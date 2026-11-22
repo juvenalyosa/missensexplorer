@@ -42,6 +42,16 @@ shows, for the selected variant:
 The interface is available in Spanish and English (*View → Language*). Results export to Excel, CSV,
 JSON and FASTA. The desktop app needs `PySide6` (installed by the `gui` extra).
 
+To build a standalone macOS app that opens with a double click (no terminal or Python needed):
+
+```bash
+packaging/macos/build_app.sh             # -> build/macos/dist/MissensExplorer.app (about 640 MB)
+packaging/macos/build_app.sh --install   # also copies it to ~/Applications
+```
+
+The build is signed ad hoc, which is enough on the Mac that built it. To share the app with other
+Macs, sign it with an Apple Developer ID and notarize it; otherwise Gatekeeper blocks it on first open.
+
 ### Web app
 
 ![MissensExplorer web interface](docs/screenshot.png)
