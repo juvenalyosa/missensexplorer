@@ -1,0 +1,15 @@
+[server]
+maxUploadSize = 1024
+
+[browser]
+gatherUsageStats = false
+
+# Separate light/dark themes keep the automatic (system) switching.
+[theme.light]
+primaryColor = "#2a78d6"
+
+[theme.dark]
+primaryColor = "#3987e5"
+
+[client]
+toolbarMode = "minimal"

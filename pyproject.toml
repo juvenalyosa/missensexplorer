@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "missensexplorer"
+version = "2.0.0"
+description = "Predict how DNA variants (VCF, HGVS, rsIDs, 'BRAF V600E') change the encoded human protein."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+  { name = "Briyis Fontecha" }, { name = "Jorge Leyva" }, { name = "Yecid Mina" }, { name = "Juvenal Yosa" },
+]
+keywords = ["bioinformatics", "variant effect", "missense", "VEP", "AlphaMissense", "VCF", "protein"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Intended Audience :: Science/Research",
+]
+dependencies = [
+  "httpx>=0.27",
+  "pandas>=2.0",
+  "openpyxl>=3.1",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+web = ["streamlit>=1.40"]
+dev = ["pytest>=8", "streamlit>=1.40"]
+
+[project.scripts]
+missensexplorer = "missensexplorer.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jyosa/missensexplorer"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/missensexplorer"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["legacy", ".venv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["network: tests that call the public Ensembl/UniProt/AlphaFold APIs"]
+addopts = "-m 'not network'"

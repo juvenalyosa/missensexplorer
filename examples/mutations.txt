@@ -1,0 +1,9 @@
+# One or more variants per line. Lines starting with # are ignored.
+BRAF V600E
+TP53: R175H, R248Q, R273H
+KRAS:p.G12D
+BRCA1:c.5096G>A
+NM_000059.4(BRCA2):c.8167G>C
+chr17:7675088 C>T
+rs113488022
+CFTR p.Phe508del

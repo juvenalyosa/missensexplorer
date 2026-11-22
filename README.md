@@ -1,160 +1,199 @@
 # MissensExplorer
 
+**Predict how DNA variants change the human protein — from a VCF file, a spreadsheet, or a line like `BRAF V600E`.**
 
-This tool analyzes single nucleotide polymorphisms (SNPs) from Variant Call Format (VCF) files, focusing on identifying and reporting potential effects of these SNPs, in human, based on various genomic databases and annotations. The tool can handle individual SNP analysis or process whole VCF files.
+MissensExplorer maps each variant to its transcript and protein (Ensembl VEP). It then gathers
+pathogenicity predictors (AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT, PolyPhen-2), the
+physico-chemistry of the amino-acid change, and the protein context (UniProt domains and functional
+sites, AlphaFold structure and confidence). Finally it adds clinical and population data (ClinVar for
+the exact allele, gnomAD) and summarises everything as one prediction per variant. You can use it
+from a web app, from the command line, or from Python.
 
-## Features
+![MissensExplorer web interface](docs/screenshot.png)
 
-- Processing of VCF files to extract SNP information.
-- Analysis of individual SNPs for potential effects on genes.
-- Integration with external databases like ClinVar and UniProt for enriched annotation.
-- Export results in CSV format with detailed information.
-- Rate limiting and retries for handling API usage.
-- Utilization of multiprocessing to enhance performance.
+> **Research use only.** The predictions are computational. They are not a clinical diagnosis.
 
-## Requirements
-
-The script requires Python 3.x and the following Python libraries:
-- `pandas`
-- `requests`
-- `argparse`
-- `multiprocessing`
-
-
-To install the required Python packages, run:
-```bash
-pip install pandas requests biopython
-```
-## Usage
-
-This tool can be used in two different modes, allowing for the processing of either entire VCF files or individual SNPs. Below are the command line options and examples for each mode.
-
-### Command Line Arguments
-
-The program supports several command line arguments to specify its operation:
-
-- `--mode`: Specifies the mode of operation. Choose `vcf` for VCF file processing or `snp` for individual SNP analysis.
-- `--email`: Required for all operations. Email address to send notifications or results.
-
-#### VCF Mode Arguments
-
-- `--vcf_file`: Path to the VCF file to process.
-- `--individual`: Identifier for the individual whose VCF file is being processed.
-- `--cores`: (Optional) Number of processor cores to use for parallel processing.
-
-#### SNP Mode Arguments
-
-- `--chro`: Chromosome number where the SNP is located.
-- `--pos`: Genomic position of the SNP.
-- `--ref_alle`: Reference allele of the SNP.
-- `--alt_alle`: Alternative allele of the SNP.
-- `--zygosity`: Zygosity status of the SNP. Options are `Homozygous`, `Heterozygous`, or `Unknown`.
-
-### Usage Examples
-
-#### Process a VCF File
-
-To process a VCF file and analyze the SNPs for a given individual:
+## Quick start
 
 ```bash
-python missenexplorer.py --mode vcf --vcf_file path/to/file.vcf --individual JohnDoe --email user@example.com --cores 4
+git clone https://github.com/jyosa/missensexplorer
+cd missensexplorer
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[web]"
+
+missensexplorer web                                    # opens http://localhost:8501
 ```
 
-For a single SNP:
+Or with Docker:
 
 ```bash
-python missenexplorer.py --mode snp --chro chr1 --pos 953279 --ref_alle T --alt_alle C --zygosity Homozygous --email user@example.com
+docker build -t missensexplorer .
+docker run -p 8501:8501 missensexplorer               # then open http://localhost:8501
 ```
 
+### Inicio rápido (español)
 
-## Output Configuration
+1. Instala con los comandos de arriba y ejecuta `missensexplorer web`.
+2. Escribe tus mutaciones, por ejemplo `BRAF V600E` o `TP53: R175H, R248Q`, o sube tu VCF.
+3. Pulsa **Predict protein effect**. Haz clic en una fila para ver el detalle: predictores, cambio
+   fisicoquímico, dominio afectado, estructura de AlphaFold, ClinVar y gnomAD.
+4. Descarga los resultados en CSV, Excel, JSON o FASTA (proteína mutante).
 
-### Files Generated
+## What you can give it
 
-- **output_snps.csv**: This CSV file contains detailed results for each SNP processed in VCF mode. It includes information such as genomic location, gene impact, clinical significance, and other relevant details.
-- **failed_to_retrieve.csv**: Records SNPs that could not be successfully processed after the maximum number of retries. This helps in tracking and re-processing these entries if necessary.
+Free text accepts one or more variants per line, separated by commas or semicolons:
 
-### Customizing Output
+| You write | Meaning |
+|---|---|
+| `BRAF V600E` · `BRAF:p.Val600Glu` · `KRAS p.G12D` | protein change in a gene |
+| `TP53: R175H, R248Q, R273H` | several changes in the same gene |
+| `V600E` together with `--gene BRAF` (or *Default gene* in the web app) | bare change |
+| `BRCA1:c.5096G>A` · `NM_004333.6(BRAF):c.1799T>A` · `ENST00000269305:c.524G>A` | cDNA HGVS |
+| `chr7:140753336 A>T` · `7-140753336-A-T` · `7 140753336 A T` | genomic position and alleles |
+| `NC_000007.14:g.140753336A>T` | genomic HGVS |
+| `rs113488022` | dbSNP ID (all alternate alleles are reported) |
+| `CFTR p.Phe508del` · `chr7:117559590 ATCT>A` | in-frame indels |
 
-You can customize how the output data is saved by modifying the `file_path_sg` and `failed_to_retrieve_file` variables in the script:
+You can also upload files:
+
+- **VCF / VCF.gz**: single- or multi-sample, multi-allelic, SNVs and indels. Zygosity is taken
+  from `GT`. Sites that the sample does not carry (`0/0`, `./.`) are skipped.
+- **CSV / TSV / Excel**: either `chrom,pos,ref,alt` columns, or a column of variants (`variant`,
+  `hgvs`, `mutation`, `rsid`, …) with an optional `gene` column.
+- **TXT**: one variant per line, in any of the formats above.
+
+The **genome build is detected automatically**, first from the VCF header (contig lengths or
+reference name). If the header has no build, the tool checks the REF alleles against GRCh38 and
+GRCh37. You can force a build with `--assembly GRCh37`.
+
+## Command line
+
+```bash
+# a few mutations, printed as a table with detail cards
+missensexplorer "BRAF V600E" "TP53: R175H, R248Q" rs28934578
+
+# bare changes in one gene, plus the mutant protein sequences
+missensexplorer --gene TP53 R175H R248Q R273H --fasta tp53_mutants.fa
+
+# a VCF, restricted to some genes, with Excel and CSV reports
+missensexplorer -f patient.vcf.gz --genes TP53,BRCA1,BRCA2 -o report.xlsx -o report.csv
+
+# options
+missensexplorer --help
+```
+
+Useful flags:
+
+| Flag | Effect |
+|---|---|
+| `--sample NAME` | report one sample of a multi-sample VCF |
+| `--pass-only` | keep only `FILTER=PASS` records |
+| `--all` | also list non-coding consequences (intronic, UTR, intergenic) |
+| `--no-predictors` | skip the predictor plugins (faster) |
+| `--workers N` | number of parallel API requests (default 4) |
+| `--no-cache` | ignore the local cache |
+| `missensexplorer cache clear` | empty the local cache |
+
+## Python
 
 ```python
-file_path_sg = 'output_snps.csv'  # Change this to your preferred output file path for successful SNP analyses
-failed_to_retrieve_file = 'failed_to_retrieve.csv'  # Change this for logging failed SNP retrievals
+from missensexplorer import predict, PredictOptions
+
+res = predict(text="BRAF V600E\nTP53 R175H", files=["sample.vcf.gz"],
+              options=PredictOptions(genes=["TP53", "BRAF"]))
+res.table          # pandas DataFrame, one row per variant × gene
+res.errors         # inputs that could not be parsed or mapped
+res.sequences      # wild-type and mutant protein sequences per row
 ```
 
-[Watch our tutorial video for VCF file on YouTube!](https://www.youtube.com/watch?v=lduh43umNCc)
+## What you get for each variant
 
+| Group | Columns |
+|---|---|
+| Protein change | `gene`, `protein_change` (V600E), `hgvsp`, `hgvsc`, `consequence`, `transcript` (MANE Select preferred), `exon`, `codons` |
+| **Prediction** | `prediction`, `effect_score` (0–1), `prediction_basis` (which predictors agree) |
+| Predictors | `alphamissense`, `revel`, `cadd_phred`, `eve`, `popeve`, `sift`, `polyphen`, `spliceai_max` |
+| Physico-chemistry | `grantham`, `blosum62`, `hydropathy_change`, `volume_change`, `charge_change`, `physchem_notes` |
+| Protein context | `protein_name`, `protein_window` (e.g. `GDFGLAT[V>E]KSRWSGS`), `key_site`, `protein_features`, `uniprot_variants_here`, `uniprot_mutagenesis_here`, `plddt`, `protein_function` |
+| Clinical & population | `clinvar` (classification of the exact allele), `clinvar_review` and stars, `clinvar_conditions`, `clinvar_oncogenicity`, `gnomad_af`, `gnomad_popmax_af`, `rsid`, `pubmed_ids` |
+| Truncating variants | `nmd` (rule-of-thumb nonsense-mediated decay), `mutant_protein` (% of the protein lost) |
+| Sample | `zygosity`, `genotype`, `sample` or `carriers` |
 
-[Watch our tutorial video for SNP on YouTube!](https://www.youtube.com/watch?v=2y5LjD6Z92A)
+### How the prediction is made
 
+- **Truncating variants** (stop-gained, frameshift, canonical splice site, start-lost) are reported
+  as *Loss of function*, with an NMD estimate and the percentage of the protein that is lost.
+- For a **missense** variant, each predictor casts a vote using published thresholds:
+  - AlphaMissense uses its own class.
+  - REVEL ≥ 0.644 / ≤ 0.290 and CADD ≥ 25.3 / ≤ 22.7 (Pejaver et al., 2022, calibrated PP3/BP4).
+  - EVE uses its own class.
+  - SIFT and PolyPhen-2 use their own calls.
 
+  AlphaMissense, REVEL and EVE have weight 1, CADD 0.75, and SIFT and PolyPhen-2 0.5. If at least
+  70% of the weighted votes say damaging, the variant is *Likely damaging*; at 30% or less it is
+  *Likely benign*; anything in between is *Uncertain*.
+- **Synonymous, splice-region and intronic** variants are judged with SpliceAI
+  (≥ 0.5 likely splice-altering, ≥ 0.2 possible).
+- ClinVar and gnomAD are shown next to the prediction, never mixed into it.
 
+## Speed
 
-### Viewing Output Data
+All lookups are batched: up to 200 variants per Ensembl VEP request, run in parallel. For more
+than 200 variants, a fast first pass finds the coding and splice variants, and only those go
+through the slower predictor plugins. Every answer is cached in `~/.cache/missensexplorer`, so a
+repeated run is almost instant. As a reference, 1,000 VCF variants take about 40 s the first time
+and about 1 s from the cache.
 
-The output CSV files can be opened with any text editor, spreadsheet software like Microsoft Excel or Google Sheets, or processed through additional scripts for further analysis.
+For exomes and genomes, pass `--genes` (or fill *Only these genes* in the web app). The VCF is then
+filtered locally before anything is sent. The public Ensembl REST API is not meant for millions of
+variants; for whole genomes, run VEP locally and load its output.
 
+## Privacy
 
+The tool sends only variant descriptions (coordinates, HGVS, rsIDs, gene symbols) to the public
+APIs of Ensembl, UniProt, AlphaFold DB and NCBI. Sample names and genotypes stay on your
+computer. Even so, check your institution's rules before you analyse patient data with public web
+services.
 
-## Agent Smith
+## What changed in version 2
 
-This Python script automates the retrieval of research papers from the PubMed database based on specified gene mutations and provides detailed summaries of those papers. The summaries are generated using the OpenAI API, making this an experimental tool that also requires an OpenAI API account for operation.
+Version 2 is a rewrite. The pipeline used to make roughly ten sequential web requests per SNP
+through UCSC, Ensembl, UniProt and NCBI. It now uses one batched Ensembl VEP call and adds
+modern predictors, protein structure and a web interface. The rewrite also fixes these bugs in the
+1.x scripts (kept in [`legacy/`](legacy/)):
 
-## Features
+- SNVs at the third base of a codon were compared with the *next* codon, so they were reported as
+  synonymous.
+- Only the first protein-coding transcript of a gene was checked. If the SNP was not in its exons,
+  the variant was reported as non-coding.
+- Nonsense variants were never detected, because the check compared a sequence's length with
+  itself.
+- A missense variant without an existing UniProt variant record was silently dropped, so new
+  variants never appeared in the output.
+- ClinVar data was never returned, because of a key check bug.
+- `0/0` genotypes were reported as homozygous variants.
+- Indels were ignored.
 
-- Retrieves relevant research papers from PubMed based on gene and mutation queries.
-- Summarizes the papers using OpenAI's GPT models.
-- Converts PDFs to text for summarization.
-- Displays summarized results directly in the console.
+*Agent Smith*, the PubMed + OpenAI summariser, is still available unchanged in `legacy/agentsmith.py`.
 
-## Requirements
-
-- Python 3.x
-- Access to the OpenAI API (requires an API key)
-- Internet connection for PubMed access and API communication
-- Python packages: `requests`, `bs4`, `PyPDF2`, `python-dotenv`, `biopython`
-
-## Installation
-
-Before running the script, ensure that you have all the required packages installed:
+## Development
 
 ```bash
-pip install requests beautifulsoup4 PyPDF2 python-dotenv biopython openai
+pip install -e ".[dev]"
+pytest                 # fast offline tests
+pytest -m network      # live end-to-end tests against the public APIs
 ```
 
-Additionally, you need to set up an environment variable for your OpenAI API key. This can be done in a .env file in the same directory as the script:
+## Data sources
 
-```bash
-OPENAI_API_KEY='your_openai_api_key_here'
-```
-
-### Running the Script
-
-The script is executed from the command line and requires three arguments:
-
-- gene_name: The name of the gene to be researched.
-- mutation_type: The specific mutation of interest.
-- user_email: The email address to use with PubMed queries (required by NCBI).
-
-Command Line Syntax:
-
-```bash
-python agentsmith.py <gene_name> <mutation_type> <user_email>
-```
-Example:
-
-```bash
-python agentsmith.py TUBA1A V409A your_email@example.com
-```
-
-[Watch our tutorial video for SNP on YouTube!](https://www.youtube.com/watch?v=J19IQ_NZSGQ)
-
-
+Ensembl VEP REST (McLaren et al., 2016) · AlphaMissense (Cheng et al., 2023) · REVEL (Ioannidis et
+al., 2016) · CADD (Rentzsch et al., 2019) · EVE (Frazer et al., 2021) and popEVE · SpliceAI
+(Jaganathan et al., 2019) · SIFT · PolyPhen-2 · UniProt · AlphaFold DB (Varadi et al., 2024) ·
+ClinVar · gnomAD · Grantham (1974) · BLOSUM62 · Kyte–Doolittle hydropathy.
 
 # Powered by
 
-### Universidad Simón Bolívar Barranquilla 
+### Universidad Simón Bolívar Barranquilla
 ### Escuela Nacional del Deporte
 
 - Briyis Fontecha briyis.fontecha@unisimon.edu.co
