@@ -16,7 +16,7 @@ from a web app, from the command line, or from Python.
 ## Quick start
 
 ```bash
-git clone https://github.com/jyosa/missensexplorer
+git clone https://github.com/juvenalyosa/missensexplorer
 cd missensexplorer
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[gui,web]"

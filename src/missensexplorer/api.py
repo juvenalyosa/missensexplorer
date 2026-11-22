@@ -34,7 +34,7 @@ class Http:
         self.client = httpx.Client(
             timeout=httpx.Timeout(timeout, connect=20),
             headers={
-                "User-Agent": f"missensexplorer/{__version__} (+https://github.com/jyosa/missensexplorer)",
+                "User-Agent": f"missensexplorer/{__version__}",
                 "Accept": "application/json",
             },
             follow_redirects=True,

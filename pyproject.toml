@@ -37,7 +37,7 @@ missensexplorer = "missensexplorer.cli:main"
 missensexplorer-gui = "missensexplorer.gui:main"
 
 [project.urls]
-Homepage = "https://github.com/jyosa/missensexplorer"
+Homepage = "https://github.com/juvenalyosa/missensexplorer"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/missensexplorer"]
