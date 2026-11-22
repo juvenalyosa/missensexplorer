@@ -347,10 +347,13 @@ def _rows_for_variant(v: VariantInput, results: list[dict], assembly: str, genes
             row.update(colocated_info(coloc, row["alt"]))
             row["_terms"] = {r.get("most_severe_consequence")}
             rows.append(row)
+        snv = bool(v.ref and v.alt and len(v.ref) == 1 and len(v.alt) == 1)
         for tc, terms in kept:
             row = dict(base)
             va = tc.get("variant_allele")
             alt_plus = revcomp(va) if (va and strand == -1) else va
+            if snv and alt_plus and alt_plus != v.alt:  # a multi-allelic result: keep only this allele
+                continue
             row["alt"] = v.alt or alt_plus
             row.update(colocated_info(coloc, alt_plus, va))
             if r.get("start") and g_ref is not None and alt_plus is not None:

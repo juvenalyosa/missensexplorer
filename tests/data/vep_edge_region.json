@@ -1,0 +1,1271 @@
+[
+ {
+  "most_severe_consequence": "missense_variant",
+  "end": 3460,
+  "start": 3460,
+  "seq_region_name": "MT",
+  "id": ".",
+  "variant_class": "SNV",
+  "strand": 1,
+  "input": "MT 3460 . G A . . .",
+  "allele_string": "G/A",
+  "colocated_variants": [
+   {
+    "strand": 1,
+    "start": 3460,
+    "somatic": 1,
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM6716712"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "end": 3460,
+    "allele_string": "COSMIC_MUTATION",
+    "seq_region_name": "MT",
+    "id": "COSV62293268"
+   },
+   {
+    "var_synonyms": {
+     "ClinVar": [
+      "RCV003319165",
+      "RCV004814877",
+      "RCV000757484",
+      "RCV000735416",
+      "RCV000143998",
+      "RCV000010370",
+      "VCV000009722",
+      "RCV005252676"
+     ],
+     "OMIM": [
+      516000.0001
+     ],
+     "UniProt": [
+      "VAR_004751"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "strand": 1,
+    "start": 3460,
+    "seq_region_name": "MT",
+    "id": "rs199476118",
+    "pubmed": [
+     1732158,
+     1900003,
+     20301353,
+     1444915,
+     12205655,
+     1734726,
+     1959619,
+     11854175,
+     173472,
+     1550131,
+     1674640,
+     1928099,
+     8496715,
+     16738010,
+     17620555,
+     40442228
+    ],
+    "clin_sig_allele": "A:pathogenic;A:not_provided",
+    "end": 3460,
+    "clin_sig_ref_allele": "G",
+    "clin_sig": [
+     "not_provided",
+     "pathogenic"
+    ],
+    "allele_string": "G/A"
+   }
+  ],
+  "assembly_name": "GRCh38",
+  "transcript_consequences": [
+   {
+    "canonical": 1,
+    "distance": 1790,
+    "gene_symbol_source": "HGNC",
+    "strand": 1,
+    "gene_id": "ENSG00000210077",
+    "transcript_id": "ENST00000387342",
+    "biotype": "Mt_tRNA",
+    "hgnc_id": "HGNC:7500",
+    "gene_symbol": "MT-TV",
+    "impact": "MODIFIER",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A"
+   },
+   {
+    "gene_symbol_source": "HGNC",
+    "distance": 1859,
+    "canonical": 1,
+    "hgnc_id": "HGNC:7470",
+    "transcript_id": "ENST00000389680",
+    "biotype": "Mt_rRNA",
+    "gene_id": "ENSG00000211459",
+    "strand": 1,
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-RNR1",
+    "variant_allele": "A",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_id": "ENSG00000198888",
+    "uniparc": [
+     "UPI0000000AA1"
+    ],
+    "exon": "1/1",
+    "transcript_id": "ENST00000361390",
+    "hgnc_id": "HGNC:7455",
+    "biotype": "protein_coding",
+    "cdna_end": 154,
+    "codons": "Gcc/Acc",
+    "canonical": 1,
+    "hgvsc": "ENST00000361390.2:c.154G>A",
+    "gene_symbol_source": "HGNC",
+    "variant_allele": "A",
+    "polyphen_prediction": "probably_damaging",
+    "gene_symbol": "MT-ND1",
+    "sift_score": 0,
+    "amino_acids": "A/T",
+    "impact": "MODERATE",
+    "trembl": [
+     "U5Z754.97"
+    ],
+    "strand": 1,
+    "hgvsp": "ENSP00000354687.2:p.Ala52Thr",
+    "cds_end": 154,
+    "swissprot": [
+     "P03886.221"
+    ],
+    "sift_prediction": "deleterious_low_confidence",
+    "protein_end": 52,
+    "consequence_terms": [
+     "missense_variant"
+    ],
+    "cds_start": 154,
+    "cdna_start": 154,
+    "protein_id": "ENSP00000354687",
+    "protein_start": 52,
+    "polyphen_score": 1
+   },
+   {
+    "variant_allele": "A",
+    "gene_symbol": "MT-ATP8",
+    "impact": "MODIFIER",
+    "uniparc": [
+     "UPI0000000AA5"
+    ],
+    "gene_id": "ENSG00000228253",
+    "hgnc_id": "HGNC:7415",
+    "transcript_id": "ENST00000361851",
+    "biotype": "protein_coding",
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "swissprot": [
+     "P03928.208"
+    ],
+    "protein_id": "ENSP00000355265",
+    "strand": 1,
+    "trembl": [
+     "U5YV54.95"
+    ],
+    "distance": 4906
+   },
+   {
+    "trembl": [
+     "Q7GXY9.228"
+    ],
+    "strand": 1,
+    "distance": 1010,
+    "swissprot": [
+     "P03891.217"
+    ],
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "protein_id": "ENSP00000355046",
+    "uniparc": [
+     "UPI0000000AA2"
+    ],
+    "gene_id": "ENSG00000198763",
+    "hgnc_id": "HGNC:7456",
+    "transcript_id": "ENST00000361453",
+    "biotype": "protein_coding",
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "variant_allele": "A",
+    "gene_symbol": "MT-ND2",
+    "impact": "MODIFIER"
+   },
+   {
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "variant_allele": "A",
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TM",
+    "transcript_id": "ENST00000387377",
+    "biotype": "Mt_tRNA",
+    "hgnc_id": "HGNC:7492",
+    "gene_id": "ENSG00000210112",
+    "strand": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 942,
+    "canonical": 1
+   },
+   {
+    "transcript_id": "ENST00000386347",
+    "hgnc_id": "HGNC:7490",
+    "biotype": "Mt_tRNA",
+    "gene_id": "ENSG00000209082",
+    "strand": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 156,
+    "canonical": 1,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A",
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TL1"
+   },
+   {
+    "gene_symbol_source": "HGNC",
+    "distance": 231,
+    "canonical": 1,
+    "transcript_id": "ENST00000387347",
+    "hgnc_id": "HGNC:7471",
+    "biotype": "Mt_rRNA",
+    "gene_id": "ENSG00000210082",
+    "strand": 1,
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-RNR2",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A"
+   },
+   {
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A",
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TC",
+    "transcript_id": "ENST00000387405",
+    "biotype": "Mt_tRNA",
+    "hgnc_id": "HGNC:7477",
+    "gene_id": "ENSG00000210140",
+    "strand": -1,
+    "gene_symbol_source": "HGNC",
+    "distance": 2301,
+    "canonical": 1
+   },
+   {
+    "gene_symbol_source": "HGNC",
+    "distance": 2197,
+    "canonical": 1,
+    "transcript_id": "ENST00000387400",
+    "hgnc_id": "HGNC:7493",
+    "biotype": "Mt_tRNA",
+    "gene_id": "ENSG00000210135",
+    "strand": -1,
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TN",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A"
+   },
+   {
+    "gene_symbol": "MT-TI",
+    "impact": "MODIFIER",
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "variant_allele": "A",
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 803,
+    "gene_id": "ENSG00000210100",
+    "strand": 1,
+    "biotype": "Mt_tRNA",
+    "transcript_id": "ENST00000387365",
+    "hgnc_id": "HGNC:7488"
+   },
+   {
+    "strand": 1,
+    "gene_id": "ENSG00000210049",
+    "hgnc_id": "HGNC:7481",
+    "transcript_id": "ENST00000387314",
+    "biotype": "Mt_tRNA",
+    "canonical": 1,
+    "distance": 2813,
+    "gene_symbol_source": "HGNC",
+    "variant_allele": "A",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "gene_symbol": "MT-TF",
+    "impact": "MODIFIER"
+   },
+   {
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 869,
+    "strand": -1,
+    "gene_id": "ENSG00000210107",
+    "transcript_id": "ENST00000387372",
+    "hgnc_id": "HGNC:7495",
+    "biotype": "Mt_tRNA",
+    "gene_symbol": "MT-TQ",
+    "impact": "MODIFIER",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A"
+   },
+   {
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TY",
+    "variant_allele": "A",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "gene_symbol_source": "HGNC",
+    "distance": 2366,
+    "canonical": 1,
+    "hgnc_id": "HGNC:7502",
+    "transcript_id": "ENST00000387409",
+    "biotype": "Mt_tRNA",
+    "strand": -1,
+    "gene_id": "ENSG00000210144"
+   },
+   {
+    "protein_id": "ENSP00000354876",
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "swissprot": [
+     "P00403.236"
+    ],
+    "distance": 4126,
+    "strand": 1,
+    "trembl": [
+     "U5Z487.96"
+    ],
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-CO2",
+    "variant_allele": "A",
+    "gene_symbol_source": "HGNC",
+    "canonical": 1,
+    "hgnc_id": "HGNC:7421",
+    "transcript_id": "ENST00000361739",
+    "biotype": "protein_coding",
+    "uniparc": [
+     "UPI0000000AA4"
+    ],
+    "gene_id": "ENSG00000198712"
+   },
+   {
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 4835,
+    "strand": 1,
+    "gene_id": "ENSG00000210156",
+    "transcript_id": "ENST00000387421",
+    "biotype": "Mt_tRNA",
+    "hgnc_id": "HGNC:7489",
+    "gene_symbol": "MT-TK",
+    "impact": "MODIFIER",
+    "variant_allele": "A",
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ]
+   },
+   {
+    "strand": -1,
+    "gene_id": "ENSG00000210127",
+    "transcript_id": "ENST00000387392",
+    "hgnc_id": "HGNC:7475",
+    "biotype": "Mt_tRNA",
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 2127,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A",
+    "gene_symbol": "MT-TA",
+    "impact": "MODIFIER"
+   },
+   {
+    "trembl": [
+     "U5YWV7.97"
+    ],
+    "strand": 1,
+    "distance": 2444,
+    "swissprot": [
+     "P00395.229"
+    ],
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "protein_id": "ENSP00000354499",
+    "uniparc": [
+     "UPI0000000AA3"
+    ],
+    "gene_id": "ENSG00000198804",
+    "transcript_id": "ENST00000361624",
+    "biotype": "protein_coding",
+    "hgnc_id": "HGNC:7419",
+    "canonical": 1,
+    "gene_symbol_source": "HGNC",
+    "variant_allele": "A",
+    "gene_symbol": "MT-CO1",
+    "impact": "MODIFIER"
+   },
+   {
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "variant_allele": "A",
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TD",
+    "biotype": "Mt_tRNA",
+    "transcript_id": "ENST00000387419",
+    "hgnc_id": "HGNC:7478",
+    "gene_id": "ENSG00000210154",
+    "strand": 1,
+    "gene_symbol_source": "HGNC",
+    "distance": 4058,
+    "canonical": 1
+   },
+   {
+    "distance": 3986,
+    "gene_symbol_source": "HGNC",
+    "canonical": 1,
+    "biotype": "Mt_tRNA",
+    "transcript_id": "ENST00000387416",
+    "hgnc_id": "HGNC:7497",
+    "gene_id": "ENSG00000210151",
+    "strand": -1,
+    "impact": "MODIFIER",
+    "gene_symbol": "MT-TS1",
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ],
+    "variant_allele": "A"
+   },
+   {
+    "gene_symbol": "MT-TW",
+    "impact": "MODIFIER",
+    "variant_allele": "A",
+    "consequence_terms": [
+     "upstream_gene_variant"
+    ],
+    "canonical": 1,
+    "distance": 2052,
+    "gene_symbol_source": "HGNC",
+    "strand": 1,
+    "gene_id": "ENSG00000210117",
+    "hgnc_id": "HGNC:7501",
+    "transcript_id": "ENST00000387382",
+    "biotype": "Mt_tRNA"
+   }
+  ]
+ },
+ {
+  "strand": 1,
+  "start": 31478302,
+  "id": ".",
+  "seq_region_name": "X",
+  "variant_class": "SNV",
+  "most_severe_consequence": "missense_variant",
+  "end": 31478302,
+  "transcript_consequences": [
+   {
+    "impact": "MODERATE",
+    "sift_score": 0.01,
+    "gene_symbol": "DMD",
+    "mane": [
+     "MANE_Select"
+    ],
+    "uniprot_isoform": [
+     "P11532-1"
+    ],
+    "hgvsc": "ENST00000357033.9:c.8741A>T",
+    "biotype": "protein_coding",
+    "cdna_end": 8978,
+    "hgnc_id": "HGNC:2928",
+    "exon": "59/79",
+    "gene_id": "ENSG00000198947",
+    "protein_start": 2914,
+    "protein_id": "ENSP00000354923",
+    "consequence_terms": [
+     "missense_variant"
+    ],
+    "sift_prediction": "deleterious",
+    "swissprot": [
+     "P11532.270"
+    ],
+    "cds_end": 8741,
+    "hgvsp": "ENSP00000354923.3:p.Glu2914Val",
+    "amino_acids": "E/V",
+    "mane_select": "NM_004006.3",
+    "polyphen_prediction": "benign",
+    "variant_allele": "A",
+    "gene_symbol_source": "HGNC",
+    "revel_score": "0.109,.,0.109,0.109,0.109,0.109,0.109,0.109,.,.,.,0.109",
+    "canonical": 1,
+    "codons": "gAg/gTg",
+    "transcript_id": "ENST00000357033",
+    "uniparc": [
+     "UPI000049E111"
+    ],
+    "polyphen_score": 0.428,
+    "cdna_start": 8978,
+    "cds_start": 8741,
+    "protein_end": 2914,
+    "strand": -1
+   }
+  ],
+  "assembly_name": "GRCh38",
+  "allele_string": "G/A",
+  "input": "X 31478302 . G A . . ."
+ },
+ {
+  "most_severe_consequence": "missense_variant",
+  "end": 7673802,
+  "strand": 1,
+  "start": 7673802,
+  "seq_region_name": "17",
+  "id": ".",
+  "variant_class": "SNV",
+  "allele_string": "C/T",
+  "input": "17 7673802 . C T . . .",
+  "transcript_consequences": [
+   {
+    "mane_select": "NM_000546.6",
+    "popeve_pop_adjusted_eve": -3.22,
+    "amino_acids": "R/H",
+    "variant_allele": "T",
+    "popeve_score": -3.658,
+    "codons": "cGt/cAt",
+    "canonical": 1,
+    "revel_score": ".,0.868,.,.,.,.,.,.,.,.,0.868,0.868,.,.,.,.,.,.,.,.,.,.,0.868,0.868,.,.,0.868,.,.,.,.,.,.",
+    "gene_symbol_source": "HGNC",
+    "uniparc": [
+     "UPI000002ED67"
+    ],
+    "popeve_gap_frequency": 0.013,
+    "transcript_id": "ENST00000269305",
+    "popeve_mutant": "R273H",
+    "protein_end": 273,
+    "cds_start": 818,
+    "eve_class": "Uncertain",
+    "cdna_start": 960,
+    "strand": -1,
+    "spliceai": {
+     "DS_AG": 0.01,
+     "DS_DL": 0,
+     "DP_AL": 11,
+     "DS_AL": 0,
+     "DS_DG": 0,
+     "SYMBOL": "TP53",
+     "DP_AG": 38,
+     "DP_DL": 5,
+     "DP_DG": -1
+    },
+    "popeve_esm1v": -8.141,
+    "gene_symbol": "TP53",
+    "impact": "MODERATE",
+    "sift_score": 0.07,
+    "cadd_raw": 4.139481,
+    "uniprot_isoform": [
+     "P04637-1"
+    ],
+    "mane": [
+     "MANE_Select"
+    ],
+    "eve_score": 0.385441336274529,
+    "hgvsc": "ENST00000269305.9:c.818G>A",
+    "popeve_pop_adjusted_esm1v": -4.096,
+    "popeve_gene": "TP53",
+    "gene_id": "ENSG00000141510",
+    "exon": "8/11",
+    "cdna_end": 960,
+    "biotype": "protein_coding",
+    "hgnc_id": "HGNC:11998",
+    "protein_id": "ENSP00000269305",
+    "protein_start": 273,
+    "swissprot": [
+     "P04637.312"
+    ],
+    "sift_prediction": "tolerated",
+    "consequence_terms": [
+     "missense_variant"
+    ],
+    "popeve_eve": 5.715,
+    "alphamissense": {
+     "am_class": "likely_pathogenic",
+     "am_pathogenicity": 0.9889
+    },
+    "cds_end": 818,
+    "cadd_phred": 24.4,
+    "trembl": [
+     "K7PPA8.97"
+    ],
+    "popeve_protein": "NP_000537.3",
+    "hgvsp": "ENSP00000269305.4:p.Arg273His"
+   }
+  ],
+  "colocated_variants": [
+   {
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "start": 7673802,
+    "strand": 1,
+    "phenotype_or_disease": 1,
+    "allele_string": "HGMD_MUTATION",
+    "end": 7673802,
+    "id": "CM004342",
+    "seq_region_name": "17"
+   },
+   {
+    "allele_string": "HGMD_MUTATION",
+    "end": 7673802,
+    "id": "CM010472",
+    "seq_region_name": "17",
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "strand": 1,
+    "start": 7673802,
+    "phenotype_or_disease": 1
+   },
+   {
+    "id": "CM920677",
+    "seq_region_name": "17",
+    "end": 7673802,
+    "allele_string": "HGMD_MUTATION",
+    "phenotype_or_disease": 1,
+    "strand": 1,
+    "start": 7673802,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)"
+   },
+   {
+    "start": 7673802,
+    "strand": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "somatic": 1,
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM10660"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "end": 7673802,
+    "allele_string": "COSMIC_MUTATION",
+    "seq_region_name": "17",
+    "id": "COSV52660980"
+   },
+   {
+    "seq_region_name": "17",
+    "id": "COSV52664805",
+    "end": 7673802,
+    "allele_string": "COSMIC_MUTATION",
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM10779"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "strand": 1,
+    "start": 7673802,
+    "somatic": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)"
+   },
+   {
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM43896"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "start": 7673802,
+    "strand": 1,
+    "somatic": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "id": "COSV52676050",
+    "seq_region_name": "17",
+    "end": 7673802,
+    "allele_string": "COSMIC_MUTATION"
+   },
+   {
+    "phenotype_or_disease": 1,
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM44440"
+     ]
+    },
+    "somatic": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "start": 7673802,
+    "strand": 1,
+    "id": "COSV52728930",
+    "seq_region_name": "17",
+    "allele_string": "COSMIC_MUTATION",
+    "end": 7673802
+   },
+   {
+    "var_synonyms": {
+     "ClinVar": [
+      "RCV001527484",
+      "RCV001527470",
+      "RCV003162246",
+      "RCV000785345",
+      "RCV001358389",
+      "RCV001257517",
+      "RCV002476955",
+      "RCV004813095",
+      "RCV004668960",
+      "RCV003492292",
+      "RCV003466853",
+      "RCV000254693",
+      "RCV000115738",
+      "RCV000013164",
+      "RCV000013163",
+      "VCV000012366",
+      "RCV000463420",
+      "RCV000444900",
+      "RCV000444851",
+      "RCV000443907",
+      "RCV000441169",
+      "RCV000440815",
+      "RCV000440474",
+      "RCV000439513",
+      "RCV000437210",
+      "RCV000436207",
+      "RCV000435547",
+      "RCV000434044",
+      "RCV000433409",
+      "RCV000431361",
+      "RCV000430161",
+      "RCV000429822",
+      "RCV000428779",
+      "RCV000424833",
+      "RCV000424627",
+      "RCV000424218",
+      "RCV000424109",
+      "RCV000423826",
+      "RCV000422733",
+      "RCV000422097",
+      "RCV000419960",
+      "RCV000418930",
+      "RCV001539823",
+      "RCV002502455",
+      "RCV002289534",
+      "RCV000515526",
+      "RCV000444989",
+      "RCV000444782",
+      "RCV000444109",
+      "RCV000442241",
+      "RCV000441792",
+      "RCV000438507",
+      "RCV000437048",
+      "RCV000436818",
+      "RCV000435767",
+      "RCV000434695",
+      "RCV000434296",
+      "RCV000433315",
+      "RCV000431067",
+      "RCV000429444",
+      "RCV000428692",
+      "RCV000427314",
+      "RCV000426132",
+      "RCV000425890",
+      "RCV000423981",
+      "RCV000423633",
+      "RCV000423490",
+      "RCV000421259",
+      "RCV000418738",
+      "RCV000418536",
+      "VCV000376655",
+      "RCV000822080",
+      "RCV000785524",
+      "RCV000568814",
+      "RCV002288863",
+      "RCV000785460",
+      "RCV000553607",
+      "RCV000222860",
+      "V"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "strand": 1,
+    "start": 7673802,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "frequencies": {
+     "T": {
+      "afr": 0,
+      "gnomadg_remaining": 0,
+      "af": 0.0002,
+      "gnomadg_amr": 0,
+      "gnomadg_nfe": 2.941e-05,
+      "gnomadg_asj": 0,
+      "gnomadg_mid": 0,
+      "eur": 0.001,
+      "gnomade": 1.026e-05,
+      "gnomadg_afr": 2.408e-05,
+      "gnomade_amr": 0,
+      "gnomadg": 1.971e-05,
+      "gnomade_asj": 7.653e-05,
+      "gnomadg_sas": 0,
+      "gnomadg_eas": 0,
+      "gnomade_eas": 0,
+      "sas": 0,
+      "gnomade_afr": 0,
+      "gnomade_mid": 0,
+      "gnomade_remaining": 0,
+      "gnomadg_ami": 0,
+      "gnomade_nfe": 1.079e-05,
+      "amr": 0,
+      "gnomade_sas": 1.159e-05,
+      "gnomadg_fin": 0,
+      "eas": 0,
+      "gnomade_fin": 0
+     }
+    },
+    "id": "rs28934576",
+    "seq_region_name": "17",
+    "clin_sig_allele": "A:pathogenic;T:likely_pathogenic;G:pathogenic;A:likely_pathogenic;G:likely_pathogenic;T:pathogenic;G:pathogenic/likely_pathogenic;T:pathogenic/likely_pathogenic",
+    "pubmed": [
+     26900293,
+     24297550,
+     25157968,
+     26619011,
+     31475166,
+     32039725,
+     26332594,
+     26716509,
+     25530832,
+     24853176,
+     25105660,
+     32888145,
+     9569050,
+     16489069,
+     17606709,
+     18511570,
+     23161690,
+     24381225,
+     24487413,
+     24641375,
+     33076847,
+     34529667,
+     34676052,
+     1565144,
+     15951970,
+     8423216,
+     15390294,
+     31658756,
+     36353970,
+     37042869,
+     37298642,
+     26884312,
+     28854261,
+     31882575,
+     34771529,
+     32704022,
+     29092957,
+     23639312,
+     32002804,
+     36866106,
+     30816478,
+     37391803,
+     37867527,
+     39036705,
+     39488539,
+     38003901,
+     40404986,
+     31395785,
+     37030635,
+     10787423,
+     8336941
+    ],
+    "end": 7673802,
+    "allele_string": "C/A/G/T",
+    "clin_sig": [
+     "likely_pathogenic",
+     "pathogenic"
+    ],
+    "clin_sig_ref_allele": "C"
+   }
+  ],
+  "assembly_name": "GRCh38"
+ },
+ {
+  "input": "17 7673802 . C A . . .",
+  "allele_string": "C/A",
+  "assembly_name": "GRCh38",
+  "colocated_variants": [
+   {
+    "seq_region_name": "17",
+    "id": "CM004342",
+    "end": 7673802,
+    "allele_string": "HGMD_MUTATION",
+    "phenotype_or_disease": 1,
+    "strand": 1,
+    "start": 7673802,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)"
+   },
+   {
+    "phenotype_or_disease": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "start": 7673802,
+    "strand": 1,
+    "id": "CM010472",
+    "seq_region_name": "17",
+    "allele_string": "HGMD_MUTATION",
+    "end": 7673802
+   },
+   {
+    "seq_region_name": "17",
+    "id": "CM920677",
+    "allele_string": "HGMD_MUTATION",
+    "end": 7673802,
+    "phenotype_or_disease": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "start": 7673802,
+    "strand": 1
+   },
+   {
+    "end": 7673802,
+    "allele_string": "COSMIC_MUTATION",
+    "seq_region_name": "17",
+    "id": "COSV52660980",
+    "strand": 1,
+    "start": 7673802,
+    "somatic": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM10660"
+     ]
+    },
+    "phenotype_or_disease": 1
+   },
+   {
+    "somatic": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "start": 7673802,
+    "strand": 1,
+    "phenotype_or_disease": 1,
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM10779"
+     ]
+    },
+    "allele_string": "COSMIC_MUTATION",
+    "end": 7673802,
+    "id": "COSV52664805",
+    "seq_region_name": "17"
+   },
+   {
+    "start": 7673802,
+    "strand": 1,
+    "somatic": 1,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM43896"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "end": 7673802,
+    "allele_string": "COSMIC_MUTATION",
+    "id": "COSV52676050",
+    "seq_region_name": "17"
+   },
+   {
+    "id": "COSV52728930",
+    "seq_region_name": "17",
+    "end": 7673802,
+    "allele_string": "COSMIC_MUTATION",
+    "var_synonyms": {
+     "COSMIC": [
+      "COSM44440"
+     ]
+    },
+    "phenotype_or_disease": 1,
+    "strand": 1,
+    "start": 7673802,
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "somatic": 1
+   },
+   {
+    "clin_sig": [
+     "likely_pathogenic",
+     "pathogenic"
+    ],
+    "clin_sig_ref_allele": "C",
+    "allele_string": "C/A/G/T",
+    "end": 7673802,
+    "clin_sig_allele": "A:pathogenic;T:likely_pathogenic;G:pathogenic;A:likely_pathogenic;G:likely_pathogenic;T:pathogenic;G:pathogenic/likely_pathogenic;T:pathogenic/likely_pathogenic",
+    "pubmed": [
+     26900293,
+     24297550,
+     25157968,
+     26619011,
+     31475166,
+     32039725,
+     26332594,
+     26716509,
+     25530832,
+     24853176,
+     25105660,
+     32888145,
+     9569050,
+     16489069,
+     17606709,
+     18511570,
+     23161690,
+     24381225,
+     24487413,
+     24641375,
+     33076847,
+     34529667,
+     34676052,
+     1565144,
+     15951970,
+     8423216,
+     15390294,
+     31658756,
+     36353970,
+     37042869,
+     37298642,
+     26884312,
+     28854261,
+     31882575,
+     34771529,
+     32704022,
+     29092957,
+     23639312,
+     32002804,
+     36866106,
+     30816478,
+     37391803,
+     37867527,
+     39036705,
+     39488539,
+     38003901,
+     40404986,
+     31395785,
+     37030635,
+     10787423,
+     8336941
+    ],
+    "seq_region_name": "17",
+    "id": "rs28934576",
+    "frequencies": {
+     "A": {
+      "gnomade_eas": 0,
+      "gnomade_afr": 0,
+      "gnomade_mid": 0,
+      "gnomadg_sas": 0,
+      "gnomade_asj": 0,
+      "gnomadg_eas": 0,
+      "gnomade_fin": 0,
+      "gnomade_remaining": 1.656e-05,
+      "gnomadg_ami": 0,
+      "gnomade_nfe": 0,
+      "gnomade_sas": 0,
+      "gnomadg_fin": 0,
+      "gnomade_amr": 0,
+      "gnomadg": 6.577e-06,
+      "gnomadg_asj": 0,
+      "gnomadg_mid": 0,
+      "gnomadg_afr": 0,
+      "gnomade": 6.841e-07,
+      "gnomadg_remaining": 0,
+      "gnomadg_nfe": 1.47e-05,
+      "gnomadg_amr": 0
+     }
+    },
+    "clinvar_somatic_classification": "Neoplasm(oncogenicity:Oncogenic);pancreatic neuroendocrine tumor(oncogenicity:Likely oncogenic);Neoplasm(oncogenicity:Oncogenic)",
+    "strand": 1,
+    "start": 7673802,
+    "phenotype_or_disease": 1,
+    "var_synonyms": {
+     "ClinVar": [
+      "RCV001527484",
+      "RCV001527470",
+      "RCV003162246",
+      "RCV000785345",
+      "RCV001358389",
+      "RCV001257517",
+      "RCV002476955",
+      "RCV004813095",
+      "RCV004668960",
+      "RCV003492292",
+      "RCV003466853",
+      "RCV000254693",
+      "RCV000115738",
+      "RCV000013164",
+      "RCV000013163",
+      "VCV000012366",
+      "RCV000463420",
+      "RCV000444900",
+      "RCV000444851",
+      "RCV000443907",
+      "RCV000441169",
+      "RCV000440815",
+      "RCV000440474",
+      "RCV000439513",
+      "RCV000437210",
+      "RCV000436207",
+      "RCV000435547",
+      "RCV000434044",
+      "RCV000433409",
+      "RCV000431361",
+      "RCV000430161",
+      "RCV000429822",
+      "RCV000428779",
+      "RCV000424833",
+      "RCV000424627",
+      "RCV000424218",
+      "RCV000424109",
+      "RCV000423826",
+      "RCV000422733",
+      "RCV000422097",
+      "RCV000419960",
+      "RCV000418930",
+      "RCV001539823",
+      "RCV002502455",
+      "RCV002289534",
+      "RCV000515526",
+      "RCV000444989",
+      "RCV000444782",
+      "RCV000444109",
+      "RCV000442241",
+      "RCV000441792",
+      "RCV000438507",
+      "RCV000437048",
+      "RCV000436818",
+      "RCV000435767",
+      "RCV000434695",
+      "RCV000434296",
+      "RCV000433315",
+      "RCV000431067",
+      "RCV000429444",
+      "RCV000428692",
+      "RCV000427314",
+      "RCV000426132",
+      "RCV000425890",
+      "RCV000423981",
+      "RCV000423633",
+      "RCV000423490",
+      "RCV000421259",
+      "RCV000418738",
+      "RCV000418536",
+      "VCV000376655",
+      "RCV000822080",
+      "RCV000785524",
+      "RCV000568814",
+      "RCV002288863",
+      "RCV000785460",
+      "RCV000553607",
+      "RCV000222860",
+      "V"
+     ]
+    }
+   }
+  ],
+  "transcript_consequences": [
+   {
+    "protein_start": 273,
+    "protein_id": "ENSP00000269305",
+    "swissprot": [
+     "P04637.312"
+    ],
+    "sift_prediction": "deleterious",
+    "consequence_terms": [
+     "missense_variant"
+    ],
+    "popeve_eve": 12.033,
+    "alphamissense": {
+     "am_class": "likely_pathogenic",
+     "am_pathogenicity": 0.9954
+    },
+    "cds_end": 818,
+    "cadd_phred": 25.5,
+    "trembl": [
+     "K7PPA8.97"
+    ],
+    "popeve_protein": "NP_000537.3",
+    "hgvsp": "ENSP00000269305.4:p.Arg273Leu",
+    "popeve_esm1v": -10.074,
+    "gene_symbol": "TP53",
+    "sift_score": 0,
+    "impact": "MODERATE",
+    "uniprot_isoform": [
+     "P04637-1"
+    ],
+    "cadd_raw": 4.489173,
+    "mane": [
+     "MANE_Select"
+    ],
+    "eve_score": 0.9497819408171,
+    "hgvsc": "ENST00000269305.9:c.818G>T",
+    "popeve_pop_adjusted_esm1v": -4.409,
+    "popeve_gene": "TP53",
+    "gene_id": "ENSG00000141510",
+    "exon": "8/11",
+    "cdna_end": 960,
+    "biotype": "protein_coding",
+    "hgnc_id": "HGNC:11998",
+    "popeve_mutant": "R273L",
+    "protein_end": 273,
+    "cds_start": 818,
+    "eve_class": "Pathogenic",
+    "cdna_start": 960,
+    "strand": -1,
+    "spliceai": {
+     "DS_AG": 0.02,
+     "DS_AL": 0,
+     "DP_AL": 11,
+     "DS_DL": 0,
+     "DS_DG": 0,
+     "DP_AG": 38,
+     "SYMBOL": "TP53",
+     "DP_DL": 5,
+     "DP_DG": -36
+    },
+    "popeve_pop_adjusted_eve": -4.57,
+    "mane_select": "NM_000546.6",
+    "amino_acids": "R/L",
+    "variant_allele": "A",
+    "codons": "cGt/cTt",
+    "popeve_score": -4.49,
+    "canonical": 1,
+    "revel_score": ".,0.921,.,.,.,.,.,.,.,.,0.921,0.921,.,.,.,.,.,.,.,.,.,.,0.921,0.921,.,.,0.921,.,.,.,.,.,.",
+    "gene_symbol_source": "HGNC",
+    "uniparc": [
+     "UPI000002ED67"
+    ],
+    "popeve_gap_frequency": 0.013,
+    "transcript_id": "ENST00000269305"
+   }
+  ],
+  "end": 7673802,
+  "most_severe_consequence": "missense_variant",
+  "variant_class": "SNV",
+  "id": ".",
+  "start": 7673802,
+  "seq_region_name": "17",
+  "strand": 1
+ }
+]
