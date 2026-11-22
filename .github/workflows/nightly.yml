@@ -15,4 +15,5 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: pytest -q -m network
+      # public APIs have occasional hiccups: re-run only the failed tests once before alarming
+      - run: pytest -q -m network || (sleep 120 && pytest -q -m network --lf)
