@@ -128,6 +128,7 @@ Useful flags:
 | `--workers N` | number of parallel API requests (default 4) |
 | `--vep local` | annotate with VEP on this computer instead of the public API ([guide](docs/local-vep.md)) |
 | `--offline` | never use the internet (with `--vep local`; skips ClinVar, UniProt and AlphaFold) |
+| `--common-af AF` | gnomAD grpmax at which damaging/uncertain calls become benign (default `0.05` = BA1; `0` = off) |
 | `--no-cache` | ignore the local cache |
 | `missensexplorer cache clear` | empty the local cache |
 
@@ -148,11 +149,12 @@ res.sequences      # wild-type and mutant protein sequences per row
 | Group | Columns |
 |---|---|
 | Protein change | `gene`, `protein_change` (V600E), `hgvsp`, `hgvsc`, `consequence`, `transcript` (MANE Select preferred), `exon`, `codons` |
-| **Prediction** | `prediction`, `effect_score` (0–1), `prediction_basis` (which predictors agree) |
+| **Prediction** | `prediction`, `effect_score` (0–1; the model score for missense variants), `prediction_basis` (model score, contributions, predictors) |
+| ACMG evidence | `acmg_pp3_bp4` (e.g. `PP3_Strong (REVEL 0.951)`), `acmg_points`, `population_frequency` (BA1 / BS1 candidate / rare / not in gnomAD) |
 | Predictors | `alphamissense`, `revel`, `cadd_phred`, `eve`, `popeve`, `sift`, `polyphen`, `spliceai_max` |
 | Physico-chemistry | `grantham`, `blosum62`, `hydropathy_change`, `volume_change`, `charge_change`, `physchem_notes` |
 | Protein context | `protein_name`, `protein_window` (e.g. `GDFGLAT[V>E]KSRWSGS`), `key_site`, `protein_features`, `uniprot_variants_here`, `uniprot_mutagenesis_here`, `plddt`, `protein_function` |
-| Clinical & population | `clinvar` (classification of the exact allele), `clinvar_review` and stars, `clinvar_conditions`, `clinvar_oncogenicity`, `gnomad_af`, `gnomad_popmax_af`, `rsid`, `pubmed_ids` |
+| Clinical & population | `clinvar` (classification of the exact allele), `clinvar_review` and stars, `clinvar_conditions`, `clinvar_oncogenicity`, `gnomad_af`, `gnomad_popmax_af` (grpmax: highest main genetic ancestry group), `rsid`, `pubmed_ids` |
 | Truncating variants | `nmd` (rule-of-thumb nonsense-mediated decay), `mutant_protein` (% of the protein lost) |
 | Sample | `zygosity`, `genotype`, `sample` or `carriers` |
 
@@ -160,22 +162,33 @@ res.sequences      # wild-type and mutant protein sequences per row
 
 - **Truncating variants** (stop-gained, frameshift, canonical splice site, start-lost) are reported
   as *Loss of function*, with an NMD estimate and the percentage of the protein that is lost.
-- For a **missense** variant, each predictor casts a vote using published thresholds:
-  - AlphaMissense uses its own class.
-  - REVEL ≥ 0.644 / ≤ 0.290 and CADD ≥ 25.3 / ≤ 22.7 (Pejaver et al., 2022, calibrated PP3/BP4).
-  - EVE uses its own class.
+- For a **missense** variant, a logistic regression combines the scores of AlphaMissense, REVEL,
+  CADD and popEVE into a *model score* (0–1). At 0.7 or more the variant is
+  *Likely damaging*; at 0.3 or less, *Likely benign*; in between, *Uncertain*. The model was
+  trained on expert-reviewed ClinVar variants from genes that the benchmark does not use, and every
+  call shows how much each predictor pushed it (desktop app: *Why* chart). The coefficients, the
+  training data and the validation are described in the [model card](docs/model.md).
 
-  AlphaMissense, REVEL and EVE have weight 1 and CADD 0.75. If at least 70% of the weighted votes
-  say damaging, the variant is *Likely damaging*; at 30% or less it is *Likely benign*; anything in
-  between is *Uncertain*. Scores that fall between the thresholds give *Uncertain (intermediate
-  scores)*.
-
-  SIFT and PolyPhen-2 vote (weight 0.5 each) only when none of the predictors above has a score,
-  and the label then says *limited evidence*. On expert-reviewed ClinVar variants, letting them
-  vote alongside the modern predictors added wrong calls ([benchmark](benchmarks/results/clinvar_benchmark.md)).
+  The model needs AlphaMissense or REVEL. Without both (for example local VEP without plugins), a
+  weighted vote of CADD and EVE decides, and SIFT/PolyPhen-2 vote only when nothing better exists;
+  the label then says *limited evidence*.
+- **Population frequency** is a separate, visible rule: a damaging or uncertain call becomes
+  *Likely benign (common in population)* when the variant reaches 5% in a gnomAD genetic ancestry
+  group (ACMG BA1; bottlenecked groups excluded, as in gnomAD's *grpmax*). The protein-level call
+  stays in `prediction_basis`. Change the cut-off with `--common-af` (`0.01`, or `0` to turn it
+  off) or *Options → Frequency* in the desktop app. A 1% cut-off removes more benign variants but
+  also mislabels pathogenic variants of recessive and founder conditions. The nine variants on
+  ClinGen's BA1 exception list (Ghosh et al., 2018; for example HFE C282Y and H63D, GJB2 V37I,
+  BTD D444H) are never called benign for being common.
+- **ACMG computational evidence**: `acmg_pp3_bp4` and `acmg_points` give PP3/BP4 with the
+  ClinGen-calibrated intervals for one predictor, REVEL ([Pejaver et al. 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9748256/))
+  or, when REVEL is missing, AlphaMissense ([Bergquist et al. 2025](https://www.ccs.neu.edu/home/radivojac/papers/bergquist_genetmed_2025.pdf)),
+  for example `PP3_Strong (REVEL 0.951)` = +4 points. `population_frequency` says whether the
+  variant meets BA1, is a BS1 candidate (≥ 1%), is rare or was not found in gnomAD. These columns
+  are one input of an ACMG classification, not a classification.
 - **Synonymous, splice-region and intronic** variants are judged with SpliceAI
   (≥ 0.5 likely splice-altering, ≥ 0.2 possible).
-- ClinVar and gnomAD are shown next to the prediction, never mixed into it.
+- ClinVar is shown next to the prediction, never mixed into it.
 
 ## Speed
 
@@ -214,14 +227,16 @@ leaves the computer.
 - **Tested on hard cases.** Recorded VEP responses cover frameshifts, start-lost, canonical splice,
   splice-altering synonymous, mitochondrial, chromosome X, multi-allelic and GRCh37 variants. A
   nightly GitHub workflow checks that the external APIs still return the fields the tool reads.
-- **Measured against ClinVar.** On 1,972 expert-reviewed (≥ 2 stars) germline missense variants
-  from 1,181 genes, the verdict calls 89% of the pathogenic variants *damaging* and 87% of the
-  benign ones *benign*. 92% of the variants get a decisive call, and decisive calls are right 96%
-  of the time (2.7% of pathogenic variants are called benign; 5.2% of benign variants are called
-  damaging). The figures are the same for variants evaluated since 2024. Some predictors were
-  trained or calibrated on similar data, so treat them as optimistic. Details, per-predictor results
-  and the cross-validated comparison of weights are in [the benchmark](benchmarks/results/clinvar_benchmark.md);
-  `benchmarks/clinvar_benchmark.py` reproduces it.
+- **Measured against ClinVar, on genes the model never saw.** On 1,972 expert-reviewed (≥ 2 stars)
+  germline missense variants from 1,181 genes, version 2.2 calls 93% of the pathogenic variants
+  *damaging* (v2.1: 89%) and 88% of the benign ones *benign* (v2.1: 87%). 94.5% of the variants get
+  a decisive call, and decisive calls are right 96% of the time (2.4% of pathogenic variants are
+  called benign; 5.1% of benign variants are called damaging). The AUC of the model score is 0.985
+  (v2.1: 0.959); on rare variants it is 0.973 (v2.1: 0.937). Some predictors were trained or
+  calibrated on similar data, so treat absolute figures as optimistic. The
+  [benchmark](benchmarks/results/clinvar_benchmark.md) has per-predictor, rare-variant and
+  since-2024 results, and the [model card](docs/model.md) explains training, validation and limits.
+  `benchmarks/clinvar_benchmark.py` and `benchmarks/train_model.py` reproduce them.
 - The desktop app writes an error log (*Help → Open error log*; on macOS
   `~/Library/Logs/MissensExplorer`).
 
@@ -252,6 +267,10 @@ modern predictors, protein structure and a web interface. The rewrite also fixes
 pip install -e ".[dev,gui]"
 pytest                 # fast offline tests (the desktop tests run headless)
 pytest -m network      # live end-to-end tests against the public APIs
+
+pip install -e ".[benchmark]"
+python benchmarks/train_model.py        # retrain the missense model (benchmark genes held out)
+python benchmarks/clinvar_benchmark.py  # held-out ClinVar benchmark
 ```
 
 ## Data sources
@@ -259,7 +278,8 @@ pytest -m network      # live end-to-end tests against the public APIs
 Ensembl VEP REST (McLaren et al., 2016) · AlphaMissense (Cheng et al., 2023) · REVEL (Ioannidis et
 al., 2016) · CADD (Rentzsch et al., 2019) · EVE (Frazer et al., 2021) and popEVE · SpliceAI
 (Jaganathan et al., 2019) · SIFT · PolyPhen-2 · UniProt · AlphaFold DB (Varadi et al., 2024) ·
-ClinVar · gnomAD · Grantham (1974) · BLOSUM62 · Kyte–Doolittle hydropathy.
+ClinVar · gnomAD · Grantham (1974) · BLOSUM62 · Kyte–Doolittle hydropathy · ClinGen PP3/BP4
+calibration (Pejaver et al., 2022; Bergquist et al., 2025).
 
 # Powered by
 

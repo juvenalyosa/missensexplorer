@@ -5,9 +5,9 @@
  "annotated": 1972,
  "genes": 1181,
  "run": {
-  "tool": "MissensExplorer 2.1.0",
-  "started_utc": "2026-11-22T17:59:16+00:00",
-  "seconds": 9.1,
+  "tool": "MissensExplorer 2.2.0",
+  "started_utc": "2026-11-22T21:50:51+00:00",
+  "seconds": 1.2,
   "assembly": "GRCh38",
   "annotation": "Ensembl VEP REST, release 116",
   "ensembl_release": 116,
@@ -26,6 +26,7 @@
    "vep_command": null,
    "vep_args": null,
    "offline": false,
+   "common_af": 0.05,
    "workers": 6,
    "cache": true
   },
@@ -37,28 +38,223 @@
    "Ensembl VEP": "ok",
    "VEP predictor plugins": "ok"
   },
+  "missense_model": {
+   "version": "2.2",
+   "trained": "2026-11-22",
+   "training_variants": 5837,
+   "cut_offs": [
+    0.3,
+    0.7
+   ]
+  },
   "python": "3.13.5"
  },
- "verdict": {
+ "model": {
+  "version": "2.2",
+  "trained": "2026-11-22",
+  "training": {
+   "source": "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz",
+   "selection": "germline missense SNVs, GRCh38, >= 2 review stars, P/LP vs B/LB, at most 8 per gene and class, benchmark genes excluded",
+   "n": 5837,
+   "pathogenic": 2851,
+   "genes": 2682,
+   "seed": 7,
+   "annotation": "Ensembl VEP REST, release 116",
+   "cv_by_gene": {
+    "auc": 0.9762,
+    "sensitivity": 0.8758,
+    "specificity": 0.8938,
+    "coverage": 0.9299,
+    "accuracy_when_decisive": 0.9517
+   }
+  }
+ },
+ "methods": {
   "all": {
-   "n_pathogenic": 978,
-   "n_benign": 994,
-   "sensitivity": 0.8905930470347648,
-   "specificity": 0.8732394366197183,
-   "pathogenic_called_benign": 0.026584867075664622,
-   "benign_called_damaging": 0.052313883299798795,
-   "coverage": 0.9213995943204868,
-   "accuracy_when_decisive": 0.9570720968629609
+   "v2.2 default: model + frequency rule (BA1, gnomAD grpmax \u2265 5%)": {
+    "n_pathogenic": 978,
+    "n_benign": 994,
+    "sensitivity": 0.9314928425357873,
+    "specificity": 0.8843058350100603,
+    "pathogenic_called_benign": 0.023517382413087935,
+    "benign_called_damaging": 0.05130784708249497,
+    "coverage": 0.9452332657200812,
+    "accuracy_when_decisive": 0.9603004291845494
+   },
+   "v2.2 model alone (no frequency rule)": {
+    "n_pathogenic": 978,
+    "n_benign": 994,
+    "sensitivity": 0.9314928425357873,
+    "specificity": 0.8802816901408451,
+    "pathogenic_called_benign": 0.023517382413087935,
+    "benign_called_damaging": 0.05130784708249497,
+    "coverage": 0.9432048681541582,
+    "accuracy_when_decisive": 0.9602150537634409
+   },
+   "v2.2 model + frequency \u2265 1%": {
+    "n_pathogenic": 978,
+    "n_benign": 994,
+    "sensitivity": 0.9314928425357873,
+    "specificity": 0.9154929577464789,
+    "pathogenic_called_benign": 0.023517382413087935,
+    "benign_called_damaging": 0.03822937625754527,
+    "coverage": 0.9543610547667343,
+    "accuracy_when_decisive": 0.9675876726886291
+   },
+   "v2.1 vote": {
+    "n_pathogenic": 978,
+    "n_benign": 994,
+    "sensitivity": 0.8905930470347648,
+    "specificity": 0.8732394366197183,
+    "pathogenic_called_benign": 0.026584867075664622,
+    "benign_called_damaging": 0.052313883299798795,
+    "coverage": 0.9213995943204868,
+    "accuracy_when_decisive": 0.9570720968629609
+   },
+   "v2.1 vote + frequency rule (BA1, 5%)": {
+    "n_pathogenic": 978,
+    "n_benign": 994,
+    "sensitivity": 0.8905930470347648,
+    "specificity": 0.8782696177062375,
+    "pathogenic_called_benign": 0.026584867075664622,
+    "benign_called_damaging": 0.05130784708249497,
+    "coverage": 0.9234279918864098,
+    "accuracy_when_decisive": 0.9577155409115871
+   },
+   "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": {
+    "n_pathogenic": 978,
+    "n_benign": 994,
+    "sensitivity": 0.8824130879345603,
+    "specificity": 0.7665995975855131,
+    "pathogenic_called_benign": 0.014314928425357873,
+    "benign_called_damaging": 0.03319919517102616,
+    "coverage": 0.847870182555781,
+    "accuracy_when_decisive": 0.97188995215311
+   }
+  },
+  "rare (gnomAD grpmax < 0.1% or absent)": {
+   "v2.2 default: model + frequency rule (BA1, gnomAD grpmax \u2265 5%)": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.9336099585062241,
+    "specificity": 0.8040201005025126,
+    "pathogenic_called_benign": 0.022821576763485476,
+    "benign_called_damaging": 0.10552763819095477,
+    "coverage": 0.9484092863284609,
+    "accuracy_when_decisive": 0.9610154125113327
+   },
+   "v2.2 model alone (no frequency rule)": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.9336099585062241,
+    "specificity": 0.8040201005025126,
+    "pathogenic_called_benign": 0.022821576763485476,
+    "benign_called_damaging": 0.10552763819095477,
+    "coverage": 0.9484092863284609,
+    "accuracy_when_decisive": 0.9610154125113327
+   },
+   "v2.2 model + frequency \u2265 1%": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.9336099585062241,
+    "specificity": 0.8040201005025126,
+    "pathogenic_called_benign": 0.022821576763485476,
+    "benign_called_damaging": 0.10552763819095477,
+    "coverage": 0.9484092863284609,
+    "accuracy_when_decisive": 0.9610154125113327
+   },
+   "v2.1 vote": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.8921161825726142,
+    "specificity": 0.8190954773869347,
+    "pathogenic_called_benign": 0.025933609958506226,
+    "benign_called_damaging": 0.09045226130653267,
+    "coverage": 0.9165950128976784,
+    "accuracy_when_decisive": 0.9596622889305816
+   },
+   "v2.1 vote + frequency rule (BA1, 5%)": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.8921161825726142,
+    "specificity": 0.8190954773869347,
+    "pathogenic_called_benign": 0.025933609958506226,
+    "benign_called_damaging": 0.09045226130653267,
+    "coverage": 0.9165950128976784,
+    "accuracy_when_decisive": 0.9596622889305816
+   },
+   "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.8848547717842323,
+    "specificity": 0.7135678391959799,
+    "pathogenic_called_benign": 0.014522821576763486,
+    "benign_called_damaging": 0.06030150753768844,
+    "coverage": 0.8779019776440241,
+    "accuracy_when_decisive": 0.9745347698334965
+   }
   },
   "evaluated since 2024": {
-   "n_pathogenic": 773,
-   "n_benign": 769,
-   "sensitivity": 0.888745148771022,
-   "specificity": 0.8764629388816645,
-   "pathogenic_called_benign": 0.027166882276843468,
-   "benign_called_damaging": 0.05071521456436931,
-   "coverage": 0.9215304798962386,
-   "accuracy_when_decisive": 0.9577762139338494
+   "v2.2 default: model + frequency rule (BA1, gnomAD grpmax \u2265 5%)": {
+    "n_pathogenic": 773,
+    "n_benign": 769,
+    "sensitivity": 0.92496765847348,
+    "specificity": 0.88296488946684,
+    "pathogenic_called_benign": 0.027166882276843468,
+    "benign_called_damaging": 0.053315994798439535,
+    "coverage": 0.9442282749675746,
+    "accuracy_when_decisive": 0.9574175824175825
+   },
+   "v2.2 model alone (no frequency rule)": {
+    "n_pathogenic": 773,
+    "n_benign": 769,
+    "sensitivity": 0.92496765847348,
+    "specificity": 0.8790637191157347,
+    "pathogenic_called_benign": 0.027166882276843468,
+    "benign_called_damaging": 0.053315994798439535,
+    "coverage": 0.9422827496757458,
+    "accuracy_when_decisive": 0.9573296627666896
+   },
+   "v2.2 model + frequency \u2265 1%": {
+    "n_pathogenic": 773,
+    "n_benign": 769,
+    "sensitivity": 0.92496765847348,
+    "specificity": 0.9076723016905072,
+    "pathogenic_called_benign": 0.027166882276843468,
+    "benign_called_damaging": 0.04031209362808843,
+    "coverage": 0.9500648508430609,
+    "accuracy_when_decisive": 0.9645051194539249
+   },
+   "v2.1 vote": {
+    "n_pathogenic": 773,
+    "n_benign": 769,
+    "sensitivity": 0.888745148771022,
+    "specificity": 0.8764629388816645,
+    "pathogenic_called_benign": 0.027166882276843468,
+    "benign_called_damaging": 0.05071521456436931,
+    "coverage": 0.9215304798962386,
+    "accuracy_when_decisive": 0.9577762139338494
+   },
+   "v2.1 vote + frequency rule (BA1, 5%)": {
+    "n_pathogenic": 773,
+    "n_benign": 769,
+    "sensitivity": 0.888745148771022,
+    "specificity": 0.8803641092327699,
+    "pathogenic_called_benign": 0.027166882276843468,
+    "benign_called_damaging": 0.05071521456436931,
+    "coverage": 0.9234760051880675,
+    "accuracy_when_decisive": 0.9578651685393258
+   },
+   "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": {
+    "n_pathogenic": 773,
+    "n_benign": 769,
+    "sensitivity": 0.8771021992238034,
+    "specificity": 0.7542262678803641,
+    "pathogenic_called_benign": 0.016817593790426907,
+    "benign_called_damaging": 0.033810143042912875,
+    "coverage": 0.8411154345006485,
+    "accuracy_when_decisive": 0.9699306090979183
+   }
   }
  },
  "predictors": {
@@ -122,6 +318,68 @@
     "benign_called_damaging": 0.386317907444668,
     "coverage": 0.981237322515213,
     "accuracy_when_decisive": 0.7834625322997416
+   }
+  },
+  "rare (gnomAD grpmax < 0.1% or absent)": {
+   "AlphaMissense": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.8267634854771784,
+    "specificity": 0.8492462311557789,
+    "pathogenic_called_benign": 0.07883817427385892,
+    "benign_called_damaging": 0.08542713567839195,
+    "coverage": 0.9105760963026656,
+    "accuracy_when_decisive": 0.9121813031161473
+   },
+   "REVEL": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.8599585062240664,
+    "specificity": 0.6984924623115578,
+    "pathogenic_called_benign": 0.012448132780082987,
+    "benign_called_damaging": 0.06030150753768844,
+    "coverage": 0.8529664660361135,
+    "accuracy_when_decisive": 0.9758064516129032
+   },
+   "EVE": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.5902489626556017,
+    "specificity": 0.35175879396984927,
+    "pathogenic_called_benign": 0.07053941908713693,
+    "benign_called_damaging": 0.05025125628140704,
+    "coverage": 0.6165090283748925,
+    "accuracy_when_decisive": 0.891213389121339
+   },
+   "CADD": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.7852697095435685,
+    "specificity": 0.6080402010050251,
+    "pathogenic_called_benign": 0.061203319502074686,
+    "benign_called_damaging": 0.18592964824120603,
+    "coverage": 0.8374892519346517,
+    "accuracy_when_decisive": 0.9014373716632443
+   },
+   "PolyPhen": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.6753112033195021,
+    "specificity": 0.5577889447236181,
+    "pathogenic_called_benign": 0.07780082987551867,
+    "benign_called_damaging": 0.09547738693467336,
+    "coverage": 0.7360275150472915,
+    "accuracy_when_decisive": 0.8901869158878505
+   },
+   "SIFT": {
+    "n_pathogenic": 964,
+    "n_benign": 199,
+    "sensitivity": 0.9543568464730291,
+    "specificity": 0.4723618090452261,
+    "pathogenic_called_benign": 0.03630705394190872,
+    "benign_called_damaging": 0.49246231155778897,
+    "coverage": 0.9862424763542562,
+    "accuracy_when_decisive": 0.8840453356582388
    }
   },
   "evaluated since 2024": {
@@ -189,9 +447,13 @@
  },
  "auc": {
   "all": {
-   "Effect score (verdict)": {
-    "auc": 0.9587021104129891,
-    "coverage": 1.0
+   "v2.2 model score": {
+    "auc": 0.9850773526152551,
+    "coverage": 0.9984787018255578
+   },
+   "v2.1 vote fraction": {
+    "auc": 0.9589655588922533,
+    "coverage": 0.9939148073022313
    },
    "AlphaMissense": {
     "auc": 0.9635296018962453,
@@ -222,10 +484,52 @@
     "coverage": 0.9310344827586207
    }
   },
-  "evaluated since 2024": {
-   "Effect score (verdict)": {
-    "auc": 0.9600092188070393,
+  "rare (gnomAD grpmax < 0.1% or absent)": {
+   "v2.2 model score": {
+    "auc": 0.973477345232386,
     "coverage": 1.0
+   },
+   "v2.1 vote fraction": {
+    "auc": 0.9365532135181631,
+    "coverage": 0.9974204643164231
+   },
+   "AlphaMissense": {
+    "auc": 0.9525556653560691,
+    "coverage": 0.9931212381771282
+   },
+   "REVEL": {
+    "auc": 0.9716112318235,
+    "coverage": 0.9656061908856406
+   },
+   "CADD": {
+    "auc": 0.885068496007006,
+    "coverage": 1.0
+   },
+   "EVE": {
+    "auc": 0.9013920817369093,
+    "coverage": 0.7592433361994841
+   },
+   "popEVE": {
+    "auc": 0.8555721846767844,
+    "coverage": 0.8684436801375752
+   },
+   "SIFT": {
+    "auc": 0.8052001527050611,
+    "coverage": 0.9862424763542562
+   },
+   "PolyPhen-2": {
+    "auc": 0.8835495874453971,
+    "coverage": 0.9097162510748066
+   }
+  },
+  "evaluated since 2024": {
+   "v2.2 model score": {
+    "auc": 0.9832077059695628,
+    "coverage": 0.9987029831387808
+   },
+   "v2.1 vote fraction": {
+    "auc": 0.960203623169977,
+    "coverage": 0.9961089494163424
    },
    "AlphaMissense": {
     "auc": 0.9617434692571775,
@@ -257,535 +561,37 @@
    }
   }
  },
- "schemes_cv": {
-  "v2.0 (SIFT/PolyPhen always vote), cut-offs 0.70/0.30": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9013539651837524,
-    "specificity": 0.817047817047817,
-    "pathogenic_called_benign": 0.019342359767891684,
-    "benign_called_damaging": 0.058212058212058215,
-    "coverage": 0.8987975951903807,
-    "accuracy_when_decisive": 0.9576365663322185
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9154013015184381,
-    "specificity": 0.8187134502923976,
-    "pathogenic_called_benign": 0.019522776572668113,
-    "benign_called_damaging": 0.06432748538011696,
-    "coverage": 0.9075975359342916,
-    "accuracy_when_decisive": 0.9524886877828054
-   }
-  ],
-  "v2.0 (SIFT/PolyPhen always vote), cut-offs 0.70/0.30, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8955512572533849,
-    "specificity": 0.8128898128898129,
-    "pathogenic_called_benign": 0.017408123791102514,
-    "benign_called_damaging": 0.04781704781704782,
-    "coverage": 0.8877755511022044,
-    "accuracy_when_decisive": 0.963882618510158
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9154013015184381,
-    "specificity": 0.8148148148148148,
-    "pathogenic_called_benign": 0.019522776572668113,
-    "benign_called_damaging": 0.05458089668615984,
-    "coverage": 0.9004106776180698,
-    "accuracy_when_decisive": 0.9578107183580388
-   }
-  ],
-  "v2.0 (SIFT/PolyPhen always vote), cut-offs 0.60/0.40": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9245647969052224,
-    "specificity": 0.8648648648648649,
-    "pathogenic_called_benign": 0.030947775628626693,
-    "benign_called_damaging": 0.09563409563409564,
-    "coverage": 0.9579158316633266,
-    "accuracy_when_decisive": 0.9351464435146444
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9522776572668112,
-    "specificity": 0.8713450292397661,
-    "pathogenic_called_benign": 0.028199566160520606,
-    "benign_called_damaging": 0.08771929824561403,
-    "coverage": 0.9691991786447639,
-    "accuracy_when_decisive": 0.9385593220338984
-   }
-  ],
-  "v2.0 (SIFT/PolyPhen always vote), cut-offs 0.60/0.40, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9168278529980658,
-    "specificity": 0.8586278586278586,
-    "pathogenic_called_benign": 0.029013539651837523,
-    "benign_called_damaging": 0.08523908523908524,
-    "coverage": 0.9448897795591182,
-    "accuracy_when_decisive": 0.9406150583244963
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9522776572668112,
-    "specificity": 0.8674463937621832,
-    "pathogenic_called_benign": 0.028199566160520606,
-    "benign_called_damaging": 0.07797270955165692,
-    "coverage": 0.9620123203285421,
-    "accuracy_when_decisive": 0.9434364994663821
-   }
-  ],
-  "v2.0 (SIFT/PolyPhen always vote), cut-offs 0.80/0.20": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.839458413926499,
-    "specificity": 0.7817047817047817,
-    "pathogenic_called_benign": 0.013539651837524178,
-    "benign_called_damaging": 0.0498960498960499,
-    "coverage": 0.842685370741483,
-    "accuracy_when_decisive": 0.9631391200951248
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8481561822125814,
-    "specificity": 0.7758284600389863,
-    "pathogenic_called_benign": 0.01735357917570499,
-    "benign_called_damaging": 0.056530214424951264,
-    "coverage": 0.8480492813141683,
-    "accuracy_when_decisive": 0.9552058111380145
-   }
-  ],
-  "v2.0 (SIFT/PolyPhen always vote), cut-offs 0.80/0.20, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8336557059961315,
-    "specificity": 0.7775467775467776,
-    "pathogenic_called_benign": 0.01160541586073501,
-    "benign_called_damaging": 0.0395010395010395,
-    "coverage": 0.8316633266533067,
-    "accuracy_when_decisive": 0.9698795180722891
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8481561822125814,
-    "specificity": 0.7719298245614035,
-    "pathogenic_called_benign": 0.01735357917570499,
-    "benign_called_damaging": 0.04678362573099415,
-    "coverage": 0.8408624229979466,
-    "accuracy_when_decisive": 0.960927960927961
-   }
-  ],
-  "equal weights, cut-offs 0.70/0.30": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9052224371373307,
-    "specificity": 0.7713097713097713,
-    "pathogenic_called_benign": 0.017408123791102514,
-    "benign_called_damaging": 0.08731808731808732,
-    "coverage": 0.8917835671342685,
-    "accuracy_when_decisive": 0.9426966292134832
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9262472885032538,
-    "specificity": 0.7543859649122807,
-    "pathogenic_called_benign": 0.01735357917570499,
-    "benign_called_damaging": 0.07797270955165692,
-    "coverage": 0.8850102669404517,
-    "accuracy_when_decisive": 0.9443155452436195
-   }
-  ],
-  "equal weights, cut-offs 0.70/0.30, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9032882011605415,
-    "specificity": 0.7671517671517671,
-    "pathogenic_called_benign": 0.017408123791102514,
-    "benign_called_damaging": 0.08523908523908524,
-    "coverage": 0.8877755511022044,
-    "accuracy_when_decisive": 0.9435665914221218
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9262472885032538,
-    "specificity": 0.7543859649122807,
-    "pathogenic_called_benign": 0.01735357917570499,
-    "benign_called_damaging": 0.07407407407407407,
-    "coverage": 0.8829568788501027,
-    "accuracy_when_decisive": 0.9465116279069767
-   }
-  ],
-  "equal weights, cut-offs 0.60/0.40": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9361702127659575,
-    "specificity": 0.8357588357588358,
-    "pathogenic_called_benign": 0.04061895551257253,
-    "benign_called_damaging": 0.12474012474012475,
-    "coverage": 0.968937875751503,
-    "accuracy_when_decisive": 0.9162357807652534
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9631236442516269,
-    "specificity": 0.8304093567251462,
-    "pathogenic_called_benign": 0.026030368763557483,
-    "benign_called_damaging": 0.1189083820662768,
-    "coverage": 0.9681724845995893,
-    "accuracy_when_decisive": 0.9225874867444327
-   }
-  ],
-  "equal weights, cut-offs 0.60/0.40, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9342359767891683,
-    "specificity": 0.8316008316008316,
-    "pathogenic_called_benign": 0.04061895551257253,
-    "benign_called_damaging": 0.12266112266112267,
-    "coverage": 0.9649298597194389,
-    "accuracy_when_decisive": 0.9169262720664589
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9631236442516269,
-    "specificity": 0.8304093567251462,
-    "pathogenic_called_benign": 0.026030368763557483,
-    "benign_called_damaging": 0.11500974658869395,
-    "coverage": 0.9661190965092402,
-    "accuracy_when_decisive": 0.924548352816153
-   }
-  ],
-  "equal weights, cut-offs 0.80/0.20": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8820116054158608,
-    "specificity": 0.6756756756756757,
-    "pathogenic_called_benign": 0.013539651837524178,
-    "benign_called_damaging": 0.05405405405405406,
-    "coverage": 0.8156312625250501,
-    "accuracy_when_decisive": 0.9594594594594594
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8828633405639913,
-    "specificity": 0.6666666666666666,
-    "pathogenic_called_benign": 0.013015184381778741,
-    "benign_called_damaging": 0.06042884990253411,
-    "coverage": 0.8069815195071869,
-    "accuracy_when_decisive": 0.9529262086513995
-   }
-  ],
-  "equal weights, cut-offs 0.80/0.20, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8800773694390716,
-    "specificity": 0.6715176715176715,
-    "pathogenic_called_benign": 0.013539651837524178,
-    "benign_called_damaging": 0.05197505197505198,
-    "coverage": 0.811623246492986,
-    "accuracy_when_decisive": 0.9604938271604938
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8828633405639913,
-    "specificity": 0.6666666666666666,
-    "pathogenic_called_benign": 0.013015184381778741,
-    "benign_called_damaging": 0.056530214424951264,
-    "coverage": 0.8049281314168378,
-    "accuracy_when_decisive": 0.9553571428571429
-   }
-  ],
-  "without SIFT/PolyPhen, cut-offs 0.70/0.30": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8839458413926499,
-    "specificity": 0.8669438669438669,
-    "pathogenic_called_benign": 0.027079303675048357,
-    "benign_called_damaging": 0.0498960498960499,
-    "coverage": 0.9138276553106213,
-    "accuracy_when_decisive": 0.9583333333333334
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8980477223427332,
-    "specificity": 0.8791423001949318,
-    "pathogenic_called_benign": 0.026030368763557483,
-    "benign_called_damaging": 0.05458089668615984,
-    "coverage": 0.9291581108829569,
-    "accuracy_when_decisive": 0.9558011049723757
-   }
-  ],
-  "without SIFT/PolyPhen, cut-offs 0.70/0.30, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8626692456479691,
-    "specificity": 0.8274428274428275,
-    "pathogenic_called_benign": 0.02127659574468085,
-    "benign_called_damaging": 0.035343035343035345,
-    "coverage": 0.87374749498998,
-    "accuracy_when_decisive": 0.9678899082568807
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8720173535791758,
-    "specificity": 0.8382066276803118,
-    "pathogenic_called_benign": 0.026030368763557483,
-    "benign_called_damaging": 0.03508771929824561,
-    "coverage": 0.8850102669404517,
-    "accuracy_when_decisive": 0.9651972157772621
-   }
-  ],
-  "without SIFT/PolyPhen, cut-offs 0.60/0.40": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9187620889748549,
-    "specificity": 0.8835758835758836,
-    "pathogenic_called_benign": 0.0367504835589942,
-    "benign_called_damaging": 0.06652806652806653,
-    "coverage": 0.9529058116232465,
-    "accuracy_when_decisive": 0.9463722397476341
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.93058568329718,
-    "specificity": 0.8869395711500975,
-    "pathogenic_called_benign": 0.028199566160520606,
-    "benign_called_damaging": 0.05847953216374269,
-    "coverage": 0.9517453798767967,
-    "accuracy_when_decisive": 0.95361380798274
-   }
-  ],
-  "without SIFT/PolyPhen, cut-offs 0.60/0.40, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8974854932301741,
-    "specificity": 0.8440748440748441,
-    "pathogenic_called_benign": 0.030947775628626693,
-    "benign_called_damaging": 0.05197505197505198,
-    "coverage": 0.9128256513026052,
-    "accuracy_when_decisive": 0.9549945115257958
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9045553145336226,
-    "specificity": 0.8460038986354775,
-    "pathogenic_called_benign": 0.028199566160520606,
-    "benign_called_damaging": 0.03898635477582846,
-    "coverage": 0.9075975359342916,
-    "accuracy_when_decisive": 0.9626696832579186
-   }
-  ],
-  "without SIFT/PolyPhen, cut-offs 0.80/0.20": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8355899419729207,
-    "specificity": 0.8357588357588358,
-    "pathogenic_called_benign": 0.017408123791102514,
-    "benign_called_damaging": 0.04573804573804574,
-    "coverage": 0.8667334669338678,
-    "accuracy_when_decisive": 0.9641618497109826
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8481561822125814,
-    "specificity": 0.8499025341130604,
-    "pathogenic_called_benign": 0.019522776572668113,
-    "benign_called_damaging": 0.05263157894736842,
-    "coverage": 0.8860369609856262,
-    "accuracy_when_decisive": 0.9582850521436849
-   }
-  ],
-  "without SIFT/PolyPhen, cut-offs 0.80/0.20, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8143133462282398,
-    "specificity": 0.7962577962577962,
-    "pathogenic_called_benign": 0.01160541586073501,
-    "benign_called_damaging": 0.031185031185031187,
-    "coverage": 0.8266533066132264,
-    "accuracy_when_decisive": 0.9745454545454545
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8221258134490239,
-    "specificity": 0.8089668615984406,
-    "pathogenic_called_benign": 0.019522776572668113,
-    "benign_called_damaging": 0.03313840155945419,
-    "coverage": 0.8418891170431212,
-    "accuracy_when_decisive": 0.9682926829268292
-   }
-  ],
-  "SIFT/PolyPhen only as fallback (v2.1 default), cut-offs 0.70/0.30": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8839458413926499,
-    "specificity": 0.8669438669438669,
-    "pathogenic_called_benign": 0.027079303675048357,
-    "benign_called_damaging": 0.0498960498960499,
-    "coverage": 0.9138276553106213,
-    "accuracy_when_decisive": 0.9583333333333334
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8980477223427332,
-    "specificity": 0.8791423001949318,
-    "pathogenic_called_benign": 0.026030368763557483,
-    "benign_called_damaging": 0.05458089668615984,
-    "coverage": 0.9291581108829569,
-    "accuracy_when_decisive": 0.9558011049723757
-   }
-  ],
-  "SIFT/PolyPhen only as fallback (v2.1 default), cut-offs 0.70/0.30, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8626692456479691,
-    "specificity": 0.8274428274428275,
-    "pathogenic_called_benign": 0.02127659574468085,
-    "benign_called_damaging": 0.035343035343035345,
-    "coverage": 0.87374749498998,
-    "accuracy_when_decisive": 0.9678899082568807
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8720173535791758,
-    "specificity": 0.8382066276803118,
-    "pathogenic_called_benign": 0.026030368763557483,
-    "benign_called_damaging": 0.03508771929824561,
-    "coverage": 0.8850102669404517,
-    "accuracy_when_decisive": 0.9651972157772621
-   }
-  ],
-  "SIFT/PolyPhen only as fallback (v2.1 default), cut-offs 0.60/0.40": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.9187620889748549,
-    "specificity": 0.8835758835758836,
-    "pathogenic_called_benign": 0.0367504835589942,
-    "benign_called_damaging": 0.06652806652806653,
-    "coverage": 0.9529058116232465,
-    "accuracy_when_decisive": 0.9463722397476341
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.93058568329718,
-    "specificity": 0.8869395711500975,
-    "pathogenic_called_benign": 0.028199566160520606,
-    "benign_called_damaging": 0.05847953216374269,
-    "coverage": 0.9517453798767967,
-    "accuracy_when_decisive": 0.95361380798274
-   }
-  ],
-  "SIFT/PolyPhen only as fallback (v2.1 default), cut-offs 0.60/0.40, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8974854932301741,
-    "specificity": 0.8440748440748441,
-    "pathogenic_called_benign": 0.030947775628626693,
-    "benign_called_damaging": 0.05197505197505198,
-    "coverage": 0.9128256513026052,
-    "accuracy_when_decisive": 0.9549945115257958
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.9045553145336226,
-    "specificity": 0.8460038986354775,
-    "pathogenic_called_benign": 0.028199566160520606,
-    "benign_called_damaging": 0.03898635477582846,
-    "coverage": 0.9075975359342916,
-    "accuracy_when_decisive": 0.9626696832579186
-   }
-  ],
-  "SIFT/PolyPhen only as fallback (v2.1 default), cut-offs 0.80/0.20": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8355899419729207,
-    "specificity": 0.8357588357588358,
-    "pathogenic_called_benign": 0.017408123791102514,
-    "benign_called_damaging": 0.04573804573804574,
-    "coverage": 0.8667334669338678,
-    "accuracy_when_decisive": 0.9641618497109826
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8481561822125814,
-    "specificity": 0.8499025341130604,
-    "pathogenic_called_benign": 0.019522776572668113,
-    "benign_called_damaging": 0.05263157894736842,
-    "coverage": 0.8860369609856262,
-    "accuracy_when_decisive": 0.9582850521436849
-   }
-  ],
-  "SIFT/PolyPhen only as fallback (v2.1 default), cut-offs 0.80/0.20, min. weight 1.5": [
-   {
-    "n_pathogenic": 517,
-    "n_benign": 481,
-    "sensitivity": 0.8143133462282398,
-    "specificity": 0.7962577962577962,
-    "pathogenic_called_benign": 0.01160541586073501,
-    "benign_called_damaging": 0.031185031185031187,
-    "coverage": 0.8266533066132264,
-    "accuracy_when_decisive": 0.9745454545454545
-   },
-   {
-    "n_pathogenic": 461,
-    "n_benign": 513,
-    "sensitivity": 0.8221258134490239,
-    "specificity": 0.8089668615984406,
-    "pathogenic_called_benign": 0.019522776572668113,
-    "benign_called_damaging": 0.03313840155945419,
-    "coverage": 0.8418891170431212,
-    "accuracy_when_decisive": 0.9682926829268292
-   }
-  ]
+ "model_cut_offs": {
+  "0.6/0.4": {
+   "n_pathogenic": 978,
+   "n_benign": 994,
+   "sensitivity": 0.9468302658486708,
+   "specificity": 0.9084507042253521,
+   "pathogenic_called_benign": 0.034764826175869123,
+   "benign_called_damaging": 0.06740442655935613,
+   "coverage": 0.9787018255578094,
+   "accuracy_when_decisive": 0.9476683937823834
+  },
+  "0.7/0.3 (default)": {
+   "n_pathogenic": 978,
+   "n_benign": 994,
+   "sensitivity": 0.9314928425357873,
+   "specificity": 0.8802816901408451,
+   "pathogenic_called_benign": 0.023517382413087935,
+   "benign_called_damaging": 0.05130784708249497,
+   "coverage": 0.9432048681541582,
+   "accuracy_when_decisive": 0.9602150537634409
+  },
+  "0.8/0.2": {
+   "n_pathogenic": 978,
+   "n_benign": 994,
+   "sensitivity": 0.8997955010224948,
+   "specificity": 0.8279678068410463,
+   "pathogenic_called_benign": 0.012269938650306749,
+   "benign_called_damaging": 0.028169014084507043,
+   "coverage": 0.8838742393509128,
+   "accuracy_when_decisive": 0.9770510613884108
+  }
  },
- "seconds": 76.0
+ "seconds": 33.9
 }

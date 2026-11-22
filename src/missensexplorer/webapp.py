@@ -293,6 +293,7 @@ if res is not None:
             "Consequence": view["consequence"].fillna("").str.replace("_variant", "").str.replace("_", " "),
             "Prediction": view["status"].map(lambda k: STATUS[k][2]) + " " + view["prediction"].fillna(""),
             "Effect": view["effect_score"],
+            "ACMG PP3/BP4": view["acmg_pp3_bp4"].fillna("").str.split(" (", regex=False).str[0],
             "AlphaMissense": view["alphamissense"],
             "REVEL": view["revel"],
             "CADD": view["cadd_phred"],
@@ -342,6 +343,12 @@ if res is not None:
             with left:
                 if _val(r["prediction_basis"]):
                     st.markdown(f"**Why:** {r['prediction_basis']}")
+                acmg_bits = [f"**{k}:** {_val(r[c])}" for k, c in (("ACMG PP3/BP4", "acmg_pp3_bp4"),
+                                                                 ("Population frequency", "population_frequency"))
+                             if _val(r[c])]
+                if acmg_bits:
+                    st.markdown(" · ".join(acmg_bits) + "  \n:gray[ClinGen-calibrated thresholds; one part of an "
+                                "ACMG classification, not a replacement for expert review.]")
                 preds = []
                 for name, val, extra, rng in [
                     ("AlphaMissense", r["alphamissense"], r["alphamissense_class"], "0–1 · >0.56 likely pathogenic"),

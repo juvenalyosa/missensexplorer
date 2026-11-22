@@ -47,6 +47,9 @@ def _predict_parser() -> argparse.ArgumentParser:
                    help="extra local VEP arguments, e.g. plugin data files (default: $MISSENSEXPLORER_VEP_ARGS)")
     p.add_argument("--offline", action="store_true",
                    help="never use the internet (needs --vep local; skips ClinVar, UniProt and AlphaFold)")
+    p.add_argument("--common-af", type=float, default=0.05, metavar="AF",
+                   help="gnomAD grpmax frequency at which damaging/uncertain calls become benign "
+                        "(default 0.05 = ACMG BA1; 0 turns the rule off)")
     p.add_argument("-o", "--output", action="append", default=[], metavar="FILE",
                    help="write results (.csv, .tsv, .xlsx, .json); repeatable")
     p.add_argument("--fasta", metavar="FILE", help="write wild-type and mutant protein sequences")
@@ -87,6 +90,7 @@ def run_predict(argv: list[str]) -> int:
         predictors=not args.no_predictors, protein_context=not args.no_protein_context,
         workers=args.workers, cache=not args.no_cache,
         vep=args.vep, vep_command=args.vep_cmd, vep_args=args.vep_args, offline=args.offline,
+        common_af=args.common_af or None,
     )
     if args.offline and args.vep != "local":
         err.print("[red]--offline needs --vep local[/]")

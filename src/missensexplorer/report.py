@@ -67,6 +67,8 @@ def run_info(res: PredictionResult) -> pd.DataFrame:
         rows.append((f"input file: {f['name']}", f"{f['bytes']} bytes, sha256 {f['sha256']}"))
     for k, v in (run.get("sources") or {}).items():
         rows.append((f"source: {k}", v))
+    for k, v in (run.get("missense_model") or {}).items():
+        rows.append((f"missense model: {k}", v))
     for w in res.warnings:
         rows.append(("warning", w))
     return pd.DataFrame([(k, "" if v is None else str(v)) for k, v in rows], columns=["item", "value"])
@@ -160,7 +162,8 @@ def print_result(res: PredictionResult, console=None, details: bool | None = Non
     if details:
         for _, r in df.iterrows():
             body = []
-            for label, key in [("Prediction", "prediction_basis"), ("Protein", "protein_name"),
+            for label, key in [("Prediction", "prediction_basis"), ("ACMG PP3/BP4", "acmg_pp3_bp4"),
+                               ("Population frequency", "population_frequency"), ("Protein", "protein_name"),
                                ("Sequence", "protein_window"), ("Mutant protein", "mutant_protein"),
                                ("Physico-chemistry", "physchem_notes"), ("Grantham", "grantham_class"),
                                ("Region", "protein_features"), ("Functional site", "key_site"),

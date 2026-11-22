@@ -10,7 +10,9 @@ from urllib.parse import unquote
 
 import pandas as pd
 
+from . import acmg
 from . import clinvar as cv
+from . import model
 from . import protein as prot
 from .aa import AA3_TO_1, substitution_profile
 from .api import ENSEMBL, ApiError, Http, OfflineError, SourceStatus, ensembl_release
@@ -41,7 +43,7 @@ CADD_DAMAGING, CADD_BENIGN = 25.3, 22.7
 COLUMNS = [
     "input", "source", "sample", "zygosity", "genotype", "carriers",
     "gene", "protein_change", "hgvsp", "hgvsc", "consequence", "impact",
-    "prediction", "effect_score", "prediction_basis",
+    "prediction", "effect_score", "prediction_basis", "acmg_pp3_bp4", "acmg_points", "population_frequency",
     "alphamissense", "alphamissense_class", "revel", "cadd_phred", "eve", "eve_class", "popeve",
     "sift", "sift_score", "polyphen", "polyphen_score", "spliceai_max", "spliceai_effect",
     "grantham", "grantham_class", "blosum62", "hydropathy_change", "volume_change", "charge_change",
@@ -72,6 +74,7 @@ class PredictOptions:
     vep_command: str | None = None          # local VEP command (default: $MISSENSEXPLORER_VEP or 'vep --cache --offline')
     vep_args: str | None = None             # extra local VEP arguments, e.g. plugin data files
     offline: bool = False                   # never use the internet (local VEP only; no ClinVar/UniProt/AlphaFold)
+    common_af: float | None = 0.05          # gnomAD grpmax at/above which damaging/uncertain calls become benign (None = off)
     workers: int = 4
     cache: bool = True
     cache_path: str | None = None
@@ -175,7 +178,9 @@ def colocated_info(colocated: list[dict], alt_plus: str | None, alt_raw: str | N
             overall = [fr[k] for k in ("gnomade", "gnomadg", "af") if fr.get(k) is not None]
             if overall:
                 af = max(overall + ([af] if af is not None else []))
-            pops = [v for k, v in fr.items() if k.startswith(("gnomade_", "gnomadg_")) and v is not None]
+            # grpmax: main genetic ancestry groups only (bottlenecked groups excluded, as gnomAD does)
+            pops = [v for k, v in fr.items() if k.startswith(("gnomade_", "gnomadg_")) and v is not None
+                    and k.split("_", 1)[1] in acmg.GRPMAX_GROUPS]
             if pops:
                 popmax = max(pops + ([popmax] if popmax is not None else []))
     out["rsid"] = ", ".join(dict.fromkeys(rs)) or None
@@ -265,8 +270,23 @@ def classify(row: dict, terms: set[str]) -> tuple[str, float | None, str]:
         basis = "; ".join(detail)
         if sp is not None and sp >= 0.2:
             basis += f"; SpliceAI {sp:.2f} (may also affect splicing)"
-        # SIFT and PolyPhen-2 only vote when no modern predictor has a score: on expert-reviewed
-        # ClinVar variants they added wrong calls (benchmarks/results/clinvar_benchmark.md).
+        # Main path: logistic regression over the scores (model.py), trained on ClinVar; it beat
+        # the vote on held-out genes (benchmarks/results/clinvar_benchmark.md).
+        ms = model.score(row)
+        if ms is not None:
+            dm, bm = [x for x in dmg if x in MODERN], [x for x in ben if x in MODERN]
+            if ms.p >= model.DAMAGING:
+                label = "Likely damaging"
+            elif ms.p <= model.BENIGN:
+                label = "Likely benign"
+            elif dm and bm:
+                label = "Uncertain (conflicting predictors)"
+            else:
+                label = "Uncertain (intermediate scores)"
+            summary = f"{model.describe(ms)}; {len(dm)} damaging / {len(bm)} benign predictors"
+            return label, round(ms.p, 2), f"{summary} | {basis}"
+        # Fallback without AlphaMissense and REVEL: weighted vote. SIFT and PolyPhen-2 only vote when
+        # no modern predictor has a score: on expert-reviewed ClinVar variants they added wrong calls.
         modern = _modern_present(row)
         limited = not modern and bool(dmg or ben)
         if modern:
@@ -325,6 +345,18 @@ def prediction_status(label) -> str:
     if label.startswith(("Uncertain", "Possible", "Protein-altering", "Splice region")):
         return "Uncertain"
     return "Not assessed"
+
+
+def apply_frequency(label: str, basis: str, grpmax, common_af: float | None) -> tuple[str, str]:
+    """BA1-style rule: a damaging or uncertain call becomes benign when the variant is common in gnomAD.
+
+    Kept separate from the score so it stays visible: the basis still shows the protein-level call."""
+    af = _num(grpmax)
+    if not common_af or af is None or af < common_af or prediction_status(label) not in ("Damaging", "Uncertain"):
+        return label, basis
+    note = (f"common in gnomAD: grpmax {af * 100:.2g}% >= {common_af * 100:g}% (protein-level call: {label}); "
+            "frequent variants can still cause recessive or founder disease")
+    return "Likely benign (common in population)", f"{note} | {basis}"
 
 
 def _nmd(exon: str | None, terms: set[str]) -> str | None:
@@ -831,6 +863,11 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
                     notes.append("UniProt canonical numbering differs from this transcript; UniProt/AlphaFold features skipped")
             label, score, basis = classify(r, terms)
             r.pop("_truncation", None)
+            if "missense_variant" in terms:
+                r["acmg_pp3_bp4"], r["acmg_points"] = acmg.computational(r)
+            r["population_frequency"] = acmg.frequency(r)
+            if not acmg.ba1_exception(r):     # common but pathogenic/uncertain (ClinGen list): no frequency rule
+                label, basis = apply_frequency(label, basis, r.get("gnomad_popmax_af"), opt.common_af)
             r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis
             r["spliceai_effect"] = ("likely splice-altering" if (r.get("spliceai_max") or 0) >= 0.5 else
                                     "possible" if (r.get("spliceai_max") or 0) >= 0.2 else None)
@@ -867,6 +904,9 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             "inputs": {"text_lines": len([x for x in (text or "").splitlines() if x.strip()]),
                        "files": [_file_info(n, d) for n, d in files]},
             "sources": status.summary(),
+            "missense_model": {"version": model.MODEL["version"], "trained": model.MODEL["trained"],
+                               "training_variants": model.MODEL["training"]["n"],
+                               "cut_offs": [model.BENIGN, model.DAMAGING]},
             "python": platform.python_version(),
         }
         say("Done", 1, 1)

@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 import httpx
 import pandas as pd
-from PySide6.QtCore import (QItemSelectionModel, QModelIndex, QObject, QPointF, QRunnable, QSettings, Qt,
+from PySide6.QtCore import (QItemSelectionModel, QModelIndex, QObject, QPointF, QRunnable, Qt,
                             QThread, QThreadPool, QTimer, QUrl, Signal)
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence, QPainter
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileDialog, QFrame, QGridLayout, QHBoxLayout,
@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileDialo
                                QProgressBar, QPushButton, QScrollArea, QSpinBox, QSplitter,
                                QStackedWidget, QTableView, QTabWidget, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
 
-from .. import __version__
+from .. import __version__, model
 from ..cache import Cache, default_cache_dir
 from ..inputs import vcf_samples
 from ..predict import PredictionResult, PredictOptions, predict, prediction_status
@@ -26,8 +26,9 @@ from ..report import to_fasta, write
 from . import i18n
 from . import theme as th
 from .i18n import aa_class, aa_name, t, tr_prediction, tr_stage, tr_text
+from .settings import app_settings
 from .models import COLUMNS, BarDelegate, FilterProxy, ResultsModel, StatusDelegate, isnum, paint_status_mark, val
-from .widgets import (PREDICTORS, Card, DropZone, FileChip, FlowLayout, Kpi, LollipopChart, PredictorRow, Toggle,
+from .widgets import (PREDICTORS, Card, ContributionChart, DropZone, FileChip, FlowLayout, Kpi, LollipopChart, PredictorRow, Toggle,
                       ensure_3dmol, label, load_page, make_web_view, sequence_html, structure_page)
 
 log = logging.getLogger(__name__)
@@ -195,7 +196,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.settings = QSettings("MissensExplorer", "MissensExplorer")
+        self.settings = app_settings()
         self.res: PredictionResult | None = None
         self.df = pd.DataFrame()
         self.files: list[str] = []
@@ -362,6 +363,16 @@ class MainWindow(QMainWindow):
             op.addWidget(w)
             w.toggled.connect(self._options_summary)
         self.build.currentIndexChanged.connect(self._options_summary)
+        frow = QHBoxLayout()
+        frow.addWidget(label(t("freq_rule")))
+        self.freq_rule = QComboBox()
+        self.freq_rule.addItem(t("freq_ba1"), 0.05)
+        self.freq_rule.addItem(t("freq_bs1"), 0.01)
+        self.freq_rule.addItem(t("freq_off"), 0.0)
+        self.freq_rule.setToolTip(t("freq_tip"))
+        self.freq_rule.setMinimumWidth(10)
+        frow.addWidget(self.freq_rule, 1)
+        op.addLayout(frow)
         wrow = QHBoxLayout()
         wrow.addWidget(label(t("workers")))
         wrow.addStretch(1)
@@ -719,6 +730,7 @@ class MainWindow(QMainWindow):
                                 ("clinvar", self.opt_cv, True), ("noncoding", self.opt_nc, False)):
             w.setChecked(str(s.value(key, default)).lower() == "true")
         self.workers.setValue(int(s.value("workers", 4)))
+        self.freq_rule.setCurrentIndex(max(0, self.freq_rule.findData(float(s.value("common_af", 0.05) or 0))))
         self.opt_btn.setChecked(str(s.value("options_open", False)).lower() == "true")
         self.engine.setCurrentIndex(max(0, self.engine.findData(s.value("engine", "rest"))))
         self.vep_cmd.setText(s.value("vep_cmd", "") or "")
@@ -736,6 +748,7 @@ class MainWindow(QMainWindow):
         s.setValue("clinvar", self.opt_cv.isChecked())
         s.setValue("noncoding", self.opt_nc.isChecked())
         s.setValue("workers", self.workers.value())
+        s.setValue("common_af", self.freq_rule.currentData())
         s.setValue("options_open", self.opt_btn.isChecked())
         s.setValue("engine", self.engine.currentData())
         s.setValue("vep_cmd", self.vep_cmd.text())
@@ -826,6 +839,7 @@ class MainWindow(QMainWindow):
             vep=self.engine.currentData(), vep_command=self.vep_cmd.text().strip() or None,
             vep_args=self.vep_args.text().strip() or None,
             offline=self.offline.isChecked() and self.engine.currentData() == "local",
+            common_af=self.freq_rule.currentData() or None,
         )
 
     def run_prediction(self):
@@ -1067,6 +1081,20 @@ class MainWindow(QMainWindow):
             summary = basis.split(" | ")[0]
             self.dl.addWidget(section(t("why")))
             self.dl.addWidget(label(tr_text(summary), "Body", wrap=True, selectable=True))
+        ms = model.score(r) if "missense" in str(g("consequence", "")) else None
+        if ms is not None and ms.contributions:
+            self.dl.addWidget(ContributionChart(ms.contributions, t("contrib_damaging"), t("contrib_benign")))
+            self.dl.addWidget(label(t("model_note"), "Muted", wrap=True))
+        ev = [(t("acmg_pp3"), g("acmg_pp3_bp4"), g("acmg_points")), (t("acmg_freq"), g("population_frequency"), None)]
+        ev = [(k, v, pts) for k, v, pts in ev if v]
+        if ev:
+            self.dl.addWidget(section(t("acmg")))
+            for k, v, pts in ev:
+                extra = f" · {t('points', n=f'{int(pts):+d}')}" if isnum(pts) and pts else ""
+                lw = label(f"<b>{k}:</b> {html.escape(tr_text(v))}{extra}", "Body", wrap=True, selectable=True)
+                lw.setTextFormat(Qt.TextFormat.RichText)
+                self.dl.addWidget(lw)
+            self.dl.addWidget(label(t("acmg_note"), "Muted", wrap=True))
 
         rows = []
         for name, col, call_col, rng, thr, hb in PREDICTORS:

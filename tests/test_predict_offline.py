@@ -21,7 +21,7 @@ def test_rows_from_vep_region_fixture():
     assert r["rsid"] == "rs113488022" and r["gnomad_af"] > 0
     assert r["grantham"] == 121 and r["_spdi"] == ("7", 140753335, "A", "T")
     label, score, basis = classify(r, r["_terms"])
-    assert label == "Likely damaging" and score == 1.0 and "AlphaMissense" in basis
+    assert label == "Likely damaging" and score >= 0.8 and basis.startswith("model score") and "AlphaMissense" in basis
 
 
 def test_gene_filter_drops_other_genes():
@@ -109,4 +109,5 @@ def test_sift_polyphen_only_as_fallback():
     assert classify(weak, {"missense_variant"})[0] == "Likely damaging (limited evidence: SIFT/PolyPhen only)"
     # modern scores in their intermediate range: uncertain, not "no scores"
     grey = {"revel": 0.5, "cadd_phred": 24.0, "sift": "deleterious"}
-    assert classify(grey, {"missense_variant"})[:2] == ("Uncertain (intermediate scores)", 0.5)
+    label, score, _ = classify(grey, {"missense_variant"})
+    assert label == "Uncertain (intermediate scores)" and 0.3 < score < 0.7

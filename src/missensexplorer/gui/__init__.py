@@ -23,7 +23,7 @@ def prepare_web_engine() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     try:
-        from PySide6.QtCore import QLocale, QSettings, Qt
+        from PySide6.QtCore import QLocale, Qt
         from PySide6.QtWidgets import QApplication
     except ImportError:
         print("The desktop app needs Qt for Python:  pip install 'missensexplorer[gui]'", file=sys.stderr)
@@ -55,7 +55,9 @@ def main(argv: list[str] | None = None) -> int:
 
     holder: dict = {}
     logs.setup(unexpected)
-    settings = QSettings("MissensExplorer", "MissensExplorer")
+    from .settings import app_settings
+
+    settings = app_settings()
     i18n.set_language(str(settings.value("language", QLocale.system().name())))
 
     from .window import MainWindow

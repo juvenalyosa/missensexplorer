@@ -7,10 +7,12 @@
 2. Samples germline missense SNVs on GRCh38 with >= 2 review stars (multiple submitters
    without conflicts, expert panel or practice guideline), labelled Pathogenic/Likely
    pathogenic or Benign/Likely benign; at most 8 per gene so a few genes do not dominate.
-3. Runs the pipeline on the genomic coordinates WITHOUT ClinVar (it never votes anyway).
-4. Reports, for the verdict and for each predictor: sensitivity (pathogenic called
-   damaging), specificity (benign called benign), how many stay uncertain, and the AUC.
-5. Compares alternative weights/cut-offs with 2-fold cross-validation.
+3. Runs the pipeline on the genomic coordinates WITHOUT ClinVar (it is never an input of the verdict).
+4. Reports, for the v2.2 verdict (model + frequency rule), the model alone, the v2.1 vote, the
+   ClinGen PP3/BP4 call and each predictor: sensitivity (pathogenic called damaging), specificity
+   (benign called benign), how many stay uncertain, and the AUC; for all variants, rare variants
+   and variants evaluated since 2024.
+5. The missense model is trained by train_model.py on other genes only, so this is a held-out test.
 
 Caveat: some predictors used ClinVar-like data in training or calibration (REVEL, and
 AlphaMissense for its thresholds), so the figures are optimistic; the "evaluated since
@@ -35,7 +37,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from missensexplorer import PredictOptions, predict  # noqa: E402
 from missensexplorer.cache import default_cache_dir  # noqa: E402
-from missensexplorer.predict import WEIGHTS, _modern_present, _votes, prediction_status  # noqa: E402
+from missensexplorer import acmg, model  # noqa: E402
+from missensexplorer.model_params import MODEL  # noqa: E402
+from missensexplorer.predict import WEIGHTS, _modern_present, _num, _votes, classify, prediction_status  # noqa: E402
 
 URL = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz"
 GOOD_REVIEW = {"criteria provided, multiple submitters, no conflicts", "reviewed by expert panel", "practice guideline"}
@@ -161,6 +165,17 @@ def scheme_call(row: dict, weights: dict, hi: float, lo: float, min_weight: floa
     return "damaging" if frac >= hi else "benign" if frac <= lo else None
 
 
+V21 = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen": 0, "SIFT": 0}
+
+
+def vote_fraction(row: dict) -> float | None:
+    """Weighted share of damaging votes, as the v2.1 verdict computed it (its effect score)."""
+    dmg, ben, _ = _votes(row)
+    w = V21 if _modern_present(row) else {**V21, "SIFT": 0.5, "PolyPhen": 0.5}
+    wd, wb = sum(w[x] for x in dmg), sum(w[x] for x in ben)
+    return None if wd + wb == 0 else wd / (wd + wb)
+
+
 def predictor_calls(row: dict) -> dict[str, str | None]:
     dmg, ben, _ = _votes(row)
     out = {}
@@ -190,6 +205,9 @@ def main(argv=None) -> int:
                   options=PredictOptions(clinvar=False, protein_context=False, sequences=False, workers=6),
                   progress=lambda s, d, n: print(f"  {s}: {d}/{n}", end="\r", flush=True))
     print()
+    failed = {k: v for k, v in res.sources.items() if v.startswith("failed")}
+    if failed:
+        raise SystemExit(f"annotation incomplete, not reporting it: {failed}. Run again (cached answers are kept).")
     by_input = defaultdict(list)
     for r in res.table.to_dict("records"):
         by_input[r["input"]].append(r)
@@ -206,45 +224,58 @@ def main(argv=None) -> int:
     def subset(items, cond):
         return [x for x in items if cond(x)]
 
+    for x in rows:
+        r = x["row"]
+        x["model_label"] = classify(r, {"missense_variant"})[0]   # model without the frequency rule
+        x["grpmax"] = _num(r.get("gnomad_popmax_af"))
+        x["v21"] = scheme_call(r, V21, 0.7, 0.3, 0.0, True)
+        pts = r.get("acmg_points")
+        x["clingen"] = None if not isinstance(pts, (int, float)) or pts != pts or pts == 0 else (
+            "damaging" if pts > 0 else "benign")
+
+    def with_freq(call, x, af):  # same rule as the pipeline, ClinGen BA1 exceptions included
+        common = x["grpmax"] is not None and x["grpmax"] >= af and not acmg.ba1_exception(x["row"])
+        return "benign" if common else call
+
+    methods = {
+        "v2.2 default: model + frequency rule (BA1, gnomAD grpmax ≥ 5%)": lambda x: verdict_call(x["row"]["prediction"]),
+        "v2.2 model alone (no frequency rule)": lambda x: verdict_call(x["model_label"]),
+        "v2.2 model + frequency ≥ 1%": lambda x: with_freq(verdict_call(x["model_label"]), x, 0.01),
+        "v2.1 vote": lambda x: x["v21"],
+        "v2.1 vote + frequency rule (BA1, 5%)": lambda x: with_freq(x["v21"], x, 0.05),
+        "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": lambda x: x["clingen"],
+    }
     report: dict = {"clinvar_file": URL, "seed": args.seed, "sampled": len(picked), "annotated": len(rows),
-                    "genes": len({x["gene"] for x in rows}), "run": res.run}
-    groups = {"all": rows, "evaluated since 2024": subset(rows, lambda x: (x["year"] or 0) >= 2024)}
-    report["verdict"] = {}
-    report["predictors"] = {}
-    report["auc"] = {}
+                    "genes": len({x["gene"] for x in rows}), "run": res.run,
+                    "model": {k: MODEL[k] for k in ("version", "trained", "training")}}
+    groups = {"all": rows,
+              "rare (gnomAD grpmax < 0.1% or absent)": subset(rows, lambda x: (x["grpmax"] or 0) < 0.001),
+              "evaluated since 2024": subset(rows, lambda x: (x["year"] or 0) >= 2024)}
+    report["methods"], report["predictors"], report["auc"] = {}, {}, {}
     for gname, items in groups.items():
-        report["verdict"][gname] = call_metrics([(verdict_call(x["row"]["prediction"]), x["label"]) for x in items])
-        per = {}
-        for name in WEIGHTS:
-            per[name] = call_metrics([(predictor_calls(x["row"])[name], x["label"]) for x in items])
-        report["predictors"][gname] = per
+        report["methods"][gname] = {m: call_metrics([(f(x), x["label"]) for x in items]) for m, f in methods.items()}
+        report["predictors"][gname] = {name: call_metrics([(predictor_calls(x["row"])[name], x["label"]) for x in items])
+                                       for name in WEIGHTS}
         aucs = {}
-        for name, col, sign in (("Effect score (verdict)", "effect_score", 1), ("AlphaMissense", "alphamissense", 1),
-                                ("REVEL", "revel", 1), ("CADD", "cadd_phred", 1), ("EVE", "eve", 1),
-                                ("popEVE", "popeve", -1), ("SIFT", "sift_score", -1), ("PolyPhen-2", "polyphen_score", 1)):
-            sc = [(sign * float(x["row"][col]), x["label"]) for x in items
-                  if x["row"].get(col) is not None and x["row"][col] == x["row"][col]]
+        for name, get in (("v2.2 model score", lambda r: (model.score(r).p if model.score(r) else None)),
+                          ("v2.1 vote fraction", vote_fraction),
+                          ("AlphaMissense", lambda r: _num(r.get("alphamissense"))),
+                          ("REVEL", lambda r: _num(r.get("revel"))), ("CADD", lambda r: _num(r.get("cadd_phred"))),
+                          ("EVE", lambda r: _num(r.get("eve"))),
+                          ("popEVE", lambda r: None if _num(r.get("popeve")) is None else -_num(r.get("popeve"))),
+                          ("SIFT", lambda r: None if _num(r.get("sift_score")) is None else -_num(r.get("sift_score"))),
+                          ("PolyPhen-2", lambda r: _num(r.get("polyphen_score")))):
+            sc = [(v, x["label"]) for x in items if (v := get(x["row"])) is not None]
             aucs[name] = {"auc": auc(sc), "coverage": len(sc) / max(1, len(items))}
         report["auc"][gname] = aucs
-
-    # ---- alternative schemes, 2-fold cross-validation by gene (no gene in both halves)
-    genes = sorted({x["gene"] for x in rows})
-    random.Random(args.seed).shuffle(genes)
-    half = set(genes[: len(genes) // 2])
-    folds = [[x for x in rows if x["gene"] in half], [x for x in rows if x["gene"] not in half]]
-    modern = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen": 0, "SIFT": 0}
-    v20 = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen": 0.5, "SIFT": 0.5}
-    equal = {k: 1.0 for k in WEIGHTS}
-    schemes = {}
-    for wname, w, fb in (("v2.0 (SIFT/PolyPhen always vote)", v20, False), ("equal weights", equal, False),
-                         ("without SIFT/PolyPhen", modern, False),
-                         ("SIFT/PolyPhen only as fallback (v2.1 default)", modern, True)):
-        for hi, lo in ((0.7, 0.3), (0.6, 0.4), (0.8, 0.2)):
-            for mw in (0.0, 1.5):
-                key = f"{wname}, cut-offs {hi:.2f}/{lo:.2f}" + (", min. weight 1.5" if mw else "")
-                schemes[key] = [call_metrics([(scheme_call(x["row"], w, hi, lo, mw, fb), x["label"]) for x in f])
-                                for f in folds]
-    report["schemes_cv"] = schemes
+    report["model_cut_offs"] = {}
+    for hi, lo in ((0.6, 0.4), (0.7, 0.3), (0.8, 0.2)):
+        calls = []
+        for x in rows:
+            ms = model.score(x["row"])
+            c = x["v21"] if ms is None else "damaging" if ms.p >= hi else "benign" if ms.p <= lo else None
+            calls.append((c, x["label"]))
+        report["model_cut_offs"][f"{hi:.1f}/{lo:.1f}" + (" (default)" if hi == model.DAMAGING else "")] = call_metrics(calls)
     report["seconds"] = round(time.time() - t0, 1)
 
     OUT.mkdir(exist_ok=True)
@@ -254,44 +285,48 @@ def main(argv=None) -> int:
     return 0
 
 
+def _metric_row(name: str, m: dict) -> str:
+    return (f"| {name} | {fmt(m['sensitivity'])} | {fmt(m['specificity'])} | {fmt(m['pathogenic_called_benign'])} | "
+            f"{fmt(m['benign_called_damaging'])} | {fmt(m['coverage'])} | {fmt(m['accuracy_when_decisive'])} |")
+
+
+HEAD = ["| Method | Sensitivity | Specificity | Pathogenic called benign | Benign called damaging | Coverage | "
+        "Accuracy when decisive |", "|---|---|---|---|---|---|---|"]
+
+
 def markdown(rep: dict) -> str:
+    tr = rep["model"]["training"]
     L = ["# ClinVar benchmark", "",
          f"{rep['annotated']} expert-reviewed (≥ 2 stars) germline missense variants from {rep['genes']} genes, "
-         f"GRCh38, sampled with seed {rep['seed']} from ClinVar's variant_summary. ClinVar is not used by the "
+         f"GRCh38, sampled with seed {rep['seed']} from ClinVar's variant_summary. ClinVar is not an input of the "
          f"verdict. Run: {rep['run'].get('tool')}, {rep['run'].get('annotation')}, {rep['run'].get('started_utc')}.",
-         "", "Sensitivity = pathogenic variants called *damaging*; specificity = benign variants called *benign*; "
+         "",
+         f"The missense model (v{rep['model']['version']}, trained {rep['model']['trained']}) was fitted on "
+         f"{tr['n']} other ClinVar variants from {tr['genes']} genes; **no gene of this benchmark was used for "
+         "training**, so these are held-out results (benchmarks/train_model.py).", "",
+         "Sensitivity = pathogenic variants called *damaging*; specificity = benign variants called *benign*; "
          "coverage = share of variants that get a decisive call (not *uncertain*/*not assessed*).", ""]
-    for g, m in rep["verdict"].items():
-        L += [f"## Verdict — {g} (n = {m['n_pathogenic']} pathogenic, {m['n_benign']} benign)", "",
-              "| Sensitivity | Specificity | Pathogenic called benign | Benign called damaging | Coverage | Accuracy when decisive |",
-              "|---|---|---|---|---|---|",
-              f"| {fmt(m['sensitivity'])} | {fmt(m['specificity'])} | {fmt(m['pathogenic_called_benign'])} | "
-              f"{fmt(m['benign_called_damaging'])} | {fmt(m['coverage'])} | {fmt(m['accuracy_when_decisive'])} |", ""]
-        L += ["| Predictor | Sensitivity | Specificity | Coverage | Accuracy when decisive | AUC (score) |",
-              "|---|---|---|---|---|---|"]
-        aucs = rep["auc"][g]
-        names = {"AlphaMissense": "AlphaMissense", "REVEL": "REVEL", "CADD": "CADD", "EVE": "EVE", "SIFT": "SIFT",
-                 "PolyPhen": "PolyPhen-2"}
-        for name, pm in rep["predictors"][g].items():
-            a = aucs.get(names[name], {}).get("auc")
-            L.append(f"| {names[name]} | {fmt(pm['sensitivity'])} | {fmt(pm['specificity'])} | {fmt(pm['coverage'])} | "
-                     f"{fmt(pm['accuracy_when_decisive'])} | {'—' if a is None else f'{a:.3f}'} |")
-        e = aucs["Effect score (verdict)"]["auc"]
-        pe = aucs["popEVE"]["auc"]
-        L += ["", f"AUC of the verdict's effect score: {'—' if e is None else f'{e:.3f}'}; "
-                  f"popEVE: {'—' if pe is None else f'{pe:.3f}'} (coverage {fmt(aucs['popEVE']['coverage'])}).", ""]
-    L += ["## Alternative weights and cut-offs (2-fold cross-validation, split by gene)", "",
-          "| Scheme | Sensitivity | Specificity | Pathogenic called benign | Benign called damaging | Coverage | "
-          "Accuracy when decisive |", "|---|---|---|---|---|---|---|"]
-    for name, folds in rep["schemes_cv"].items():
-        avg = {k: sum(f[k] for f in folds) / len(folds) for k in (
-            "sensitivity", "specificity", "pathogenic_called_benign", "benign_called_damaging", "coverage",
-            "accuracy_when_decisive")}
-        L.append(f"| {name} | {fmt(avg['sensitivity'])} | {fmt(avg['specificity'])} | "
-                 f"{fmt(avg['pathogenic_called_benign'])} | {fmt(avg['benign_called_damaging'])} | "
-                 f"{fmt(avg['coverage'])} | {fmt(avg['accuracy_when_decisive'])} |")
-    L += ["", "Caveat: REVEL was trained on disease-variant databases and AlphaMissense's thresholds were calibrated "
-          "on ClinVar, so these figures are optimistic; the *evaluated since 2024* rows are a less circular check.", ""]
+    for g, ms in rep["methods"].items():
+        n = next(iter(ms.values()))
+        L += [f"## {g[0].upper() + g[1:]} (n = {n['n_pathogenic']} pathogenic, {n['n_benign']} benign)", ""] + HEAD
+        L += [_metric_row(k, m) for k, m in ms.items()]
+        a = rep["auc"][g]
+        L += ["", "AUC: " + "; ".join(f"{k} {v['auc']:.3f}" + (f" (coverage {fmt(v['coverage'])})" if v["coverage"] < 0.995 else "")
+                                     for k, v in a.items() if v["auc"] is not None) + ".", ""]
+        if g == "all":
+            L += ["| Predictor alone | Sensitivity | Specificity | Coverage | Accuracy when decisive |",
+                  "|---|---|---|---|---|"]
+            for name, pm in rep["predictors"][g].items():
+                L.append(f"| {name} | {fmt(pm['sensitivity'])} | {fmt(pm['specificity'])} | {fmt(pm['coverage'])} | "
+                         f"{fmt(pm['accuracy_when_decisive'])} |")
+            L.append("")
+    L += ["## Model cut-offs (all variants, no frequency rule)", ""] + HEAD
+    L += [_metric_row(k, m) for k, m in rep["model_cut_offs"].items()]
+    L += ["", "Caveats: REVEL was trained on disease-variant databases and AlphaMissense's thresholds were calibrated "
+          "on ClinVar, so absolute figures are optimistic; the comparison between methods is the robust part. "
+          "The frequency rule looks better here than it will in practice because ClinVar curators use the same "
+          "gnomAD frequencies to classify variants as benign; it also mislabels pathogenic variants of recessive or "
+          "founder conditions (that is why the default is 5% and not 1%).", ""]
     return "\n".join(L)
 
 

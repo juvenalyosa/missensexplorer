@@ -14,7 +14,12 @@ def smoke(out: str) -> int:
     from missensexplorer.gui import prepare_web_engine
 
     prepare_web_engine()
+    import tempfile
+
     from PySide6.QtCore import QTimer
+
+    # self-test with default options, independent of (and without touching) the user's preferences
+    os.environ["MISSENSEXPLORER_SETTINGS"] = os.path.join(tempfile.mkdtemp(prefix="mx-smoke-"), "settings.ini")
     from PySide6.QtWidgets import QApplication
 
     from missensexplorer.gui import i18n

@@ -36,6 +36,16 @@ S = {
     "opt_clinvar": ("Clasificación ClinVar", "ClinVar classification"),
     "opt_noncoding": ("Incluir variantes no codificantes", "Include non-coding variants"),
     "workers": ("Peticiones en paralelo", "Parallel requests"),
+    "freq_rule": ("Frecuencia", "Frequency"),
+    "freq_ba1": ("≥ 5 % en gnomAD → benigna (BA1)", "≥ 5% in gnomAD → benign (BA1)"),
+    "freq_bs1": ("≥ 1 % en gnomAD → benigna (BS1)", "≥ 1% in gnomAD → benign (BS1)"),
+    "freq_off": ("No usar la frecuencia", "Do not use frequency"),
+    "freq_tip": ("Una variante común en gnomAD (grupo de ancestría con mayor frecuencia) se marca como benigna aunque "
+                 "los predictores digan otra cosa. 5 % es el criterio BA1 de ACMG; 1 % es más estricto, pero confunde "
+                 "variantes patogénicas de enfermedades recesivas o de efecto fundador.",
+                 "A variant that is common in gnomAD (highest genetic ancestry group) is called benign whatever the "
+                 "predictors say. 5% is the ACMG BA1 criterion; 1% is stricter but mislabels pathogenic variants of "
+                 "recessive or founder conditions."),
     "engine": ("Anotación", "Annotation"),
     "engine_rest": ("Ensembl en línea", "Ensembl online"),
     "engine_local": ("VEP local", "Local VEP"),
@@ -104,6 +114,20 @@ S = {
     "col_zyg": ("Cigosidad", "Zygosity"), "col_source": ("Origen", "Source"), "col_error": ("Motivo", "Reason"),
     # detail
     "why": ("POR QUÉ", "WHY"),
+    "contrib_damaging": ("dañina", "damaging"),
+    "contrib_benign": ("benigna", "benign"),
+    "model_note": ("Aporte de cada predictor al puntaje del modelo (log-odds). El modelo es una regresión logística "
+                   "entrenada con variantes de ClinVar revisadas por expertos.",
+                   "Each predictor's contribution to the model score (log-odds). The model is a logistic regression "
+                   "trained on expert-reviewed ClinVar variants."),
+    "acmg": ("EVIDENCIA ACMG (ORIENTATIVA)", "ACMG EVIDENCE (INDICATIVE)"),
+    "acmg_pp3": ("Computacional PP3/BP4", "Computational PP3/BP4"),
+    "acmg_freq": ("Frecuencia poblacional", "Population frequency"),
+    "points": ("{n} puntos", "{n} points"),
+    "acmg_note": ("Umbrales calibrados por ClinGen (REVEL; AlphaMissense si falta REVEL). Es solo una parte de la "
+                  "clasificación ACMG: no reemplaza la revisión de un especialista.",
+                  "ClinGen-calibrated thresholds (REVEL; AlphaMissense when REVEL is missing). This is only part of "
+                  "an ACMG classification: it does not replace review by a specialist."),
     "predictors": ("PREDICTORES", "PREDICTORS"),
     "physchem": ("CAMBIO FISICOQUÍMICO", "PHYSICO-CHEMISTRY"),
     "sequence": ("SECUENCIA", "SEQUENCE"),
@@ -199,6 +223,7 @@ PREDICTION_ES = {
     "Likely benign (single predictor)": "Probablemente benigna (un solo predictor)",
     "Uncertain (conflicting predictors)": "Incierta (predictores en conflicto)",
     "Uncertain (intermediate scores)": "Incierta (puntuaciones intermedias)",
+    "Likely benign (common in population)": "Probablemente benigna (frecuente en la población)",
     "Likely damaging (limited evidence: SIFT/PolyPhen only)": "Probablemente dañina (evidencia limitada: solo SIFT/PolyPhen)",
     "Likely benign (limited evidence: SIFT/PolyPhen only)": "Probablemente benigna (evidencia limitada: solo SIFT/PolyPhen)",
     "Missense (no predictor scores)": "Missense (sin puntuaciones)",
@@ -224,6 +249,20 @@ PHRASES_ES = [
      r"truncada en el residuo \1: se pierden \2 de \3 residuos (\4 %)"),
     (r"(\d+) damaging / (\d+) benign predictors \(weighted (\d+)% damaging\)",
      r"\1 predictores dañinos / \2 benignos (ponderado: \3 % dañino)"),
+    (r"(\d+) damaging / (\d+) benign predictors", r"\1 predictores dañinos / \2 benignos"),
+    (r"\bmodel score (\d\.\d+)", r"puntaje del modelo \1"),
+    (r"common in gnomAD: grpmax (\S+) >= (\S+) \(protein-level call: (.+?)\); frequent variants can still cause "
+     r"recessive or founder disease",
+     lambda m: f"frecuente en gnomAD: grpmax {m.group(1)} ≥ {m.group(2)} (predicción a nivel de proteína: "
+               f"{PREDICTION_ES.get(m.group(3), m.group(3))}); una variante frecuente aún puede causar una enfermedad "
+               "recesiva o de efecto fundador"),
+    (r"^common: BA1 \(grpmax (\S+)\)$", r"común: BA1 (grpmax \1)"),
+    (r"^frequent, but on the ClinGen BA1 exception list \(grpmax (\S+)\)$",
+     r"frecuente, pero está en la lista de excepciones a BA1 de ClinGen (grpmax \1)"),
+    (r"^frequent: BS1 candidate \(grpmax (\S+)\)$", r"frecuente: posible BS1 (grpmax \1)"),
+    (r"^rare \(grpmax (\S+)\)$", r"rara (grpmax \1)"),
+    (r"^not found in gnomAD$", "no encontrada en gnomAD"),
+    (r"^none \((.+), indeterminate\)$", r"ninguna (\1, indeterminado)"),
     (r"frameshift: downstream sequence changes, not reconstructed",
      "cambio del marco de lectura: la secuencia posterior cambia y no se reconstruye"),
     (r"HIGH impact consequence", "consecuencia de impacto ALTO"),

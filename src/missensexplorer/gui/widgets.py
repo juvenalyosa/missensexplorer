@@ -362,6 +362,69 @@ class PredictorRow(QWidget):
         p.end()
 
 
+class ContributionChart(QWidget):
+    """How much each predictor pushed the model score (log-odds): right = damaging, left = benign."""
+
+    ROW, TOP = 22, 20
+
+    def __init__(self, contributions, damaging_txt, benign_txt):
+        super().__init__()
+        self.items = list(contributions)
+        self.damaging_txt, self.benign_txt = damaging_txt, benign_txt
+        self.span = max([1.0] + [abs(v) for _, v in self.items])
+        self.setMinimumHeight(self.TOP + self.ROW * len(self.items) + 4)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setMouseTracking(True)
+
+    def sizeHint(self):
+        return QSize(380, self.minimumHeight())
+
+    def _geom(self):
+        name_w, val_w = 104, 46
+        left = name_w
+        width = max(60, self.width() - name_w - val_w - 8)
+        return left, width, left + width / 2
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        left, width, mid = self._geom()
+        p.setFont(th.font(11))
+        p.setPen(QColor(th.MUTED))
+        p.drawText(QRectF(left, 0, width / 2 - 6, self.TOP - 4), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+                   "← " + self.benign_txt)
+        p.drawText(QRectF(mid + 6, 0, width / 2 - 6, self.TOP - 4), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                   self.damaging_txt + " →")
+        bottom = self.TOP + self.ROW * len(self.items)
+        p.setPen(QPen(QColor(th.BORDER), 1))
+        p.drawLine(QPointF(mid, self.TOP - 2), QPointF(mid, bottom))
+        for i, (name, v) in enumerate(self.items):
+            y = self.TOP + i * self.ROW
+            p.setPen(QColor(th.INK))
+            p.setFont(th.font(12, QFont.Weight.Medium))
+            p.drawText(QRectF(0, y, left - 8, self.ROW), Qt.AlignmentFlag.AlignVCenter, name)
+            w = (width / 2 - 2) * abs(v) / self.span
+            status = "Damaging" if v > 0 else "Benign / silent"
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor(th.STATUS_COLOR[status]))
+            bar = QRectF(mid if v > 0 else mid - w, y + self.ROW / 2 - 4, max(2.0, w), 8)
+            p.drawRoundedRect(bar, 4, 4)
+            p.setPen(QColor(th.INK_2))
+            p.setFont(th.font(11.5))
+            p.drawText(QRectF(left + width + 8, y, 46, self.ROW), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                       f"{v:+.1f}")
+        p.end()
+
+    def mouseMoveEvent(self, e):
+        i = int((e.position().y() - self.TOP) // self.ROW)
+        if 0 <= i < len(self.items):
+            name, v = self.items[i]
+            QToolTip.showText(e.globalPosition().toPoint(),
+                              f"{name}: {v:+.2f} log-odds → {self.damaging_txt if v > 0 else self.benign_txt}", self)
+        else:
+            QToolTip.hideText()
+
+
 # --------------------------------------------------------------------------- lollipop chart
 
 class LollipopChart(QWidget):
