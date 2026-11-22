@@ -579,6 +579,11 @@ def ensure_3dmol(tmp_dir: Path) -> bool:
     return True
 
 
+def _js(value) -> str:
+    """JSON for inline <script>: '</' must not appear, or the text could close the script tag."""
+    return json.dumps(value).replace("</", "<\\/")
+
+
 def structure_page(pdb: str, pos: int, label_text: str) -> str:
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <style>html,body{{margin:0;height:100%;background:#fff;overflow:hidden;font-family:Helvetica Neue,Helvetica,Arial}}
@@ -593,12 +598,12 @@ padding:6px 9px;border-radius:8px;border:1px solid {th.BORDER}}}
 <i style="background:{th.ACCENT};border-radius:50%"></i>{html.escape(label_text)}</div>
 <script>
   const v = $3Dmol.createViewer(document.getElementById("mol"), {{backgroundColor: "white"}});
-  v.addModel({json.dumps(pdb)}, "pdb");
+  v.addModel({_js(pdb)}, "pdb");
   const plddt = a => a.b >= 90 ? "#0053D6" : a.b >= 70 ? "#65CBF3" : a.b >= 50 ? "#FFDB13" : "#FF7D45";
   v.setStyle({{}}, {{cartoon: {{colorfunc: plddt}}}});
   v.addStyle({{resi: {pos}}}, {{stick: {{color: "{th.ACCENT}", radius: 0.28}}}});
   v.addStyle({{resi: {pos}, atom: "CA"}}, {{sphere: {{color: "{th.ACCENT}", radius: 1.15}}}});
-  v.addLabel({json.dumps(label_text)}, {{backgroundColor: "{th.PETROL_900}", backgroundOpacity: 0.92,
+  v.addLabel({_js(label_text)}, {{backgroundColor: "{th.PETROL_900}", backgroundOpacity: 0.92,
       fontColor: "white", fontSize: 13, inFront: true, showBackground: true, borderRadius: 6}},
       {{resi: {pos}, atom: "CA"}});
   v.zoomTo({{within: {{distance: 18, sel: {{resi: {pos}}}}}}});

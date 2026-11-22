@@ -197,29 +197,51 @@ def colocated_info(colocated: list[dict], alt_plus: str | None, alt_raw: str | N
 WEIGHTS = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen": 0.5, "SIFT": 0.5}
 
 
+def _num(x) -> float | None:
+    """Float, or None for missing values (None, NaN, '', non-numeric)."""
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    return None if v != v else v
+
+
+def _str(x) -> str | None:
+    return x if isinstance(x, str) and x else None
+
+
+MODERN = ("AlphaMissense", "REVEL", "EVE", "CADD")
+
+
+def _modern_present(row: dict) -> bool:
+    return bool(_str(row.get("alphamissense_class")) or _num(row.get("revel")) is not None
+                or _num(row.get("cadd_phred")) is not None or _str(row.get("eve_class")))
+
+
 def _votes(row: dict) -> tuple[list[str], list[str], list[str]]:
+    """Damaging/benign votes per predictor. Accepts pipeline dicts and table rows (NaN = missing)."""
     dmg, ben, detail = [], [], []
-    am, amc = row.get("alphamissense"), row.get("alphamissense_class")
+    am, amc = _num(row.get("alphamissense")), _str(row.get("alphamissense_class"))
     if amc:
         detail.append(f"AlphaMissense {am:.2f} ({amc.replace('_', ' ')})" if am is not None else f"AlphaMissense {amc}")
         (dmg if amc == "likely_pathogenic" else ben if amc == "likely_benign" else []).append("AlphaMissense")
-    rv = row.get("revel")
+    rv = _num(row.get("revel"))
     if rv is not None:
         detail.append(f"REVEL {rv:.2f}")
         (dmg if rv >= REVEL_DAMAGING else ben if rv <= REVEL_BENIGN else []).append("REVEL")
-    cd = row.get("cadd_phred")
+    cd = _num(row.get("cadd_phred"))
     if cd is not None:
         detail.append(f"CADD {cd:.1f}")
         (dmg if cd >= CADD_DAMAGING else ben if cd <= CADD_BENIGN else []).append("CADD")
-    ev = row.get("eve_class")
+    ev = _str(row.get("eve_class"))
     if ev:
         detail.append(f"EVE {ev}")
         (dmg if ev.lower() == "pathogenic" else ben if ev.lower() == "benign" else []).append("EVE")
-    sf = row.get("sift")
+    sf = _str(row.get("sift"))
     if sf:
         detail.append(f"SIFT {sf.replace('_', ' ')}")
         (dmg if sf.startswith("deleterious") else ben if sf.startswith("tolerated") else []).append("SIFT")
-    pp = row.get("polyphen")
+    pp = _str(row.get("polyphen"))
     if pp:
         detail.append(f"PolyPhen {pp.replace('_', ' ')}")
         (dmg if pp == "probably_damaging" else ben if pp == "benign" else []).append("PolyPhen")
@@ -240,21 +262,31 @@ def classify(row: dict, terms: set[str]) -> tuple[str, float | None, str]:
         return f"Loss of function ({kind})", 1.0, "; ".join(basis) or "HIGH impact consequence"
     if "missense_variant" in terms:
         dmg, ben, detail = _votes(row)
-        n = len(dmg) + len(ben)
-        wd, wb = sum(WEIGHTS[x] for x in dmg), sum(WEIGHTS[x] for x in ben)
         basis = "; ".join(detail)
         if sp is not None and sp >= 0.2:
             basis += f"; SpliceAI {sp:.2f} (may also affect splicing)"
+        # SIFT and PolyPhen-2 only vote when no modern predictor has a score: on expert-reviewed
+        # ClinVar variants they added wrong calls (benchmarks/results/clinvar_benchmark.md).
+        modern = _modern_present(row)
+        limited = not modern and bool(dmg or ben)
+        if modern:
+            dmg = [x for x in dmg if x in MODERN]
+            ben = [x for x in ben if x in MODERN]
+        n = len(dmg) + len(ben)
         if n == 0:
+            if modern:
+                return "Uncertain (intermediate scores)", 0.5, basis
             return "Missense (no predictor scores)", None, basis or "no scores available"
+        wd, wb = sum(WEIGHTS[x] for x in dmg), sum(WEIGHTS[x] for x in ben)
         frac = wd / (wd + wb)
         summary = f"{len(dmg)} damaging / {len(ben)} benign predictors (weighted {frac:.0%} damaging)"
-        if n == 1:
+        suffix = " (limited evidence: SIFT/PolyPhen only)" if limited else ""
+        if n == 1 and not limited:
             label = "Likely damaging (single predictor)" if dmg else "Likely benign (single predictor)"
         elif frac >= 0.7:
-            label = "Likely damaging"
+            label = "Likely damaging" + suffix
         elif frac <= 0.3:
-            label = "Likely benign"
+            label = "Likely benign" + suffix
         else:
             label = "Uncertain (conflicting predictors)"
         return label, round(frac, 2), f"{summary} | {basis}"

@@ -97,3 +97,16 @@ def test_clinvar_match_by_spdi_and_cdna():
     assert clinvar.match(recs, ["VCV2", "VCV1"], ("7", 140753335, "A", "T"), None, None) is recs["VCV1"]
     assert clinvar.match(recs, ["VCV1", "VCV2"], None, "NM_004333.6", "c.1799T>G") is recs["VCV2"]
     assert clinvar.stars("reviewed by expert panel") == 3
+
+
+def test_sift_polyphen_only_as_fallback():
+    # modern predictor present: SIFT/PolyPhen do not vote (benchmark: they add wrong calls)
+    row = {"alphamissense": 0.1, "alphamissense_class": "likely_benign", "revel": 0.2,
+           "sift": "deleterious", "polyphen": "probably_damaging"}
+    assert classify(row, {"missense_variant"})[0] == "Likely benign"
+    # nothing modern: SIFT/PolyPhen decide, and the label says the evidence is limited
+    weak = {"sift": "deleterious", "polyphen": "probably_damaging"}
+    assert classify(weak, {"missense_variant"})[0] == "Likely damaging (limited evidence: SIFT/PolyPhen only)"
+    # modern scores in their intermediate range: uncertain, not "no scores"
+    grey = {"revel": 0.5, "cadd_phred": 24.0, "sift": "deleterious"}
+    assert classify(grey, {"missense_variant"})[:2] == ("Uncertain (intermediate scores)", 0.5)

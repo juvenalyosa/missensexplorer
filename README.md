@@ -126,6 +126,8 @@ Useful flags:
 | `--all` | also list non-coding consequences (intronic, UTR, intergenic) |
 | `--no-predictors` | skip the predictor plugins (faster) |
 | `--workers N` | number of parallel API requests (default 4) |
+| `--vep local` | annotate with VEP on this computer instead of the public API ([guide](docs/local-vep.md)) |
+| `--offline` | never use the internet (with `--vep local`; skips ClinVar, UniProt and AlphaFold) |
 | `--no-cache` | ignore the local cache |
 | `missensexplorer cache clear` | empty the local cache |
 
@@ -162,11 +164,15 @@ res.sequences      # wild-type and mutant protein sequences per row
   - AlphaMissense uses its own class.
   - REVEL ≥ 0.644 / ≤ 0.290 and CADD ≥ 25.3 / ≤ 22.7 (Pejaver et al., 2022, calibrated PP3/BP4).
   - EVE uses its own class.
-  - SIFT and PolyPhen-2 use their own calls.
 
-  AlphaMissense, REVEL and EVE have weight 1, CADD 0.75, and SIFT and PolyPhen-2 0.5. If at least
-  70% of the weighted votes say damaging, the variant is *Likely damaging*; at 30% or less it is
-  *Likely benign*; anything in between is *Uncertain*.
+  AlphaMissense, REVEL and EVE have weight 1 and CADD 0.75. If at least 70% of the weighted votes
+  say damaging, the variant is *Likely damaging*; at 30% or less it is *Likely benign*; anything in
+  between is *Uncertain*. Scores that fall between the thresholds give *Uncertain (intermediate
+  scores)*.
+
+  SIFT and PolyPhen-2 vote (weight 0.5 each) only when none of the predictors above has a score,
+  and the label then says *limited evidence*. On expert-reviewed ClinVar variants, letting them
+  vote alongside the modern predictors added wrong calls ([benchmark](benchmarks/results/clinvar_benchmark.md)).
 - **Synonymous, splice-region and intronic** variants are judged with SpliceAI
   (≥ 0.5 likely splice-altering, ≥ 0.2 possible).
 - ClinVar and gnomAD are shown next to the prediction, never mixed into it.
@@ -181,14 +187,43 @@ and about 1 s from the cache.
 
 For exomes and genomes, pass `--genes` (or fill *Only these genes* in the web app). The VCF is then
 filtered locally before anything is sent. The public Ensembl REST API is not meant for millions of
-variants; for whole genomes, run VEP locally and load its output.
+variants; for whole genomes, use the [local VEP mode](docs/local-vep.md). VCF files are read as a
+stream, so large files do not have to fit in memory.
 
 ## Privacy
 
 The tool sends only variant descriptions (coordinates, HGVS, rsIDs, gene symbols) to the public
 APIs of Ensembl, UniProt, AlphaFold DB and NCBI. Sample names and genotypes stay on your
 computer. Even so, check your institution's rules before you analyse patient data with public web
-services.
+services. With `--vep local --offline` (or *Local VEP* + *Offline* in the desktop app) nothing
+leaves the computer.
+
+## Reliability
+
+- **Failures are visible.** Each external source (VEP, its predictor plugins, ClinVar, UniProt,
+  AlphaFold, protein sequences) is tracked. If one does not respond, the result says so in a
+  warning, the affected rows say so in `notes`, and running the analysis again retries only what is
+  missing, because everything already obtained is cached. A failed predictor request no longer
+  discards the rest of the annotation.
+- **Fast, clear errors offline.** A host that refuses connections is marked as down after a few
+  attempts, instead of retrying for minutes.
+- **Every run is recorded.** Exports include the tool version, the Ensembl release, the options,
+  the SHA-256 of each input file and the status of each source (JSON `run`, Excel *Run info* sheet,
+  *Help → Run information* in the desktop app). Cached VEP answers are tied to the Ensembl release.
+  ClinVar answers are refreshed every week.
+- **Tested on hard cases.** Recorded VEP responses cover frameshifts, start-lost, canonical splice,
+  splice-altering synonymous, mitochondrial, chromosome X, multi-allelic and GRCh37 variants. A
+  nightly GitHub workflow checks that the external APIs still return the fields the tool reads.
+- **Measured against ClinVar.** On 1,972 expert-reviewed (≥ 2 stars) germline missense variants
+  from 1,181 genes, the verdict calls 89% of the pathogenic variants *damaging* and 87% of the
+  benign ones *benign*. 92% of the variants get a decisive call, and decisive calls are right 96%
+  of the time (2.7% of pathogenic variants are called benign; 5.2% of benign variants are called
+  damaging). The figures are the same for variants evaluated since 2024. Some predictors were
+  trained or calibrated on similar data, so treat them as optimistic. Details, per-predictor results
+  and the cross-validated comparison of weights are in [the benchmark](benchmarks/results/clinvar_benchmark.md);
+  `benchmarks/clinvar_benchmark.py` reproduces it.
+- The desktop app writes an error log (*Help → Open error log*; on macOS
+  `~/Library/Logs/MissensExplorer`).
 
 ## What changed in version 2
 

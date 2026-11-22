@@ -14,14 +14,13 @@ import altair as alt
 import httpx
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 
 from missensexplorer import __version__
 from missensexplorer.aa import AA_NAMES
 from missensexplorer.cache import Cache
 from missensexplorer.inputs import vcf_samples
 from missensexplorer.predict import PredictOptions, predict, prediction_status
-from missensexplorer.report import to_bytes, to_fasta
+from missensexplorer.report import run_info, to_bytes, to_fasta
 
 st.set_page_config(page_title="MissensExplorer", page_icon="🧬", layout="wide")
 
@@ -173,18 +172,23 @@ def fetch_text(url: str) -> str | None:
         return None
 
 
+def _js(value) -> str:
+    """JSON for inline <script>: '</' must not appear, or the text could close the script tag."""
+    return json.dumps(value).replace("</", "<\\/")
+
+
 def structure_html(pdb: str, pos: int, label: str, height: int) -> str:
     return f"""
 <div id="mol" style="width:100%;height:{height}px;position:relative;border-radius:8px;overflow:hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/3dmol@2.4.2/build/3Dmol-min.js"></script>
 <script>
   const v = $3Dmol.createViewer(document.getElementById("mol"), {{backgroundColor: "white", backgroundAlpha: 0}});
-  v.addModel({json.dumps(pdb)}, "pdb");
+  v.addModel({_js(pdb)}, "pdb");
   const plddt = a => a.b >= 90 ? "#0053D6" : a.b >= 70 ? "#65CBF3" : a.b >= 50 ? "#FFDB13" : "#FF7D45";
   v.setStyle({{}}, {{cartoon: {{colorfunc: plddt}}}});
   v.addStyle({{resi: {pos}}}, {{stick: {{colorscheme: "magentaCarbon", radius: 0.28}}}});
   v.addStyle({{resi: {pos}, atom: "CA"}}, {{sphere: {{color: "#d6008f", radius: 1.1}}}});
-  v.addLabel({json.dumps(label)}, {{backgroundColor: "#222", backgroundOpacity: 0.85, fontColor: "white",
+  v.addLabel({_js(label)}, {{backgroundColor: "#222", backgroundOpacity: 0.85, fontColor: "white",
              fontSize: 13, inFront: true, showBackground: true}}, {{resi: {pos}, atom: "CA"}});
   v.zoomTo({{within: {{distance: 18, sel: {{resi: {pos}}}}}}});
   v.render();
@@ -261,6 +265,9 @@ if res is not None:
                                                  ("file_skipped_symbolic", "symbolic/structural alleles")] if s.get(k)]
     if skipped:
         st.caption("Skipped: " + " · ".join(skipped))
+    run = getattr(res, "run", None) or {}
+    with st.expander(f"Run information · {run.get('annotation', '')}"):
+        st.dataframe(run_info(res), hide_index=True, width="stretch")
 
     if df.empty:
         st.info("No protein-level consequences found. Turn on *Include non-coding variants* in the sidebar to "
@@ -447,7 +454,7 @@ if res is not None:
                     with st.spinner("Loading AlphaFold structure…"):
                         pdb = fetch_text(af["pdb_url"])
                     if pdb:
-                        components.html(structure_html(pdb, pos, str(_val(r["protein_change"], pos)), 430), height=440)
+                        st.iframe(structure_html(pdb, pos, str(_val(r["protein_change"], pos)), 430), height=440)
                         st.caption(f"AlphaFold model {af.get('entry_id')} (wild type), coloured by confidence: "
                                    "🟦 very high · 🩵 confident · 🟨 low · 🟧 very low. Magenta = mutated residue.")
                 else:

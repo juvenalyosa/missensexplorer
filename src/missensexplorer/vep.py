@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import math
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .api import ENSEMBL, ApiError, Http
@@ -124,8 +125,24 @@ class Vep:
                               headers={"Content-Type": "application/json"})
         return r
 
-    def _run_batch(self, kind, batch, params) -> dict[str, dict]:
+    def _run_batch(self, kind, batch, params, _attempt: int = 0) -> dict[str, dict]:
         r = self._post(kind, batch, params)
+        if r.status_code == 200:
+            items = _parse_json(r.text)
+            if items is None:  # truncated/garbled response: retry, then split the batch
+                log.warning("VEP returned an unreadable response (%d variants, attempt %d)", len(batch), _attempt + 1)
+                if _attempt < 2:
+                    return self._run_batch(kind, batch, params, _attempt + 1)
+                if len(batch) > 1:
+                    mid = len(batch) // 2
+                    res = self._run_batch(kind, batch[:mid], params)
+                    res.update(self._run_batch(kind, batch[mid:], params))
+                    return res
+                # a single variant whose answer cannot be read: lose only this one
+                if self.status is not None:
+                    self.status.fail("Ensembl VEP", "unreadable response", batch)
+                return {batch[0]: {"error": "VEP returned an unreadable response for this variant",
+                                   "service_error": True}}
         if r.status_code == 400:
             if len(batch) == 1:
                 try:
@@ -141,7 +158,7 @@ class Vep:
             raise ApiError(f"HTTP {r.status_code}: {r.text[:200]}", r.status_code)
 
         grouped: dict[str, list] = {}
-        for item in r.json():
+        for item in items:
             grouped.setdefault(item.get("input"), []).append(item)
         res = {}
         lost = []
@@ -156,6 +173,21 @@ class Vep:
         for q in lost:
             res.setdefault(q, {"error": "VEP could not map this variant (check notation/assembly)", "cache_error": True})
         return res
+
+
+_BAD_NUMBER = re.compile(r'(?<=[:\[,])(\s*)-?(?:nan|NaN|inf|Inf|infinity|Infinity)(?=\s*[,}\]])')
+
+
+def _parse_json(text: str):
+    """json.loads, tolerating bare nan/inf tokens that some VEP plugins print; None if unreadable."""
+    try:
+        return json.loads(text)
+    except ValueError:
+        pass
+    try:
+        return json.loads(_BAD_NUMBER.sub(r"\1null", text))
+    except ValueError:
+        return None
 
 
 def _short_error(msg: str) -> str:

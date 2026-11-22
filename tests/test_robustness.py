@@ -193,3 +193,50 @@ def test_vcf_gz_is_streamed(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "read_bytes", lambda self: (_ for _ in ()).throw(AssertionError("loaded whole file")))
     parsed = read_file(str(p))
     assert len(parsed.variants) == 2000 and parsed.variants[0].zygosity == "heterozygous"
+
+
+def test_vep_retries_truncated_response():
+    from missensexplorer.vep import Vep
+
+    calls = []
+
+    class FakeHttp:
+        def request(self, method, url, **kw):
+            calls.append(kw["json"]["variants"])
+            req = httpx.Request("POST", url)
+            if len(calls) == 1:  # first answer is cut off mid-JSON
+                return httpx.Response(200, text=json.dumps(BRAF)[:500], request=req)
+            return httpx.Response(200, text=json.dumps(BRAF), request=req)
+
+    vep = Vep(FakeHttp(), P.NullCache(), "GRCh38", workers=1)
+    q = BRAF[0]["input"]
+    out = vep.annotate({"region": [q]}, {"hgvs": 1})
+    assert "results" in out[("region", q)] and len(calls) == 2
+
+
+def test_votes_accept_table_rows_with_nan():
+    nan = float("nan")
+    row = {"alphamissense": 0.99, "alphamissense_class": "likely_pathogenic", "revel": nan, "cadd_phred": nan,
+           "eve_class": nan, "sift": nan, "polyphen": None}
+    dmg, ben, _ = P._votes(row)
+    assert dmg == ["AlphaMissense"] and ben == []
+
+
+def test_one_unreadable_variant_does_not_sink_its_batch():
+    from missensexplorer.vep import Vep
+
+    good = BRAF[0]["input"]
+    bad = "1 12345 . A G . . ."
+
+    class FakeHttp:
+        def request(self, method, url, **kw):
+            req = httpx.Request("POST", url)
+            if bad in kw["json"]["variants"]:
+                return httpx.Response(200, text='[{"input": "1 12345 . A G . . .", "x": ', request=req)
+            return httpx.Response(200, text=json.dumps(BRAF), request=req)
+
+    st = SourceStatus()
+    vep = Vep(FakeHttp(), P.NullCache(), "GRCh38", workers=1, status=st)
+    out = vep.annotate({"region": [good, bad]}, {"hgvs": 1})
+    assert "results" in out[("region", good)]
+    assert out[("region", bad)]["service_error"] and st.failed("Ensembl VEP", bad)
