@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 import random
+import threading
 import time
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -26,11 +28,23 @@ class ApiError(RuntimeError):
         self.status = status
 
 
-class Http:
-    """Shared, thread-safe HTTP client (httpx.Client pools connections across threads)."""
+class OfflineError(ApiError):
+    """A host could not be reached at all (no network, DNS failure, firewall)."""
 
-    def __init__(self, timeout: float = 300, max_retries: int = 6):
+
+class Http:
+    """Shared, thread-safe HTTP client (httpx.Client pools connections across threads).
+
+    Server errors and rate limits are retried with backoff. Network errors are retried
+    only a few times; after that the host is marked as down and later requests to it
+    fail immediately, so an offline computer gets a clear error instead of long waits.
+    """
+
+    def __init__(self, timeout: float = 300, max_retries: int = 6, transport_retries: int = 3):
         self.max_retries = max_retries
+        self.transport_retries = transport_retries
+        self.down: dict[str, str] = {}
+        self._lock = threading.Lock()
         self.client = httpx.Client(
             timeout=httpx.Timeout(timeout, connect=20),
             headers={
@@ -47,13 +61,24 @@ class Http:
         4xx client errors (other than 429) are returned to the caller without
         retrying, because they usually carry a useful message (e.g. a bad HGVS).
         """
+        host = urlsplit(url).netloc
+        if host in self.down:
+            raise OfflineError(f"{host} is unreachable ({self.down[host]})")
         last_err = ""
+        transport_failures = 0
         for attempt in range(self.max_retries):
             try:
                 r = self.client.request(method, url, **kwargs)
             except httpx.TransportError as e:
                 last_err = f"{type(e).__name__}: {e}"
-                self._sleep(attempt)
+                transport_failures += 1
+                if transport_failures >= self.transport_retries:
+                    if isinstance(e, (httpx.ConnectError, httpx.ConnectTimeout)):
+                        with self._lock:
+                            self.down[host] = last_err
+                        raise OfflineError(f"cannot connect to {host} ({last_err})") from e
+                    break
+                self._sleep(transport_failures - 1)
                 continue
             if r.status_code in ok_statuses:
                 return r
@@ -87,6 +112,66 @@ class Http:
 
     def close(self) -> None:
         self.client.close()
+
+
+class SourceStatus:
+    """Which external sources were used, and which requests to them failed.
+
+    A failed source is not the same as "no data": rows affected by a failure are
+    flagged so the user knows the gap comes from the service and can retry.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.used: dict[str, int] = {}
+        self.errors: dict[str, list[str]] = {}
+        self.failed_items: dict[str, set] = {}
+        self.skipped: dict[str, str] = {}
+
+    def use(self, source: str, n: int = 1) -> None:
+        with self._lock:
+            self.used[source] = self.used.get(source, 0) + n
+
+    def skip(self, source: str, reason: str) -> None:
+        with self._lock:
+            self.skipped[source] = reason
+
+    def fail(self, source: str, message: str, items=()) -> None:
+        with self._lock:
+            msgs = self.errors.setdefault(source, [])
+            if len(msgs) < 5 and str(message) not in msgs:
+                msgs.append(str(message))
+            self.failed_items.setdefault(source, set()).update(i for i in items if i is not None)
+
+    def failed(self, source: str, item=None) -> bool:
+        if source not in self.errors:
+            return False
+        return item is None or item in self.failed_items.get(source, ())
+
+    def summary(self) -> dict[str, str]:
+        out = {}
+        for src in sorted(set(self.used) | set(self.errors) | set(self.skipped)):
+            if src in self.errors:
+                n = len(self.failed_items.get(src, ()))
+                out[src] = f"failed{f' ({n} items)' if n else ''}: {self.errors[src][0]}"
+            elif src in self.skipped:
+                out[src] = f"skipped: {self.skipped[src]}"
+            else:
+                out[src] = "ok"
+        return out
+
+
+def ensembl_release(http: Http, cache, assembly: str) -> int | None:
+    """Current Ensembl release of the REST server (cached for a day)."""
+    key = f"ensembl_release|{assembly}"
+    hit = cache.get(key, max_age=86400)
+    if hit:
+        return hit
+    data = http.get_json(f"{ENSEMBL[assembly]}/info/software", params={"content-type": "application/json"})
+    rel = data.get("release")
+    if rel:
+        cache.set(key, rel)
+    return rel
 
 
 def _error_text(r: httpx.Response) -> str:

@@ -60,8 +60,10 @@ def _compact_uniprot(entry: dict) -> dict:
             "features": feats}
 
 
-def fetch_uniprot(http: Http, cache, accessions, workers: int = 4) -> dict[str, dict]:
+def fetch_uniprot(http: Http, cache, accessions, workers: int = 4, status=None) -> dict[str, dict]:
     accs = sorted({a for a in accessions if a})
+    if status is not None and accs:
+        status.use("UniProt", len(accs))
     out = {}
     keys = {a: f"uniprot|{a}" for a in accs}
     hit = cache.get_many(list(keys.values()))
@@ -75,6 +77,8 @@ def fetch_uniprot(http: Http, cache, accessions, workers: int = 4) -> dict[str, 
                                          "format": "json", "size": 500})
         except ApiError as e:
             log.warning("UniProt request failed: %s", e)
+            if status is not None:
+                status.fail("UniProt", str(e), chunk)
             return {}
         return {r["primaryAccession"]: _compact_uniprot(r) for r in data.get("results", [])}
 
@@ -126,8 +130,10 @@ def features_at(entry: dict, start: int, end: int | None = None) -> dict:
 
 # --------------------------------------------------------------------------- AlphaFold
 
-def fetch_alphafold(http: Http, cache, accessions, workers: int = 4) -> dict[str, dict]:
+def fetch_alphafold(http: Http, cache, accessions, workers: int = 4, status=None) -> dict[str, dict]:
     accs = sorted({a for a in accessions if a})
+    if status is not None and accs:
+        status.use("AlphaFold DB", len(accs))
     out = {}
 
     def run(acc):
@@ -154,6 +160,8 @@ def fetch_alphafold(http: Http, cache, accessions, workers: int = 4) -> dict[str
                 }
         except (ApiError, ValueError, KeyError) as ex:
             log.warning("AlphaFold lookup failed for %s: %s", acc, ex)
+            if status is not None:
+                status.fail("AlphaFold DB", str(ex), [acc])
             return acc, None  # do not cache transient failures
         cache.set(key, val)
         return acc, val
@@ -187,8 +195,10 @@ def plddt_class(v: float | None) -> str | None:
 
 # --------------------------------------------------------------------------- sequences
 
-def fetch_protein_sequences(http: Http, cache, protein_ids, assembly: str = "GRCh38") -> dict[str, str]:
+def fetch_protein_sequences(http: Http, cache, protein_ids, assembly: str = "GRCh38", status=None) -> dict[str, str]:
     ids = sorted({p.split(".")[0] for p in protein_ids if p})
+    if status is not None and ids:
+        status.use("Ensembl protein sequences", len(ids))
     keys = {p: f"protseq|{assembly}|{p}" for p in ids}
     hit = cache.get_many(list(keys.values()))
     out = {p: hit[keys[p]] for p in ids if keys[p] in hit}
@@ -200,6 +210,8 @@ def fetch_protein_sequences(http: Http, cache, protein_ids, assembly: str = "GRC
                                   headers={"Content-Type": "application/json"})
         except ApiError as e:
             log.warning("Ensembl protein sequence request failed: %s", e)
+            if status is not None:
+                status.fail("Ensembl protein sequences", str(e), chunk)
             continue
         res = {}
         for item in data:

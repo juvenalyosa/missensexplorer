@@ -48,11 +48,16 @@ def _compact(r: dict) -> dict:
     }
 
 
-def fetch(http: Http, cache, vcv_ids) -> dict[str, dict]:
-    """{'VCV000013961': {...}, ...}"""
+CLINVAR_MAX_AGE = 7 * 86400  # ClinVar is updated weekly
+
+
+def fetch(http: Http, cache, vcv_ids, status=None) -> dict[str, dict]:
+    """{'VCV000013961': {...}, ...}. Failed requests are recorded in `status` (source 'ClinVar')."""
     ids = sorted({v for v in vcv_ids if v and v.startswith("VCV")})
+    if status is not None and ids:
+        status.use("ClinVar", len(ids))
     keys = {v: f"clinvar|{v}" for v in ids}
-    hit = cache.get_many(list(keys.values()))
+    hit = cache.get_many(list(keys.values()), max_age=CLINVAR_MAX_AGE)
     out = {v: hit[keys[v]] for v in ids if keys[v] in hit}
     missing = [v for v in ids if v not in out]
     for i in range(0, len(missing), 200):
@@ -61,9 +66,13 @@ def fetch(http: Http, cache, vcv_ids) -> dict[str, dict]:
         try:
             r = http.request("POST", EUTILS, data={"db": "clinvar", "id": ",".join(uid), "retmode": "json",
                                                    "tool": "missensexplorer"})
-            data = r.json().get("result", {}) if r.status_code == 200 else {}
+            if r.status_code != 200:
+                raise ApiError(f"HTTP {r.status_code}", r.status_code)
+            data = r.json().get("result", {})
         except (ApiError, ValueError) as e:
             log.warning("ClinVar request failed: %s", e)
+            if status is not None:
+                status.fail("ClinVar", str(e), chunk)
             continue
         res = {}
         for u in data.get("uids", []):

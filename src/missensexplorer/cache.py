@@ -36,22 +36,25 @@ class Cache:
         )
         self._db.commit()
 
-    def get(self, key: str):
+    def get(self, key: str, max_age: float | None = None):
+        """Cached value, or None when missing or older than `max_age` seconds (default: the TTL)."""
+        limit = max_age if max_age is not None else self.ttl
         with self._lock:
             row = self._db.execute("SELECT v, t FROM kv WHERE k = ?", (key,)).fetchone()
-        if row is None or (self.ttl and time.time() - row[1] > self.ttl):
+        if row is None or (limit and time.time() - row[1] > limit):
             return None
         return json.loads(row[0])
 
-    def get_many(self, keys: list[str]) -> dict:
+    def get_many(self, keys: list[str], max_age: float | None = None) -> dict:
         out = {}
         now = time.time()
+        limit = max_age if max_age is not None else self.ttl
         with self._lock:
             for i in range(0, len(keys), 500):
                 chunk = keys[i : i + 500]
                 q = f"SELECT k, v, t FROM kv WHERE k IN ({','.join('?' * len(chunk))})"
                 for k, v, t in self._db.execute(q, chunk):
-                    if not self.ttl or now - t <= self.ttl:
+                    if not limit or now - t <= limit:
                         out[k] = json.loads(v)
         return out
 
@@ -76,10 +79,10 @@ class Cache:
 class NullCache:
     """Drop-in replacement when caching is disabled."""
 
-    def get(self, key):
+    def get(self, key, max_age=None):
         return None
 
-    def get_many(self, keys):
+    def get_many(self, keys, max_age=None):
         return {}
 
     def set(self, key, value):

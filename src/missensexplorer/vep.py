@@ -47,18 +47,30 @@ def _sig(params: dict) -> str:
 
 
 class Vep:
-    def __init__(self, http: Http, cache, assembly: str = "GRCh38", workers: int = 4):
+    """Ensembl VEP REST client. Cache keys include the Ensembl release, so answers from an
+    older release are not reused after the server is updated."""
+
+    name = "Ensembl VEP (REST)"
+
+    def __init__(self, http: Http, cache, assembly: str = "GRCh38", workers: int = 4,
+                 release: int | None = None, status=None):
         if assembly not in ENSEMBL:
             raise ValueError(f"assembly must be one of {list(ENSEMBL)}")
         self.http, self.cache, self.assembly, self.workers = http, cache, assembly, workers
         self.base = ENSEMBL[assembly]
+        self.release = release
+        self.status = status
 
     def _key(self, kind, params, q):
-        return f"vep|{self.assembly}|{kind}|{_sig(params)}|{q}"
+        return f"vep|e{self.release or '?'}|{self.assembly}|{kind}|{_sig(params)}|{q}"
 
     def annotate(self, queries: dict[str, list[str]], params: dict, progress=None,
-                 stage: str = "VEP") -> dict[tuple[str, str], dict]:
-        """queries: {kind: [query, ...]} -> {(kind, query): {"results": [...]} | {"error": str}}."""
+                 stage: str = "VEP", source: str = "Ensembl VEP") -> dict[tuple[str, str], dict]:
+        """queries: {kind: [query, ...]} -> {(kind, query): {"results": [...]} | {"error": str}}.
+
+        A batch that still fails after the retries gives {"error": ..., "service_error": True}
+        for its queries (not cached, so the next run asks again) and is recorded in `status`.
+        """
         out: dict[tuple[str, str], dict] = {}
         todo: list[tuple[str, list[str]]] = []
         for kind, qs in queries.items():
@@ -76,6 +88,8 @@ class Vep:
             todo += [(kind, missing[i : i + size]) for i in range(0, len(missing), size)]
 
         total = sum(len(b) for _, b in todo)
+        if self.status is not None:
+            self.status.use(source, sum(len(set(q)) for q in queries.values()))
         done = 0
         if progress:
             progress(stage, 0, total)
@@ -89,7 +103,9 @@ class Vep:
                     res = fut.result()
                 except Exception as e:  # network failure after retries
                     log.warning("VEP batch failed: %s", e)
-                    res = {q: {"error": f"VEP request failed: {e}"} for q in batch}
+                    res = {q: {"error": f"VEP request failed: {e}", "service_error": True} for q in batch}
+                    if self.status is not None:
+                        self.status.fail(source, f"{type(e).__name__}: {e}", batch)
                 cacheable = {}
                 for q, val in res.items():
                     out[(kind, q)] = val

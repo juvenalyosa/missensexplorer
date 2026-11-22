@@ -35,8 +35,8 @@ def to_bytes(res: PredictionResult, fmt: str) -> bytes:
         return df.to_csv(index=False, sep="\t").encode()
     if fmt == "json":
         recs = json.loads(df.to_json(orient="records"))
-        return json.dumps({"assembly": res.assembly, "warnings": res.warnings, "stats": res.stats,
-                           "variants": recs, "errors": res.errors.to_dict("records")}, indent=2).encode()
+        return json.dumps({"run": res.run, "assembly": res.assembly, "warnings": res.warnings, "stats": res.stats,
+                           "variants": recs, "errors": res.errors.to_dict("records")}, indent=2, default=str).encode()
     if fmt == "xlsx":
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as xw:
@@ -45,6 +45,7 @@ def to_bytes(res: PredictionResult, fmt: str) -> bytes:
             df.to_excel(xw, sheet_name="All columns", index=False)
             if len(res.errors):
                 res.errors.to_excel(xw, sheet_name="Not analysed", index=False)
+            run_info(res).to_excel(xw, sheet_name="Run info", index=False)
             for ws in xw.book.worksheets:
                 ws.freeze_panes = "A2"
                 for col in ws.columns:
@@ -54,6 +55,21 @@ def to_bytes(res: PredictionResult, fmt: str) -> bytes:
     if fmt in ("fasta", "fa"):
         return to_fasta(res).encode()
     raise ValueError(f"unknown format {fmt}")
+
+
+def run_info(res: PredictionResult) -> pd.DataFrame:
+    """Provenance as two columns (for the Excel 'Run info' sheet)."""
+    run = res.run or {}
+    rows = [(k, run.get(k)) for k in ("tool", "started_utc", "seconds", "assembly", "annotation", "python")]
+    for k, v in (run.get("options") or {}).items():
+        rows.append((f"option: {k}", v))
+    for f in (run.get("inputs") or {}).get("files", []):
+        rows.append((f"input file: {f['name']}", f"{f['bytes']} bytes, sha256 {f['sha256']}"))
+    for k, v in (run.get("sources") or {}).items():
+        rows.append((f"source: {k}", v))
+    for w in res.warnings:
+        rows.append(("warning", w))
+    return pd.DataFrame([(k, "" if v is None else str(v)) for k, v in rows], columns=["item", "value"])
 
 
 def to_fasta(res: PredictionResult, include_wildtype: bool = True) -> str:

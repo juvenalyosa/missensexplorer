@@ -37,6 +37,16 @@ def _predict_parser() -> argparse.ArgumentParser:
     p.add_argument("--all", action="store_true", help="also report non-coding consequences")
     p.add_argument("--no-predictors", action="store_true", help="skip AlphaMissense/REVEL/CADD/EVE/SpliceAI (faster)")
     p.add_argument("--no-protein-context", action="store_true", help="skip UniProt/AlphaFold annotation")
+    p.add_argument("--vep", choices=["rest", "local"], default="rest",
+                   help="annotation engine: the public Ensembl REST API (default) or VEP on this computer")
+    p.add_argument("--vep-cmd", metavar="CMD",
+                   help="local VEP command (default: $MISSENSEXPLORER_VEP or 'vep --cache --offline'), e.g. "
+                        "'docker run --rm -i -v $HOME/vep_data:/data ensemblorg/ensembl-vep vep --cache --offline "
+                        "--dir_cache /data'")
+    p.add_argument("--vep-args", metavar="ARGS",
+                   help="extra local VEP arguments, e.g. plugin data files (default: $MISSENSEXPLORER_VEP_ARGS)")
+    p.add_argument("--offline", action="store_true",
+                   help="never use the internet (needs --vep local; skips ClinVar, UniProt and AlphaFold)")
     p.add_argument("-o", "--output", action="append", default=[], metavar="FILE",
                    help="write results (.csv, .tsv, .xlsx, .json); repeatable")
     p.add_argument("--fasta", metavar="FILE", help="write wild-type and mutant protein sequences")
@@ -76,7 +86,11 @@ def run_predict(argv: list[str]) -> int:
         sample=args.sample, pass_only=args.pass_only, include_noncoding=args.all,
         predictors=not args.no_predictors, protein_context=not args.no_protein_context,
         workers=args.workers, cache=not args.no_cache,
+        vep=args.vep, vep_command=args.vep_cmd, vep_args=args.vep_args, offline=args.offline,
     )
+    if args.offline and args.vep != "local":
+        err.print("[red]--offline needs --vep local[/]")
+        return 2
     with Progress(TextColumn("{task.description}"), BarColumn(), TextColumn("{task.completed}/{task.total}"),
                   TimeElapsedColumn(), console=err, transient=True, disable=args.quiet) as prog:
         tasks = {}
@@ -88,12 +102,16 @@ def run_predict(argv: list[str]) -> int:
 
         try:
             res = predict(text="\n".join(texts), files=args.file, options=opts, progress=cb)
-        except ValueError as e:
+        except (ValueError, ConnectionError) as e:
             err.print(f"[red]{e}[/]")
             return 2
 
     if not args.quiet:
         print_result(res, Console(), details=True if args.details else None)
+    failed = {k: v for k, v in res.sources.items() if v.startswith("failed")}
+    err.print(f"[dim]{res.run.get('tool')} · {res.run.get('annotation')} · {res.assembly}[/]")
+    for k, v in failed.items():
+        err.print(f"[yellow]{k}: {v}[/]")
     outputs = list(args.output)
     if not outputs and args.file:
         outputs = [f"{Path(args.file[0]).name.split('.')[0]}.missensexplorer.csv"]

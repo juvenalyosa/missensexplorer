@@ -13,10 +13,11 @@ import pandas as pd
 from . import clinvar as cv
 from . import protein as prot
 from .aa import AA3_TO_1, substitution_profile
-from .api import ENSEMBL, ApiError, Http
+from .api import ENSEMBL, ApiError, Http, OfflineError, SourceStatus, ensembl_release
 from .cache import Cache, NullCache
 from .inputs import CHROMS, ParsedInput, VariantInput, parse_text, read_file
 from .vep import BASE_PARAMS, DETAIL_CONSEQUENCES, PREDICTOR_PARAMS, Vep
+from .vep_local import LocalVep
 
 log = logging.getLogger(__name__)
 
@@ -67,6 +68,10 @@ class PredictOptions:
     protein_context: bool = True            # UniProt features + AlphaFold pLDDT
     clinvar: bool = True                    # exact-allele ClinVar classification (NCBI)
     sequences: bool = True                  # mutant protein sequences
+    vep: str = "rest"                       # rest (public Ensembl API) | local (VEP on this computer)
+    vep_command: str | None = None          # local VEP command (default: $MISSENSEXPLORER_VEP or 'vep --cache --offline')
+    vep_args: str | None = None             # extra local VEP arguments, e.g. plugin data files
+    offline: bool = False                   # never use the internet (local VEP only; no ClinVar/UniProt/AlphaFold)
     workers: int = 4
     cache: bool = True
     cache_path: str | None = None
@@ -82,6 +87,8 @@ class PredictionResult:
     sequences: dict[int, dict] = field(default_factory=dict)   # row index -> {wt, mut, header, note}
     alphafold: dict[str, dict] = field(default_factory=dict)   # uniprot -> AlphaFold info
     uniprot: dict[str, dict] = field(default_factory=dict)
+    run: dict = field(default_factory=dict)                     # provenance: versions, options, inputs, sources
+    sources: dict[str, str] = field(default_factory=dict)       # source -> ok | failed: ... | skipped: ...
 
 
 # --------------------------------------------------------------------------- small helpers
@@ -352,10 +359,11 @@ def _rows_for_variant(v: VariantInput, results: list[dict], assembly: str, genes
             aa = tc.get("amino_acids") or ""
             ref_aa, _, alt_aa = aa.partition("/")
             hgvsp = tc.get("hgvsp")
-            am = tc.get("alphamissense") or {}
+            # REST nests plugin output; a local VEP may report flat keys (am_class, spliceai_pred_ds_ag, ...)
+            am = tc.get("alphamissense") or {"am_class": tc.get("am_class"), "am_pathogenicity": tc.get("am_pathogenicity")}
             amc = am.get("am_class")
             amc = {"pathogenic": "likely_pathogenic", "benign": "likely_benign"}.get(amc, amc)
-            sp = tc.get("spliceai") or {}
+            sp = tc.get("spliceai") or {k: tc.get(f"spliceai_pred_{k.lower()}") for k in ("DS_AG", "DS_AL", "DS_DG", "DS_DL")}
             sp_vals = [_f(sp.get(k)) for k in ("DS_AG", "DS_AL", "DS_DG", "DS_DL")]
             sp_vals = [x for x in sp_vals if x is not None]
             sp_max = max(sp_vals) if sp_vals else None
@@ -478,14 +486,52 @@ def _peek_assembly(name: str, data: bytes | None) -> str | None:
 
 # --------------------------------------------------------------------------- main entry
 
+def _file_info(name: str, data: bytes | None) -> dict:
+    """Name, size and SHA-256 of an input file (for the run record)."""
+    import hashlib
+    import os
+
+    h = hashlib.sha256()
+    if data is not None:
+        h.update(data)
+        size = len(data)
+    else:
+        size = os.path.getsize(name)
+        with open(name, "rb") as fh:
+            for block in iter(lambda: fh.read(1 << 20), b""):
+                h.update(block)
+    return {"name": os.path.basename(name), "bytes": size, "sha256": h.hexdigest()}
+
+
+def _source_warnings(status: SourceStatus) -> list[str]:
+    out = []
+    for src, msgs in status.errors.items():
+        n = len(status.failed_items.get(src, ()))
+        out.append(f"{src} did not respond{f' for {n} item(s)' if n else ''} ({msgs[0][:160]}). Affected rows are "
+                   "marked in 'notes'. Run the analysis again to retry: everything already obtained is cached.")
+    return out
+
+
 def predict(text: str = "", files=(), options: PredictOptions | None = None, progress=None) -> PredictionResult:
     """Annotate variants given as free text and/or files [(name, bytes_or_None), ...]."""
+    import platform
+    from dataclasses import asdict
+    from datetime import datetime, timezone
+
+    from . import __version__
+
     t0 = time.time()
+    started = datetime.now(timezone.utc).isoformat(timespec="seconds")
     opt = options or PredictOptions()
     cache = Cache(opt.cache_path) if opt.cache else NullCache()
     http = Http()
+    status = SourceStatus()
     warnings: list[str] = []
     say = progress or (lambda *a, **k: None)
+    local = opt.vep == "local"
+    net = not opt.offline
+    if opt.offline and not local:
+        raise ValueError("offline mode needs the local VEP (vep='local')")
     try:
         genes = [g.strip().upper() for g in (opt.genes or []) if g and g.strip()]
         files = [(f, None) if isinstance(f, str) else f for f in files]
@@ -497,12 +543,35 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             hint = hint or _peek_assembly(name, data)
         assembly = opt.assembly if opt.assembly != "auto" else (hint or "GRCh38")
 
+        # ---- connectivity: one quick request tells us whether Ensembl is reachable at all
+        if net:
+            try:
+                ensembl_release(http, cache, "GRCh38")
+            except OfflineError as e:
+                if not local:
+                    raise ConnectionError(
+                        "Cannot reach the Ensembl REST API (rest.ensembl.org). Check the internet connection, "
+                        "or use the local VEP mode for VCF/genomic input.") from e
+                net = False
+                warnings.append("No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold "
+                                "are skipped.")
+            except ApiError as e:
+                log.warning("Ensembl release lookup failed: %s", e)
+
         def load(asm):
             regions = None
             if genes and files:
-                regions, missing = gene_regions(http, cache, genes, asm)
-                if missing:
-                    warnings.append(f"Gene(s) not found in Ensembl: {', '.join(missing)}")
+                if net:
+                    try:
+                        regions, missing = gene_regions(http, cache, genes, asm)
+                        if missing:
+                            warnings.append(f"Gene(s) not found in Ensembl: {', '.join(missing)}")
+                    except ApiError as e:
+                        status.fail("Ensembl gene lookup", str(e), genes)
+                        regions = None
+                if regions is None:
+                    warnings.append("Gene coordinates unavailable: the gene filter is applied after annotation "
+                                    "(slower for large files).")
             parsed = ParsedInput()
             if text and text.strip():
                 parsed.extend(parse_text(text, gene=opt.default_gene))
@@ -517,56 +586,102 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
         # ---- verify REF alleles against the genome; auto-switch build if clearly wrong
         region_vars = [v for v in parsed.variants if v.ok and v.kind == "region"]
         ref_seqs = {}
-        if region_vars:
+        if region_vars and net:
             say("Checking genome build", 0, 1)
             small = len(region_vars) <= 200
             sample = region_vars if small else region_vars[:: max(1, len(region_vars) // 50)][:50]
-            rate, ref_seqs = _match_rate(http, assembly, sample, cache)
-            if rate is not None and rate < 0.9:
-                other = "GRCh37" if assembly == "GRCh38" else "GRCh38"
-                rate2, seqs2 = _match_rate(http, other, sample, cache)
-                if opt.assembly == "auto" and not hint and rate2 is not None and rate2 > rate and rate2 >= 0.9:
-                    warnings.append(f"REF alleles match {other} ({rate2:.0%}) better than {assembly} ({rate:.0%}); "
-                                    f"using {other}.")
-                    assembly, ref_seqs = other, seqs2
-                    if genes and files:
-                        parsed = load(assembly)
-                        region_vars = [v for v in parsed.variants if v.ok and v.kind == "region"]
-                else:
-                    warnings.append(f"Only {rate:.0%} of checked REF alleles match {assembly}"
-                                    + (f" ({other}: {rate2:.0%})" if rate2 is not None else "")
-                                    + ". Check the genome build and coordinates.")
+            try:
+                rate, ref_seqs = _match_rate(http, assembly, sample, cache)
+                if rate is not None and rate < 0.9:
+                    other = "GRCh37" if assembly == "GRCh38" else "GRCh38"
+                    rate2, seqs2 = _match_rate(http, other, sample, cache)
+                    if opt.assembly == "auto" and not hint and rate2 is not None and rate2 > rate and rate2 >= 0.9:
+                        warnings.append(f"REF alleles match {other} ({rate2:.0%}) better than {assembly} ({rate:.0%}); "
+                                        f"using {other}.")
+                        assembly, ref_seqs = other, seqs2
+                        if genes and files:
+                            parsed = load(assembly)
+                            region_vars = [v for v in parsed.variants if v.ok and v.kind == "region"]
+                    else:
+                        warnings.append(f"Only {rate:.0%} of checked REF alleles match {assembly}"
+                                        + (f" ({other}: {rate2:.0%})" if rate2 is not None else "")
+                                        + ". Check the genome build and coordinates.")
+            except ApiError as e:
+                status.fail("Genome build check", str(e))
             say("Checking genome build", 1, 1)
+        elif region_vars and opt.assembly == "auto" and not hint:
+            warnings.append(f"Genome build not verified (offline); assuming {assembly}.")
         ref_note = {}
         for v in region_vars:
             g = ref_seqs.get(v.query)
             if g and g != v.ref:
                 ref_note[v.query] = f"REF {v.ref} does not match {assembly} ({g})"
 
-        # ---- VEP
+        release = None
+        if net:
+            try:
+                release = ensembl_release(http, cache, assembly)
+            except ApiError as e:
+                log.warning("Ensembl release lookup failed: %s", e)
+
+        # ---- VEP (local and/or REST)
         ok_vars = [v for v in parsed.variants if v.ok]
         queries: dict[str, list[str]] = {}
         for v in ok_vars:
             queries.setdefault(v.kind, []).append(v.query)
         n_unique = sum(len(set(q)) for q in queries.values())
-        vep = Vep(http, cache, assembly, workers=opt.workers)
         full = {**BASE_PARAMS, **PREDICTOR_PARAMS}
-        if not opt.predictors:
-            res = vep.annotate(queries, BASE_PARAMS, say, "Annotating variants (VEP)")
-        elif n_unique <= 200:
-            res = vep.annotate(queries, full, say, "Annotating + predictors (VEP)")
+        no_predictors: set = set()   # (kind, query) annotated, but the predictor plugins failed
+        res: dict = {}
+        local_version = None
+        if local:
+            lv = LocalVep(cache, assembly, opt.vep_command, opt.vep_args, status=status)
+            local_version = lv.version()
+            res.update(lv.annotate({"region": queries.get("region", [])}, None, say, "Annotating variants (local VEP)"))
+            rest_queries = {k: v for k, v in queries.items() if k != "region"}
+            if rest_queries and not net:
+                res.update(lv.annotate(rest_queries))
+                rest_queries = {}
         else:
-            res = vep.annotate(queries, BASE_PARAMS, say, "Annotating variants (VEP, fast pass)")
-            detail: dict[str, list[str]] = {}
-            for (kind, q), val in res.items():
-                for r in val.get("results", []):
-                    if any((set(tc.get("consequence_terms") or []) & DETAIL_CONSEQUENCES)
-                           and (not genes or (tc.get("gene_symbol") or "").upper() in genes)
-                           for tc in r.get("transcript_consequences") or []):
-                        detail.setdefault(kind, []).append(q)
-                        break
-            if detail:
-                res.update(vep.annotate(detail, full, say, "Scoring coding variants (predictors)"))
+            rest_queries = queries
+        if rest_queries:
+            vep = Vep(http, cache, assembly, workers=opt.workers, release=release, status=status)
+            n_rest = sum(len(set(q)) for q in rest_queries.values())
+            if not opt.predictors:
+                res.update(vep.annotate(rest_queries, BASE_PARAMS, say, "Annotating variants (VEP)"))
+            elif n_rest <= 200:
+                part = vep.annotate(rest_queries, full, say, "Annotating + predictors (VEP)",
+                                    source="Ensembl VEP + predictors")
+                retry: dict[str, list[str]] = {}
+                for (kind, q), val in part.items():
+                    if val.get("service_error"):
+                        retry.setdefault(kind, []).append(q)
+                if retry:  # plugins are the usual culprit: try again without them
+                    base = vep.annotate(retry, BASE_PARAMS, say, "Retrying without predictors")
+                    for k, val in base.items():
+                        if "results" in val:
+                            part[k] = val
+                            no_predictors.add(k)
+                res.update(part)
+            else:
+                part = vep.annotate(rest_queries, BASE_PARAMS, say, "Annotating variants (VEP, fast pass)")
+                detail: dict[str, list[str]] = {}
+                for (kind, q), val in part.items():
+                    for r in val.get("results", []):
+                        if any((set(tc.get("consequence_terms") or []) & DETAIL_CONSEQUENCES)
+                               and (not genes or (tc.get("gene_symbol") or "").upper() in genes)
+                               for tc in r.get("transcript_consequences") or []):
+                            detail.setdefault(kind, []).append(q)
+                            break
+                if detail:
+                    scored = vep.annotate(detail, full, say, "Scoring coding variants (predictors)",
+                                          source="VEP predictor plugins")
+                    for k, val in scored.items():
+                        if "results" in val:
+                            part[k] = val
+                        else:  # keep the base annotation instead of losing the variant
+                            no_predictors.add(k)
+                res.update(part)
 
         # ---- rows
         rows, errors = [], []
@@ -584,16 +699,22 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             if not vrows:
                 n_no_protein += 1
             for r in vrows:
+                notes = []
                 if v.query in ref_note:
-                    r["notes"] = ref_note[v.query]
+                    notes.append(ref_note[v.query])
+                if (v.kind, v.query) in no_predictors:
+                    notes.append("predictors unavailable (service error; run again to retry)")
+                r["notes"] = "; ".join(notes) or None
             rows.extend(vrows)
 
         # ---- ClinVar (exact allele)
         records = {}
-        if opt.clinvar and rows:
+        if opt.clinvar and rows and net:
             say("ClinVar classification", 0, 1)
-            records = cv.fetch(http, cache, {x for r in rows for x in r.get("_vcvs", [])})
+            records = cv.fetch(http, cache, {x for r in rows for x in r.get("_vcvs", [])}, status=status)
             say("ClinVar classification", 1, 1)
+        elif opt.clinvar and rows:
+            status.skip("ClinVar", "offline: classification taken from the VEP data (all submissions)")
         for r in rows:
             rec = cv.match(records, r.get("_vcvs", []), r.get("_spdi"), r.get("mane_select"), r.get("hgvsc"))
             if rec:
@@ -605,20 +726,26 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
                 r["clinvar_ids"] = rec["accession"]
             elif r.get("_clinvar_vep"):
                 r["clinvar"] = f"{r['_clinvar_vep']} (submissions)"
+            if any(status.failed("ClinVar", x) for x in r.get("_vcvs", [])):
+                r["notes"] = "; ".join(x for x in (r.get("notes"), "ClinVar unavailable (service error)") if x)
             for k in ("_vcvs", "_spdi", "_clinvar_vep"):
                 r.pop(k, None)
 
         # ---- protein context
         uni, afd, seqs = {}, {}, {}
         prot_rows = [r for r in rows if r.get("protein_position")]
-        if prot_rows and opt.protein_context:
+        if prot_rows and opt.protein_context and net:
             say("Protein context (UniProt, AlphaFold)", 0, 1)
             accs = {r["uniprot"] for r in prot_rows if r.get("uniprot")}
-            uni = prot.fetch_uniprot(http, cache, accs, workers=opt.workers)
-            afd = prot.fetch_alphafold(http, cache, accs, workers=opt.workers)
+            uni = prot.fetch_uniprot(http, cache, accs, workers=opt.workers, status=status)
+            afd = prot.fetch_alphafold(http, cache, accs, workers=opt.workers, status=status)
             say("Protein context (UniProt, AlphaFold)", 1, 1)
-        if prot_rows and opt.sequences:
-            seqs = prot.fetch_protein_sequences(http, cache, {r.get("protein_id") for r in prot_rows}, assembly)
+        elif prot_rows and opt.protein_context:
+            status.skip("UniProt", "offline")
+            status.skip("AlphaFold DB", "offline")
+        if prot_rows and opt.sequences and net:
+            seqs = prot.fetch_protein_sequences(http, cache, {r.get("protein_id") for r in prot_rows}, assembly,
+                                                status=status)
 
         sequences = {}
         for i, r in enumerate(rows):
@@ -626,7 +753,10 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             pend = r.pop("_protein_end", None)
             notes = [r["notes"]] if r.get("notes") else []
             pos = r.get("protein_position")
-            wt = seqs.get((r.get("protein_id") or "").split(".")[0])
+            pid = (r.get("protein_id") or "").split(".")[0]
+            wt = seqs.get(pid)
+            if pid and not wt and status.failed("Ensembl protein sequences", pid):
+                notes.append("protein sequence unavailable (service error)")
             if wt:
                 r["protein_length"] = len(wt)
             if pos and wt and r.get("ref_aa"):
@@ -639,7 +769,12 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
                 if mut is not None:
                     sequences[i] = {"wt": wt, "mut": mut, "note": note,
                                     "header": f"{r.get('gene')}|{r.get('protein_change')}|{r.get('protein_id')}|{r.get('input')}"}
-            entry = uni.get(r.get("uniprot") or "")
+            acc = r.get("uniprot") or ""
+            if acc and pos and status.failed("UniProt", acc):
+                notes.append("UniProt unavailable (service error)")
+            if acc and pos and status.failed("AlphaFold DB", acc):
+                notes.append("AlphaFold unavailable (service error)")
+            entry = uni.get(acc)
             if entry and pos:
                 r["protein_name"] = entry.get("name")
                 r["protein_function"] = entry.get("function")
@@ -664,7 +799,7 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis
             r["spliceai_effect"] = ("likely splice-altering" if (r.get("spliceai_max") or 0) >= 0.5 else
                                     "possible" if (r.get("spliceai_max") or 0) >= 0.2 else None)
-            r["notes"] = "; ".join(notes) or None
+            r["notes"] = "; ".join(dict.fromkeys(notes)) or None
 
         table = pd.DataFrame(rows, columns=COLUMNS) if rows else pd.DataFrame(columns=COLUMNS)
         errs = pd.DataFrame(errors, columns=["input", "source", "error"])
@@ -684,9 +819,24 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             warnings.append(f"Multi-sample VCF ({len(parsed.samples)} samples): carriers listed per variant. "
                             "Choose one sample to get its zygosity.")
         warnings.extend(parsed.warnings)
+        warnings.extend(_source_warnings(status))
+        run = {
+            "tool": f"MissensExplorer {__version__}",
+            "started_utc": started,
+            "seconds": stats["seconds"],
+            "assembly": assembly,
+            "annotation": (f"local VEP ({local_version or 'version unknown'})" if local else
+                           f"Ensembl VEP REST, release {release or 'unknown'}"),
+            "ensembl_release": release,
+            "options": {k: v for k, v in asdict(opt).items() if k not in ("cache_path",)},
+            "inputs": {"text_lines": len([x for x in (text or "").splitlines() if x.strip()]),
+                       "files": [_file_info(n, d) for n, d in files]},
+            "sources": status.summary(),
+            "python": platform.python_version(),
+        }
         say("Done", 1, 1)
         return PredictionResult(table=table, errors=errs, assembly=assembly, warnings=warnings, stats=stats,
-                                sequences=sequences, alphafold=afd, uniprot=uni)
+                                sequences=sequences, alphafold=afd, uniprot=uni, run=run, sources=status.summary())
     finally:
         http.close()
 

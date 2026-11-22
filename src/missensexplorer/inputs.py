@@ -417,8 +417,21 @@ def read_table(df, source: str = "table", gene: str | None = None) -> ParsedInpu
 
 def read_file(name: str, data: bytes | None = None, *, gene: str | None = None,
               sample: str | None = None, regions=None, pass_only: bool = False) -> ParsedInput:
-    """Read a VCF / VCF.gz / CSV / TSV / XLSX / TXT file given its name and (optionally) bytes."""
+    """Read a VCF / VCF.gz / CSV / TSV / XLSX / TXT file given its name and (optionally) bytes.
+
+    VCF files given by path are streamed line by line (never fully loaded in memory).
+    """
     if data is None:
+        with open(name, "rb") as fh:
+            head = fh.read(2)
+            gz = head == b"\x1f\x8b"
+        opener = gzip.open if gz else open
+        with opener(name, "rt", encoding="utf-8", errors="replace") as fh:
+            first = fh.read(4096)
+        low = Path(name).name.lower().removesuffix(".gz").removesuffix(".bgz")
+        if low.endswith(".vcf") or first.startswith("##fileformat=VCF") or first.startswith("#CHROM"):
+            with opener(name, "rt", encoding="utf-8", errors="replace") as fh:
+                return read_vcf(fh, source=Path(name).name, sample=sample, regions=regions, pass_only=pass_only)
         data = Path(name).read_bytes()
     base = Path(name).name
     lower = base.lower()

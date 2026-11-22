@@ -45,12 +45,20 @@ def main(argv: list[str] | None = None) -> int:
     app.setStyleSheet(th.stylesheet())
     app.setWindowIcon(th.app_icon())
 
+    from . import logs
+
+    def unexpected(exc):
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.warning(holder.get("win"), i18n.t("unexpected"),
+                            i18n.t("unexpected_body", path=str(logs.log_file())) + f"\n\n{exc}")
+
+    holder: dict = {}
+    logs.setup(unexpected)
     settings = QSettings("MissensExplorer", "MissensExplorer")
     i18n.set_language(str(settings.value("language", QLocale.system().name())))
 
     from .window import MainWindow
-
-    holder = {}
 
     def build(old=None):
         win = MainWindow()

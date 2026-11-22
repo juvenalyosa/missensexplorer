@@ -337,6 +337,23 @@ class MainWindow(QMainWindow):
         self.build.setMinimumWidth(10)
         grow.addWidget(self.build, 1)
         op.addLayout(grow)
+        erow = QHBoxLayout()
+        erow.addWidget(label(t("engine")))
+        self.engine = QComboBox()
+        self.engine.addItem(t("engine_rest"), "rest")
+        self.engine.addItem(t("engine_local"), "local")
+        self.engine.setToolTip(t("engine_tip"))
+        self.engine.setMinimumWidth(10)
+        erow.addWidget(self.engine, 1)
+        op.addLayout(erow)
+        self.vep_cmd = QLineEdit(placeholderText=t("vep_cmd"))
+        self.vep_cmd.setToolTip(t("engine_tip"))
+        self.vep_args = QLineEdit(placeholderText=t("vep_args"))
+        self.offline = Toggle(t("offline"), False, t("offline_tip"))
+        for w in (self.vep_cmd, self.vep_args, self.offline):
+            op.addWidget(w)
+        self.engine.currentIndexChanged.connect(self._engine_changed)
+        self.engine.currentIndexChanged.connect(self._options_summary)
         self.opt_pred = Toggle(t("opt_predictors"), True, t("opt_predictors_tip"))
         self.opt_ctx = Toggle(t("opt_context"), True)
         self.opt_cv = Toggle(t("opt_clinvar"), True)
@@ -354,6 +371,7 @@ class MainWindow(QMainWindow):
         op.addLayout(wrow)
         b.addWidget(self.opt_panel)
         self.opt_btn.toggled.connect(self._toggle_options)
+        self._engine_changed()
         self._toggle_options(False)
         b.addStretch(1)
         scroll.setWidget(body)
@@ -395,7 +413,17 @@ class MainWindow(QMainWindow):
 
     def _options_summary(self, *_):
         n = sum(w.isChecked() for w in (self.opt_pred, self.opt_ctx, self.opt_cv, self.opt_nc))
-        self.opt_summary.setText(t("options_summary", build=self.build.currentText().split(" /")[0], n=n))
+        txt = t("options_summary", build=self.build.currentText().split(" /")[0], n=n)
+        if self.engine.currentData() == "local":
+            txt += f" · {t('engine_local')}"
+        self.opt_summary.setText(txt)
+
+    def _engine_changed(self, *_):
+        local = self.engine.currentData() == "local"
+        for w in (self.vep_cmd, self.vep_args, self.offline):
+            w.setVisible(local)
+        if not local:
+            self.offline.setChecked(False)
 
     # ------------------------------------------------------------------ header
     def _build_header(self) -> QWidget:
@@ -666,6 +694,8 @@ class MainWindow(QMainWindow):
             lang.addAction(act)
         h = mb.addMenu(t("m_help"))
         h.addAction(t("m_formats"), self.show_formats)
+        h.addAction(t("m_run_info"), self.show_run_info)
+        h.addAction(t("m_open_log"), self.open_log)
         h.addAction(t("m_clear_cache"), self.clear_cache)
         h.addSeparator()
         h.addAction(t("m_about"), self.show_about)
@@ -690,6 +720,11 @@ class MainWindow(QMainWindow):
             w.setChecked(str(s.value(key, default)).lower() == "true")
         self.workers.setValue(int(s.value("workers", 4)))
         self.opt_btn.setChecked(str(s.value("options_open", False)).lower() == "true")
+        self.engine.setCurrentIndex(max(0, self.engine.findData(s.value("engine", "rest"))))
+        self.vep_cmd.setText(s.value("vep_cmd", "") or "")
+        self.vep_args.setText(s.value("vep_args", "") or "")
+        self.offline.setChecked(str(s.value("offline", False)).lower() == "true")
+        self._engine_changed()
         self.drop.start_dir = s.value("last_dir", str(Path.home()))
 
     def _save_settings(self):
@@ -702,6 +737,10 @@ class MainWindow(QMainWindow):
         s.setValue("noncoding", self.opt_nc.isChecked())
         s.setValue("workers", self.workers.value())
         s.setValue("options_open", self.opt_btn.isChecked())
+        s.setValue("engine", self.engine.currentData())
+        s.setValue("vep_cmd", self.vep_cmd.text())
+        s.setValue("vep_args", self.vep_args.text())
+        s.setValue("offline", self.offline.isChecked())
         s.setValue("last_dir", self.drop.start_dir)
 
     def closeEvent(self, e):
@@ -784,6 +823,9 @@ class MainWindow(QMainWindow):
             pass_only=self.pass_only.isChecked(), include_noncoding=self.opt_nc.isChecked(),
             predictors=self.opt_pred.isChecked(), protein_context=self.opt_ctx.isChecked(),
             clinvar=self.opt_cv.isChecked(), workers=self.workers.value(),
+            vep=self.engine.currentData(), vep_command=self.vep_cmd.text().strip() or None,
+            vep_args=self.vep_args.text().strip() or None,
+            offline=self.offline.isChecked() and self.engine.currentData() == "local",
         )
 
     def run_prediction(self):
@@ -833,7 +875,9 @@ class MainWindow(QMainWindow):
         self.show_result(res)
 
     def _on_failed(self, msg):
-        QMessageBox.warning(self, t("failed"), msg)
+        from .logs import log_file
+
+        QMessageBox.warning(self, t("failed"), f"{tr_text(msg)}\n\n{log_file()}")
 
     def _on_cancelled(self):
         self.toast.show_message(t("cancel"))
@@ -855,8 +899,11 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(1)
         self._show_header_tools(True)
         self.title.setText(t("results"))
+        run = res.run or {}
+        engine = (t("local_label") if str(run.get("annotation", "")).startswith("local")
+                  else f"Ensembl {run.get('ensembl_release')}" if run.get("ensembl_release") else "Ensembl")
         self.subtitle.setText(t("subtitle", inputs=s.get("inputs", 0), rows=s.get("rows", 0), build=res.assembly,
-                                secs=s.get("seconds", 0)))
+                                engine=engine, secs=s.get("seconds", 0)))
         self.k_inputs.set(s.get("inputs", 0))
         self.k_rows.set(s.get("rows", 0))
         self.k_dmg.set(s.get("likely_damaging", 0))
@@ -871,7 +918,7 @@ class MainWindow(QMainWindow):
 
         clear_layout(self.banners)
         for w in res.warnings:
-            self.banners.addWidget(self._banner(tr_text(w)))
+            self.banners.addWidget(self._banner(tr_text(w), retry="did not respond" in w))
         skipped = [t(k, n=s[key]) for key, k in (("no_protein_effect", "skip_noprot"),
                                                   ("file_skipped_not_carried", "skip_carried"),
                                                   ("file_skipped_outside_genes", "skip_genes"),
@@ -931,7 +978,7 @@ class MainWindow(QMainWindow):
         p.end()
         return QIcon(pm)
 
-    def _banner(self, text):
+    def _banner(self, text, retry: bool = False):
         f = QFrame(objectName="Banner")
         lay = QHBoxLayout(f)
         lay.setContentsMargins(14, 9, 14, 9)
@@ -939,6 +986,12 @@ class MainWindow(QMainWindow):
         ic.setPixmap(th.icon("alert", "#9A7414", 16).pixmap(16, 16))
         lay.addWidget(ic)
         lay.addWidget(label(text, wrap=True), 1)
+        if retry:
+            b = QPushButton(f" {t('retry')}")
+            b.setIcon(th.icon("reset", th.INK_2, 14))
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.clicked.connect(self.run_prediction)
+            lay.addWidget(b)
         return f
 
     def _filter_changed(self, *_):
@@ -1323,6 +1376,32 @@ class MainWindow(QMainWindow):
             return
         self.drop.start_dir = str(Path(path).parent)
         self.toast.show_message(t("saved", path=Path(path).name))
+
+    def show_run_info(self):
+        if not self.res:
+            return
+        from ..report import run_info
+
+        info = run_info(self.res)
+        dlg = QDialog(self)
+        dlg.setWindowTitle(t("run_info_title"))
+        dlg.resize(820, 520)
+        lay = QVBoxLayout(dlg)
+        lay.setContentsMargins(20, 18, 20, 18)
+        lay.addWidget(label(t("run_info_title"), "H2"))
+        view = QTextBrowser()
+        rows = "".join(
+            f"<tr><td style='color:{th.MUTED};padding:4px 14px 4px 0;vertical-align:top'>{html.escape(str(k))}</td>"
+            f"<td style='padding:4px 0'>{html.escape(tr_text(str(v)))}</td></tr>" for k, v in info.itertuples(index=False))
+        view.setHtml(f"<table cellspacing='0'>{rows}</table>")
+        lay.addWidget(view)
+        dlg.exec()
+
+    def open_log(self):
+        from .logs import log_file
+
+        f = log_file()
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(f if f.exists() else f.parent)))
 
     def show_formats(self):
         box = QMessageBox(self)
