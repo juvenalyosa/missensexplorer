@@ -20,7 +20,7 @@ from missensexplorer import __version__
 from missensexplorer.aa import AA_NAMES
 from missensexplorer.cache import Cache
 from missensexplorer.inputs import vcf_samples
-from missensexplorer.predict import PredictOptions, is_damaging, predict
+from missensexplorer.predict import PredictOptions, predict, prediction_status
 from missensexplorer.report import to_bytes, to_fasta
 
 st.set_page_config(page_title="MissensExplorer", page_icon="🧬", layout="wide")
@@ -55,15 +55,7 @@ STATUS = {
 
 
 def status_of(label: str | None) -> str:
-    label = label or ""
-    if is_damaging(label):
-        return "Damaging"
-    low = label.lower()
-    if "benign" in low or label.startswith("Silent"):
-        return "Benign / silent"
-    if label.startswith(("Uncertain", "Possible", "Protein-altering", "Splice region")):
-        return "Uncertain"
-    return "Not assessed"
+    return prediction_status(label)
 
 
 def _isnum(v) -> bool:

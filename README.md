@@ -19,10 +19,32 @@ from a web app, from the command line, or from Python.
 git clone https://github.com/jyosa/missensexplorer
 cd missensexplorer
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -e ".[web]"
+pip install -e ".[gui,web]"
 
-missensexplorer web                                    # opens http://localhost:8501
+missensexplorer gui                                    # desktop app (Qt)
+missensexplorer web                                    # web app at http://localhost:8501
 ```
+
+### Desktop app
+
+`missensexplorer gui` (or `missensexplorer-gui`) opens a native Qt window. Qt runs on macOS,
+Windows and Linux; the app has been tested on macOS. Type variants or drag files onto the window,
+then press **Predict protein effect**
+(⌘/Ctrl + Enter). The results table can be filtered by prediction and searched; the panel below
+shows, for the selected variant:
+
+- the predictor scores against their published thresholds, the physico-chemistry of the change and
+  the sequence around it;
+- the UniProt context and the ClinVar and gnomAD data;
+- three tabs: the AlphaFold model in 3D with the mutated residue highlighted, all variants along the
+  protein over its domains, and the wild-type and mutant protein sequences (copy as FASTA).
+
+The interface is available in Spanish and English (*View → Language*). Results export to Excel, CSV,
+JSON and FASTA. The desktop app needs `PySide6` (installed by the `gui` extra).
+
+### Web app
+
+![MissensExplorer web interface](docs/screenshot.png)
 
 Or with Docker:
 
@@ -33,11 +55,14 @@ docker run -p 8501:8501 missensexplorer               # then open http://localho
 
 ### Inicio rápido (español)
 
-1. Instala con los comandos de arriba y ejecuta `missensexplorer web`.
-2. Escribe tus mutaciones, por ejemplo `BRAF V600E` o `TP53: R175H, R248Q`, o sube tu VCF.
-3. Pulsa **Predict protein effect**. Haz clic en una fila para ver el detalle: predictores, cambio
-   fisicoquímico, dominio afectado, estructura de AlphaFold, ClinVar y gnomAD.
-4. Descarga los resultados en CSV, Excel, JSON o FASTA (proteína mutante).
+1. Instala con los comandos de arriba y ejecuta `missensexplorer gui` (aplicación de escritorio, en
+   español) o `missensexplorer web` (en el navegador).
+2. Escribe tus mutaciones, por ejemplo `BRAF V600E` o `TP53: R175H, R248Q`, o arrastra tu VCF a la
+   ventana.
+3. Pulsa **Predecir efecto en la proteína** (⌘/Ctrl + Enter). Haz clic en una fila para ver el
+   detalle: predictores, cambio fisicoquímico, dominio afectado, estructura 3D de AlphaFold, ClinVar
+   y gnomAD.
+4. Exporta los resultados a Excel, CSV, JSON o FASTA (proteína mutante).
 
 ## What you can give it
 
@@ -179,8 +204,8 @@ modern predictors, protein structure and a web interface. The rewrite also fixes
 ## Development
 
 ```bash
-pip install -e ".[dev]"
-pytest                 # fast offline tests
+pip install -e ".[dev,gui]"
+pytest                 # fast offline tests (the desktop tests run headless)
 pytest -m network      # live end-to-end tests against the public APIs
 ```
 

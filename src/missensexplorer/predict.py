@@ -273,6 +273,21 @@ def is_damaging(label) -> bool:
             or label == "Protein-altering in-frame (likely damaging)")
 
 
+STATUSES = ["Damaging", "Uncertain", "Benign / silent", "Not assessed"]
+
+
+def prediction_status(label) -> str:
+    """Collapse a prediction label into one of STATUSES (for colour, filters and charts)."""
+    label = label if isinstance(label, str) else ""
+    if is_damaging(label):
+        return "Damaging"
+    if "benign" in label.lower() or label.startswith("Silent"):
+        return "Benign / silent"
+    if label.startswith(("Uncertain", "Possible", "Protein-altering", "Splice region")):
+        return "Uncertain"
+    return "Not assessed"
+
+
 def _nmd(exon: str | None, terms: set[str]) -> str | None:
     if not exon or not terms & {"stop_gained", "frameshift_variant"}:
         return None

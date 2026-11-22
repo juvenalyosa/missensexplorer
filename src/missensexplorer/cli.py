@@ -3,7 +3,8 @@
     missensexplorer "BRAF V600E" "TP53: R175H, R248Q" rs28934578
     missensexplorer -f sample.vcf.gz --genes TP53,BRCA1 -o results.xlsx
     missensexplorer --gene TP53 R175H R248Q R273H --fasta mutants.fa
-    missensexplorer web
+    missensexplorer web       # browser interface
+    missensexplorer gui       # desktop app (Qt)
 """
 
 from __future__ import annotations
@@ -133,8 +134,19 @@ def run_cache(argv: list[str]) -> int:
     return 0
 
 
+def run_gui(argv: list[str]) -> int:
+    try:
+        from .gui import main as gui_main
+    except ImportError:
+        print("The desktop app needs Qt for Python:  pip install 'missensexplorer[gui]'", file=sys.stderr)
+        return 1
+    return gui_main(argv)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] in (["gui"], ["desktop"]):
+        return run_gui(argv[1:])
     if argv[:1] == ["web"]:
         return run_web(argv[1:])
     if argv[:1] == ["cache"]:

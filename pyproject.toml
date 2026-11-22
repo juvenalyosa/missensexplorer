@@ -27,10 +27,14 @@ dependencies = [
 
 [project.optional-dependencies]
 web = ["streamlit>=1.40"]
+gui = ["PySide6>=6.6"]
 dev = ["pytest>=8", "streamlit>=1.40"]
 
 [project.scripts]
 missensexplorer = "missensexplorer.cli:main"
+
+[project.gui-scripts]
+missensexplorer-gui = "missensexplorer.gui:main"
 
 [project.urls]
 Homepage = "https://github.com/jyosa/missensexplorer"
