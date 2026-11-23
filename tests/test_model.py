@@ -93,7 +93,8 @@ def test_frequency_evidence():
     assert acmg.frequency({"gnomad_af": 0.04, "gnomad_popmax_af": 0.062}) == "common: BA1 (grpmax 6.2%)"
     assert acmg.frequency({"gnomad_af": 0.004, "gnomad_popmax_af": 0.013}) == "frequent: BS1 candidate (grpmax 1.3%)"
     assert acmg.frequency({"gnomad_af": 1e-5, "gnomad_popmax_af": 2e-5}) == "rare (grpmax 0.002%)"
-    assert acmg.frequency({}) == "not found in gnomAD"
+    assert acmg.frequency({}) == "no gnomAD frequency in Ensembl's data (not checked in gnomAD)"
+    assert acmg.frequency({"_gnomad": {"found": False, "dataset": "gnomAD v4"}}) == "absent from gnomAD v4"
     assert acmg.frequency({"chrom": "MT"}) is None
 
 

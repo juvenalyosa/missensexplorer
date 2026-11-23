@@ -89,7 +89,17 @@ def fake_services(monkeypatch):
         status.fail("UniProt", "HTTP 500", accs)
         return {}
 
+    def clinvar_search_down(http, cache, windows, assembly, status=None):
+        status.fail("ClinVar", "HTTP 503", [f"{assembly}:{c}:{a}-{b}" for c, a, b in windows])
+        return {}
+
+    def gnomad_down(http, cache, variants, assembly, status=None):
+        status.fail("gnomAD", "HTTP 503", [f"{c}-{p}-{r}-{a}" for c, p, r, a in variants])
+        return {}
+
     monkeypatch.setattr(P.cv, "fetch", clinvar_down)
+    monkeypatch.setattr(P.cv, "search_windows", clinvar_search_down)
+    monkeypatch.setattr(P.gnomad, "lookup", gnomad_down)
     monkeypatch.setattr(P.prot, "fetch_uniprot", uniprot_down)
     monkeypatch.setattr(P.prot, "fetch_alphafold", lambda *a, **k: {})
     monkeypatch.setattr(P.prot, "fetch_protein_sequences", lambda *a, **k: {})

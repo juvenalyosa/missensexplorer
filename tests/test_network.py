@@ -25,6 +25,18 @@ def test_grch37_autodetect(tmp_path):
     assert set(res.table["gene"]) == {"BRAF", "TP53"}
 
 
+def test_ps1_pm5_and_pm2_live(tmp_path):
+    # BRAF V600L by c.1798G>T: c.1798G>C makes the same change and is pathogenic (PS1); absent from gnomAD
+    # (PM2). PKD1L1 P885R is a gnomAD v4 singleton that Ensembl gives no frequency: found by the direct check.
+    res = predict(text="7:140753337 C>A\n7:47890563 G>C", options=PredictOptions(
+        cache_path=str(tmp_path / "c.sqlite"), protein_context=False))
+    t = res.table.set_index("protein_change")
+    assert t.loc["V600L", "acmg_ps1_pm5"].startswith("PS1 (same change by c.1798G>C")
+    assert t.loc["V600L", "acmg_pm2"].startswith("PM2_Supporting (absent from gnomAD v4")
+    assert t.loc["P885R", "population_frequency"].startswith("rare (grpmax")
+    assert t.loc["P885R", "acmg_pm2"].startswith("depends on the disease")
+
+
 # --------------------------------------------------------------------------- API contracts
 # These check that the external services still return the fields MissensExplorer reads.
 # They run every night on GitHub (.github/workflows/nightly.yml) to catch API changes early.

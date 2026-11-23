@@ -134,6 +134,15 @@ S = {
     "acmg": ("EVIDENCIA ACMG (ORIENTATIVA)", "ACMG EVIDENCE (INDICATIVE)"),
     "acmg_pp3": ("Computacional PP3/BP4", "Computational PP3/BP4"),
     "acmg_freq": ("Frecuencia poblacional", "Population frequency"),
+    "acmg_codes": ("Criterios", "Criteria"),
+    "acmg_ps1pm5": ("Mismo residuo PS1/PM5", "Same residue PS1/PM5"),
+    "acmg_pm2": ("Ausencia PM2", "Absence PM2"),
+    "acmg_note_residue": ("PS1/PM5: variantes missense patogénicas de ClinVar en el mismo residuo (no se comprueba si su "
+                          "clasificación es independiente de PS1/PM5). PM2: ausencia confirmada en gnomAD en una posición "
+                          "con lecturas suficientes; si la variante está presente, depende de la enfermedad.",
+                          "PS1/PM5: pathogenic ClinVar missense variants at the same residue (whether their "
+                          "classification is independent of PS1/PM5 is not checked). PM2: absence confirmed in gnomAD "
+                          "at a position with enough reads; if the variant is present, it depends on the disease."),
     "points": ("{n} puntos", "{n} points"),
     "acmg_note": ("Umbrales calibrados por ClinGen (REVEL; AlphaMissense si falta REVEL). Es solo una parte de la "
                   "clasificación ACMG: no reemplaza la revisión de un especialista.",
@@ -279,6 +288,30 @@ PHRASES_ES = [
     (r"^frequent: BS1 candidate \(grpmax (\S+)\)$", r"frecuente: posible BS1 (grpmax \1)"),
     (r"^rare \(grpmax (\S+)\)$", r"rara (grpmax \1)"),
     (r"^not found in gnomAD$", "no encontrada en gnomAD"),
+    (r"^absent from (gnomAD v[\d.]+)$", r"ausente de \1"),
+    (r"^no gnomAD frequency in Ensembl's data \(not checked in gnomAD\)$",
+     "sin frecuencia de gnomAD en los datos de Ensembl (no consultado en gnomAD)"),
+    (r"(\d+%) of exomes", r"\1 de los exomas"),
+    (r"^PM2_Supporting \(absent from (gnomAD v[\d.]+); >= 20 reads in (.+)\)$",
+     r"PM2_Supporting (ausente de \1; ≥ 20 lecturas en \2)"),
+    (r"^not applicable \(absent from (gnomAD v[\d.]+), but few reads there: >= 20 reads in (.+)\)$",
+     r"no aplicable (ausente de \1, pero con pocas lecturas: ≥ 20 lecturas en \2)"),
+    (r"^depends on the disease \(present in gnomAD(, failing gnomAD quality filters)?; compare with its maximum "
+     r"credible frequency\)$",
+     lambda m: "depende de la enfermedad (presente en gnomAD" + (", sin pasar sus filtros de calidad" if m.group(1)
+                                                                  else "") + "; compárese con su frecuencia máxima creíble)"),
+    (r"^not met \(frequent in gnomAD\)$", "no se cumple (frecuente en gnomAD)"),
+    (r"^none \(no pathogenic missense variant at this residue in ClinVar\)$",
+     "ninguna (ClinVar no tiene variantes missense patogénicas en este residuo)"),
+    (r"^not applied \(SpliceAI (\S+): the variant may act on splicing\)$",
+     r"no aplicada (SpliceAI \1: la variante podría actuar sobre el splicing)"),
+    (r"^not checked \(ClinVar turned off\)$", "no consultado (ClinVar desactivado)"),
+    (r"^not checked \(offline\)$", "no consultado (sin conexión)"),
+    (r"^not checked \(ClinVar did not respond\)$", "no consultado (ClinVar no respondió)"),
+    (r"same change by (c\.\S+?):", r"mismo cambio por \1:"),
+    (r": Pathogenic, (\d)★", r": patogénica, \1★"),
+    (r": Likely pathogenic, (\d)★", r": probablemente patogénica, \1★"),
+    (r"; and (\d+) more\)$", r"; y \1 más)"),
     (r"^none \((.+), indeterminate\)$", r"ninguna (\1, indeterminado)"),
     (r"frameshift: downstream sequence changes, not reconstructed",
      "cambio del marco de lectura: la secuencia posterior cambia y no se reconstruye"),

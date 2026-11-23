@@ -12,6 +12,7 @@ import pandas as pd
 
 from . import acmg
 from . import clinvar as cv
+from . import gnomad, residue
 from . import model
 from . import protein as prot
 from .aa import AA3_TO_1, substitution_profile
@@ -43,7 +44,8 @@ CADD_DAMAGING, CADD_BENIGN = 25.3, 22.7
 COLUMNS = [
     "input", "source", "sample", "zygosity", "genotype", "carriers",
     "gene", "protein_change", "hgvsp", "hgvsc", "consequence", "impact",
-    "prediction", "effect_score", "prediction_basis", "acmg_pp3_bp4", "acmg_points", "population_frequency",
+    "prediction", "effect_score", "prediction_basis", "acmg_codes", "acmg_pp3_bp4", "acmg_points", "acmg_ps1_pm5",
+    "acmg_pm2", "population_frequency",
     "alphamissense", "alphamissense_class", "revel", "cadd_phred", "eve", "eve_class", "popeve",
     "sift", "sift_score", "polyphen", "polyphen_score", "spliceai_max", "spliceai_effect",
     "grantham", "grantham_class", "blosum62", "hydropathy_change", "volume_change", "charge_change",
@@ -76,6 +78,7 @@ class PredictOptions:
     offline: bool = False                   # never use the internet (local VEP only; no ClinVar/UniProt/AlphaFold)
     common_af: float | None = 0.05          # gnomAD grpmax at/above which damaging/uncertain calls become benign (None = off)
     acmg_source: str = "model"              # PP3/BP4 from: model (own ClinGen-method calibration) | revel (ClinGen's)
+    gnomad_check: bool = True               # ask gnomAD directly about variants Ensembl gives no frequency (PM2)
     workers: int = 4
     cache: bool = True
     cache_path: str | None = None
@@ -571,6 +574,13 @@ def _file_info(name: str, data: bytes | None) -> dict:
     return {"name": os.path.basename(name), "bytes": size, "sha256": h.hexdigest()}
 
 
+def _vcf_alleles(r: dict) -> bool:
+    """SNVs and VCF-style indels (no '-'), which gnomAD can look up; not mitochondrial."""
+    ref, alt = str(r.get("ref") or ""), str(r.get("alt") or "")
+    return (bool(ref) and bool(alt) and "-" not in ref + alt and ref.isalpha() and alt.isalpha()
+            and str(r.get("chrom") or "").upper() not in ("MT", "M", "CHRM"))
+
+
 def _source_warnings(status: SourceStatus) -> list[str]:
     out = []
     for src, msgs in status.errors.items():
@@ -799,6 +809,35 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             for k in ("_vcvs", "_spdi", "_clinvar_vep"):
                 r.pop(k, None)
 
+        # ---- ACMG PS1/PM5: pathogenic missense variants at the same residue (ClinVar)
+        windows = {i: w for i, r in enumerate(rows) if (w := residue.window(r))}
+        residue_refs: dict[int, list] = {}
+        if windows and opt.clinvar and net:
+            say("ClinVar: same residue", 0, 1)
+            found = cv.search_windows(http, cache, list(windows.values()), assembly, status=status)
+            recs = cv.fetch(http, cache, {v for w in found.values() for v in w}, status=status)
+            for i, w in windows.items():
+                if w in found and all(v in recs for v in found[w]):
+                    residue_refs[i] = residue.references(rows[i], {v: recs[v] for v in found[w]}, assembly)
+            say("ClinVar: same residue", 1, 1)
+
+        # ---- gnomAD itself, for variants without a frequency in Ensembl's data (singletons, PM2)
+        need = {i: (str(r["chrom"]), int(r["pos"]), str(r["ref"]), str(r["alt"])) for i, r in enumerate(rows)
+                if r.get("gnomad_af") is None and r.get("pos") and _vcf_alleles(r)}
+        gnomad_info: dict[int, dict] = {}
+        if need and opt.gnomad_check and net:
+            say("gnomAD", 0, 1)
+            got = gnomad.lookup(http, cache, list(need.values()), assembly, status=status,
+                                progress=lambda k, n: say("gnomAD", k, n))
+            for i, k in need.items():
+                if k in got:
+                    gnomad_info[i] = got[k]
+                    if got[k]["found"]:
+                        rows[i]["gnomad_af"], rows[i]["gnomad_popmax_af"] = got[k]["af"], got[k]["grpmax"]
+            say("gnomAD", 1, 1)
+        elif need and opt.gnomad_check:
+            status.skip("gnomAD", "offline")
+
         # ---- protein context
         uni, afd, seqs = {}, {}, {}
         prot_rows = [r for r in rows if r.get("protein_position")]
@@ -866,7 +905,19 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             r.pop("_truncation", None)
             if "missense_variant" in terms:
                 r["acmg_pp3_bp4"], r["acmg_points"] = acmg.computational(r, opt.acmg_source)
+            if i in windows:
+                r["acmg_ps1_pm5"] = residue.evidence(r, residue_refs[i])[0] if i in residue_refs else (
+                    "not checked (" + ("ClinVar turned off" if not opt.clinvar else "offline" if not net else
+                                       "ClinVar did not respond") + ")")
+                if status.failed("ClinVar", f"{assembly}:{windows[i][0]}:{windows[i][1]}-{windows[i][2]}"):
+                    notes.append("ClinVar same-residue search unavailable (service error)")
+            r["_gnomad"] = gnomad_info.get(i)
+            r["acmg_pm2"] = acmg.pm2(r, r["_gnomad"])[0]
+            if i in need and i not in gnomad_info and opt.gnomad_check and net:
+                notes.append("gnomAD check unavailable (service error)")
             r["population_frequency"] = acmg.frequency(r)
+            r.pop("_gnomad")
+            r["acmg_codes"] = acmg.codes(r)
             if not acmg.ba1_exception(r):     # common but pathogenic/uncertain (ClinGen list): no frequency rule
                 label, basis = apply_frequency(label, basis, r.get("gnomad_popmax_af"), opt.common_af)
             r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis

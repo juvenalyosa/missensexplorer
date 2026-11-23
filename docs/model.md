@@ -351,3 +351,76 @@ with the one the level needs:
 - **Tied to one trained model.** The thresholds apply to model 2.3 as trained on 2026-11-23. After a
   retrain, the app falls back to REVEL until `benchmarks/calibrate_acmg.py` is run again, and a test
   fails as a reminder.
+
+## PS1, PM5 and PM2
+
+Three more ACMG/AMP criteria are computed automatically, next to PP3/BP4. They are listed with their
+points in `acmg_codes`, and explained in `acmg_ps1_pm5` and `acmg_pm2`.
+
+**PS1 and PM5: pathogenic variants at the same residue (ClinVar).**
+- **Search.** For every missense SNV, the tool searches ClinVar (E-utilities, batched) for the
+  pathogenic and likely pathogenic variants within two bases on each side, which covers the whole
+  codon.
+- **What counts as a reference variant.**
+  - A germline classification of Pathogenic, Pathogenic/Likely pathogenic or Likely pathogenic, with
+    review criteria (≥ 1 star, no conflicts).
+  - The same MANE Select transcript, protein position and reference amino acid. ClinVar names its
+    variants on that transcript.
+  - Not the variant itself.
+- **Strengths.**
+
+  | Reference variant | Pathogenic | Only likely pathogenic |
+  |---|---|---|
+  | Same amino-acid change, other nucleotide change | PS1 (+4) | PS1_Moderate (+2) |
+  | Another missense change at the residue | PM5 (+2) | PM5_Supporting (+1) |
+
+  The lower strengths for likely pathogenic references follow several ClinGen expert panels (for
+  example glaucoma and HNF4A). Only the stronger of PS1 and PM5 is given, never both.
+- **Not given when SpliceAI ≥ 0.2.** The variant may then act through splicing rather than through
+  the amino-acid change.
+- **What you must still check.**
+  - Whether the reference variant was classified independently of PS1/PM5.
+  - Whether the reference variant itself acts through splicing (codons at exon edges).
+  - Any gene-specific rule of a ClinGen expert panel; some, for example, give PM5_Strong when two
+    pathogenic changes are known.
+  - Codons split by an intron, or reference variants named on another transcript, are not found.
+
+**PM2: absence from controls (gnomAD).**
+- **Strength.** ClinGen lowered PM2 to Supporting in 2020 (SVI recommendation v1.0).
+- **ClinGen's 2025 guidance on gnomAD v4.** Do not specify PM2 as strict absence; use a frequency
+  threshold calculated for each disease, from its inheritance, prevalence and penetrance.
+- **What the tool can decide.** It does not know the disease. But a variant that is truly absent
+  meets every such threshold, so the tool gives **PM2_Supporting (+1) only for confirmed absence**:
+  - gnomAD itself (v4 on GRCh38, v2.1 on GRCh37) does not have the variant;
+  - and at least half of gnomAD's exome samples have ≥ 20 reads at the position.
+- **Other cases.** A poorly covered position gives *not applicable*. A variant present in gnomAD
+  gives *depends on the disease*: compare its frequency with the disease's maximum credible allele
+  frequency.
+- **Why the tool asks gnomAD directly.** Ensembl attaches gnomAD frequencies only to variants in its
+  variation database, so many rare gnomAD variants, singletons above all, came back with no
+  frequency.
+  - Before this check, `population_frequency` called them *not found in gnomAD*.
+  - The tool now asks gnomAD about every variant without a frequency, and fills in its real one.
+  - In a random sample of 300 rare gnomAD v4 missense variants, 46% were in that situation: exactly
+    the ones without a dbSNP identifier.
+- **Combining with PP3/BP4.** Pejaver et al. (2022) allow PM2 and BS1 to be combined with PP3/BP4
+  without limits, because the PP3/BP4 score does not use allele frequency.
+
+**How informative they are** ([results](../benchmarks/results/acmg_criteria.md);
+`python benchmarks/acmg_criteria.py`).
+- **Data.** The held-out benchmark: 1,972 variants from genes the model never saw.
+- **Time split.** The reference variants come from the January 2023 ClinVar release, and the test
+  variants were classified after it.
+
+| Criterion | Pathogenic with it | Benign with it | Likelihood ratio | Needed |
+|---|---|---|---|---|
+| Any PS1/PM5, current ClinVar | 50.9% | 0.3% | 169 | ≥ 2.4 |
+| Any PS1/PM5, time split | 26.6% | 1.2% | 23 | ≥ 2.4 |
+| PM5_Supporting, time split | 11.3% | 1.2% | 9.8 (95% CI from 3.5) | 2.4 |
+| PM2_Supporting, rare variants | 46.7% | 1.0% | 46 (95% CI from 17) | 2.4 |
+
+- Every criterion clears, by far, the likelihood ratio its strength needs.
+- The ratios are optimistic. ClinVar submitters use these same criteria, and frequency, to classify
+  variants, so the labels are not independent of the evidence. The time split limits this for
+  PS1/PM5 but does not remove it.
+- The strengths are therefore kept at the published ones, not raised.

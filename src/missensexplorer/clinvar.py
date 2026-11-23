@@ -1,4 +1,5 @@
-"""Authoritative ClinVar classification for an exact allele (NCBI E-utilities, batched)."""
+"""ClinVar through NCBI E-utilities (batched): the classification of an exact allele, and the
+pathogenic variants near a position (for ACMG PS1/PM5, see residue.py)."""
 
 from __future__ import annotations
 
@@ -11,6 +12,9 @@ from .api import ApiError, Http
 log = logging.getLogger(__name__)
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+PATHOGENIC_FILTER = "(clinsig_pathogenic[prop] OR clinsig_likely_pathogenic[prop])"
+WINDOWS_PER_SEARCH = 25
 
 STARS = {
     "practice guideline": 4,
@@ -30,10 +34,13 @@ def _compact(r: dict) -> dict:
     onc = (r.get("oncogenicity_classification") or {}).get("description") or None
     som = (r.get("clinical_impact_classification") or {}).get("description") or None
     vsets = r.get("variation_set") or []
-    spdi, cdna = None, None
+    spdi, cdna, loc = None, None, {}
     if len(vsets) == 1:
         spdi = vsets[0].get("canonical_spdi")
         cdna = vsets[0].get("cdna_change")
+        for x in vsets[0].get("variation_loc") or []:
+            if x.get("assembly_name") in ("GRCh37", "GRCh38") and str(x.get("start") or "").isdigit():
+                loc[x["assembly_name"]] = [x.get("chr"), int(x["start"]), int(x.get("stop") or x["start"])]
     return {
         "accession": r.get("accession"),
         "title": r.get("title"),
@@ -45,6 +52,7 @@ def _compact(r: dict) -> dict:
         "somatic_impact": som,
         "spdi": spdi,
         "cdna": cdna,
+        "loc": loc,                                    # assembly -> [chrom, start, stop] (1-based)
     }
 
 
@@ -56,7 +64,7 @@ def fetch(http: Http, cache, vcv_ids, status=None) -> dict[str, dict]:
     ids = sorted({v for v in vcv_ids if v and v.startswith("VCV")})
     if status is not None and ids:
         status.use("ClinVar", len(ids))
-    keys = {v: f"clinvar|{v}" for v in ids}
+    keys = {v: f"clinvar2|{v}" for v in ids}    # clinvar2: records with positions
     hit = cache.get_many(list(keys.values()), max_age=CLINVAR_MAX_AGE)
     out = {v: hit[keys[v]] for v in ids if keys[v] in hit}
     missing = [v for v in ids if v not in out]
@@ -119,3 +127,51 @@ def match(records: dict[str, dict], candidates: list[str], spdi_key: tuple | Non
 
 def stars(review_status: str | None) -> int | None:
     return None if not review_status else STARS.get(review_status, 0)
+
+
+def vcv(uid: str) -> str:
+    return f"VCV{int(uid):09d}"
+
+
+def search_windows(http: Http, cache, windows, assembly: str, status=None) -> dict[tuple, list[str]]:
+    """VCV accessions of the pathogenic or likely pathogenic ClinVar variants that overlap each genomic
+    window (chrom, start, end; 1-based, on `assembly`), {window: [VCV...]}. Searches are batched
+    (WINDOWS_PER_SEARCH windows each) and the result of every window is cached for a week. Windows of
+    a failed search are left out of the result and recorded in `status` (source 'ClinVar')."""
+    field = "chrpos38" if assembly == "GRCh38" else "chrpos37"
+    windows = sorted(set(windows))
+    keys = {w: f"clinvar-window|{assembly}|{w[0]}:{w[1]}-{w[2]}" for w in windows}
+    hit = cache.get_many(list(keys.values()), max_age=CLINVAR_MAX_AGE)
+    out = {w: hit[keys[w]] for w in windows if keys[w] in hit}
+    todo = [w for w in windows if w not in out]
+    for i in range(0, len(todo), WINDOWS_PER_SEARCH):
+        chunk = todo[i : i + WINDOWS_PER_SEARCH]
+        term = " OR ".join(f"({c}[chr] AND {a}:{b}[{field}])" for c, a, b in chunk)
+        try:
+            r = http.request("POST", ESEARCH, data={"db": "clinvar", "term": f"({term}) AND {PATHOGENIC_FILTER}",
+                                                    "retmode": "json", "retmax": 10000, "tool": "missensexplorer"})
+            if r.status_code != 200:
+                raise ApiError(f"HTTP {r.status_code}", r.status_code)
+            ids = [vcv(u) for u in r.json()["esearchresult"].get("idlist", [])]
+        except (ApiError, ValueError, KeyError) as e:
+            log.warning("ClinVar search failed: %s", e)
+            if status is not None:
+                status.fail("ClinVar", f"search: {e}", [f"{assembly}:{c}:{a}-{b}" for c, a, b in chunk])
+            continue
+        records = fetch(http, cache, ids, status=status)
+        if len(records) < len(ids):
+            continue                                   # incomplete: do not cache these windows
+        for w in chunk:
+            out[w] = [v for v, rec in records.items() if _overlaps(rec, w, assembly)]
+        cache.set_many({keys[w]: out[w] for w in chunk})
+    return out
+
+
+def _overlaps(rec: dict, window: tuple, assembly: str) -> bool:
+    c, a, b = window
+    loc = (rec.get("loc") or {}).get(assembly)
+    if loc:
+        return str(loc[0]) == str(c) and loc[1] <= b and loc[2] >= a
+    p = _parse_spdi(rec.get("spdi")) if assembly == "GRCh38" else None
+    return bool(p) and p[0] == str(c) and a <= p[1] + 1 <= b
+

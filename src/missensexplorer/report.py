@@ -162,8 +162,9 @@ def print_result(res: PredictionResult, console=None, details: bool | None = Non
     if details:
         for _, r in df.iterrows():
             body = []
-            for label, key in [("Prediction", "prediction_basis"), ("ACMG PP3/BP4", "acmg_pp3_bp4"),
-                               ("Population frequency", "population_frequency"), ("Protein", "protein_name"),
+            for label, key in [("Prediction", "prediction_basis"), ("ACMG criteria", "acmg_codes"),
+                               ("ACMG PP3/BP4", "acmg_pp3_bp4"), ("ACMG PS1/PM5", "acmg_ps1_pm5"),
+                               ("ACMG PM2", "acmg_pm2"), ("Population frequency", "population_frequency"), ("Protein", "protein_name"),
                                ("Sequence", "protein_window"), ("Mutant protein", "mutant_protein"),
                                ("Physico-chemistry", "physchem_notes"), ("Grantham", "grantham_class"),
                                ("Region", "protein_features"), ("Functional site", "key_site"),

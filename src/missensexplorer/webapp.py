@@ -293,7 +293,7 @@ if res is not None:
             "Consequence": view["consequence"].fillna("").str.replace("_variant", "").str.replace("_", " "),
             "Prediction": view["status"].map(lambda k: STATUS[k][2]) + " " + view["prediction"].fillna(""),
             "Effect": view["effect_score"],
-            "ACMG PP3/BP4": view["acmg_pp3_bp4"].fillna("").str.split(" (", regex=False).str[0],
+            "ACMG": view["acmg_codes"].fillna(""),
             "AlphaMissense": view["alphamissense"],
             "REVEL": view["revel"],
             "CADD": view["cadd_phred"],
@@ -343,7 +343,9 @@ if res is not None:
             with left:
                 if _val(r["prediction_basis"]):
                     st.markdown(f"**Why:** {r['prediction_basis']}")
-                acmg_bits = [f"**{k}:** {_val(r[c])}" for k, c in (("ACMG PP3/BP4", "acmg_pp3_bp4"),
+                acmg_bits = [f"**{k}:** {_val(r[c])}" for k, c in (("ACMG criteria", "acmg_codes"),
+                                                                 ("PP3/BP4", "acmg_pp3_bp4"),
+                                                                 ("PS1/PM5", "acmg_ps1_pm5"), ("PM2", "acmg_pm2"),
                                                                  ("Population frequency", "population_frequency"))
                              if _val(r[c])]
                 if acmg_bits:

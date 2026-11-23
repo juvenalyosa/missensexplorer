@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog, QFileDialo
                                QProgressBar, QPushButton, QScrollArea, QSpinBox, QSplitter,
                                QStackedWidget, QTableView, QTabWidget, QTextBrowser, QToolButton, QVBoxLayout, QWidget)
 
-from .. import __version__, model
+from .. import __version__, acmg, model
 from ..cache import Cache, default_cache_dir
 from ..inputs import vcf_samples
 from ..predict import PredictionResult, PredictOptions, predict, prediction_status
@@ -1096,7 +1096,14 @@ class MainWindow(QMainWindow):
         if ms is not None and ms.contributions:
             self.dl.addWidget(ContributionChart(ms.contributions, t("contrib_damaging"), t("contrib_benign")))
             self.dl.addWidget(label(t("model_note"), "Muted", wrap=True))
-        ev = [(t("acmg_pp3"), g("acmg_pp3_bp4"), g("acmg_points")), (t("acmg_freq"), g("population_frequency"), None)]
+        def code_points(text):
+            return acmg.CODE_POINTS.get(str(text or "").split(" ")[0])
+
+        ev = [(t("acmg_codes"), g("acmg_codes"), None),
+              (t("acmg_pp3"), g("acmg_pp3_bp4"), g("acmg_points")),
+              (t("acmg_ps1pm5"), g("acmg_ps1_pm5"), code_points(g("acmg_ps1_pm5"))),
+              (t("acmg_pm2"), g("acmg_pm2"), code_points(g("acmg_pm2"))),
+              (t("acmg_freq"), g("population_frequency"), None)]
         ev = [(k, v, pts) for k, v, pts in ev if v]
         if ev:
             self.dl.addWidget(section(t("acmg")))
@@ -1107,6 +1114,8 @@ class MainWindow(QMainWindow):
                 self.dl.addWidget(lw)
             own = "(model " in str(g("acmg_pp3_bp4") or "")
             self.dl.addWidget(label(t("acmg_note_model" if own else "acmg_note"), "Muted", wrap=True))
+            if g("acmg_ps1_pm5") or g("acmg_pm2"):
+                self.dl.addWidget(label(t("acmg_note_residue"), "Muted", wrap=True))
 
         rows = []
         for name, col, call_col, rng, thr, hb in PREDICTORS:

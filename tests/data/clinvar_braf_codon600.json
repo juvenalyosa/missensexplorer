@@ -1,0 +1,278 @@
+{
+ "VCV000013961": {
+  "accession": "VCV000013961",
+  "cdna": "c.1799T>A",
+  "classification": "Conflicting classifications of pathogenicity",
+  "conditions": [
+   "Vascular malformation",
+   "BRAF-related glioma susceptibility",
+   "Cardiovascular phenotype",
+   "not provided",
+   "RASopathy"
+  ],
+  "last_evaluated": "2026/03/11",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453136,
+    140453136
+   ],
+   "GRCh38": [
+    "7",
+    140753336,
+    140753336
+   ]
+  },
+  "oncogenicity": "Oncogenic",
+  "review_status": "criteria provided, conflicting classifications",
+  "somatic_impact": "Tier I - Strong",
+  "spdi": "NC_000007.14:140753335:A:T",
+  "title": "NM_004333.6(BRAF):c.1799T>A (p.Val600Glu)"
+ },
+ "VCV000013966": {
+  "accession": "VCV000013966",
+  "cdna": "c.1801A>G",
+  "classification": "Pathogenic",
+  "conditions": [
+   "Non-small cell lung carcinoma"
+  ],
+  "last_evaluated": "2011/08/23",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453134,
+    140453134
+   ],
+   "GRCh38": [
+    "7",
+    140753334,
+    140753334
+   ]
+  },
+  "oncogenicity": "Oncogenic",
+  "review_status": "criteria provided, single submitter",
+  "somatic_impact": "Tier II - Potential",
+  "spdi": "NC_000007.14:140753333:T:C",
+  "title": "NM_004333.6(BRAF):c.1801A>G (p.Lys601Glu)"
+ },
+ "VCV000040389": {
+  "accession": "VCV000040389",
+  "cdna": "c.1799T>G",
+  "classification": "Pathogenic",
+  "conditions": [
+   "RASopathy"
+  ],
+  "last_evaluated": "2020/06/25",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453136,
+    140453136
+   ],
+   "GRCh38": [
+    "7",
+    140753336,
+    140753336
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "reviewed by expert panel",
+  "somatic_impact": null,
+  "spdi": "NC_000007.14:140753335:A:C",
+  "title": "NM_004333.6(BRAF):c.1799T>G (p.Val600Gly)"
+ },
+ "VCV000041446": {
+  "accession": "VCV000041446",
+  "cdna": "c.1801A>C",
+  "classification": "Pathogenic",
+  "conditions": [
+   "BRAF-related disorder",
+   "Lung cancer",
+   "Colorectal cancer",
+   "Melanoma, cutaneous malignant, susceptibility to, 1",
+   "Noonan syndrome 7",
+   "Cardiofaciocutaneous syndrome 1",
+   "LEOPARD syndrome 3",
+   "Cardio-facio-cutaneous syndrome",
+   "Noonan syndrome",
+   "not provided",
+   "RASopathy"
+  ],
+  "last_evaluated": "2025/02/04",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453134,
+    140453134
+   ],
+   "GRCh38": [
+    "7",
+    140753334,
+    140753334
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "criteria provided, multiple submitters, no conflicts",
+  "somatic_impact": null,
+  "spdi": "NC_000007.14:140753333:T:G",
+  "title": "NM_004333.6(BRAF):c.1801A>C (p.Lys601Gln)"
+ },
+ "VCV000044815": {
+  "accession": "VCV000044815",
+  "cdna": "c.1798G>A",
+  "classification": "Likely pathogenic",
+  "conditions": [
+   "Non-small cell lung carcinoma"
+  ],
+  "last_evaluated": "2012/05/09",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453137,
+    140453137
+   ],
+   "GRCh38": [
+    "7",
+    140753337,
+    140753337
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "criteria provided, single submitter",
+  "somatic_impact": null,
+  "spdi": "NC_000007.14:140753336:C:T",
+  "title": "NM_004333.6(BRAF):c.1798G>A (p.Val600Met)"
+ },
+ "VCV000044816": {
+  "accession": "VCV000044816",
+  "cdna": "c.1798G>T",
+  "classification": "Likely pathogenic",
+  "conditions": [
+   "Non-small cell lung carcinoma"
+  ],
+  "last_evaluated": "2011/10/04",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453137,
+    140453137
+   ],
+   "GRCh38": [
+    "7",
+    140753337,
+    140753337
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "criteria provided, single submitter",
+  "somatic_impact": null,
+  "spdi": "NC_000007.14:140753336:C:A",
+  "title": "NM_004333.6(BRAF):c.1798G>T (p.Val600Leu)"
+ },
+ "VCV000044817": {
+  "accession": "VCV000044817",
+  "cdna": "c.1799_1801del",
+  "classification": "Likely pathogenic",
+  "conditions": [
+   "Non-small cell lung carcinoma"
+  ],
+  "last_evaluated": "2011/10/12",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453134,
+    140453136
+   ],
+   "GRCh38": [
+    "7",
+    140753334,
+    140753336
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "criteria provided, single submitter",
+  "somatic_impact": "Tier I - Strong",
+  "spdi": "NC_000007.14:140753333:TCA:",
+  "title": "NM_004333.6(BRAF):c.1799_1801del (p.Val600_Lys601delinsGlu)"
+ },
+ "VCV000162793": {
+  "accession": "VCV000162793",
+  "cdna": "c.1794_1796dup",
+  "classification": "Pathogenic",
+  "conditions": [
+   "Non-small cell lung carcinoma",
+   "Neoplasm of the large intestine",
+   "not provided"
+  ],
+  "last_evaluated": "2019/04/01",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453138,
+    140453139
+   ],
+   "GRCh38": [
+    "7",
+    140753338,
+    140753339
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "criteria provided, multiple submitters, no conflicts",
+  "somatic_impact": "Tier I - Strong",
+  "spdi": "NC_000007.14:140753338:GTAG:GTAGTAG",
+  "title": "NM_004333.6(BRAF):c.1794_1796dup (p.Thr599dup)"
+ },
+ "VCV000376289": {
+  "accession": "VCV000376289",
+  "cdna": "c.1798G>C",
+  "classification": "Pathogenic/Likely pathogenic",
+  "conditions": [
+   "Cardiofaciocutaneous syndrome 1"
+  ],
+  "last_evaluated": "1/01/01",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453137,
+    140453137
+   ],
+   "GRCh38": [
+    "7",
+    140753337,
+    140753337
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "criteria provided, multiple submitters, no conflicts",
+  "somatic_impact": null,
+  "spdi": "NC_000007.14:140753336:C:G",
+  "title": "NM_004333.6(BRAF):c.1798G>C (p.Val600Leu)"
+ },
+ "VCV002664272": {
+  "accession": "VCV002664272",
+  "cdna": "c.1799_1810delinsATG",
+  "classification": "Pathogenic",
+  "conditions": [
+   "Lymphatic malformation"
+  ],
+  "last_evaluated": "1/01/01",
+  "loc": {
+   "GRCh37": [
+    "7",
+    140453125,
+    140453136
+   ],
+   "GRCh38": [
+    "7",
+    140753325,
+    140753336
+   ]
+  },
+  "oncogenicity": null,
+  "review_status": "no assertion criteria provided",
+  "somatic_impact": null,
+  "spdi": "NC_000007.14:140753324:ATCGAGATTTCA:CAT",
+  "title": "NM_004333.6(BRAF):c.1799_1810delinsATG (p.Val600_Trp604delinsAspGly)"
+ }
+}

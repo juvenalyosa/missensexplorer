@@ -127,8 +127,10 @@ Useful flags:
 | `--no-predictors` | skip the predictor plugins (faster) |
 | `--workers N` | number of parallel API requests (default 4) |
 | `--vep local` | annotate with VEP on this computer instead of the public API ([guide](docs/local-vep.md)) |
-| `--offline` | never use the internet (with `--vep local`; skips ClinVar, UniProt and AlphaFold) |
+| `--offline` | never use the internet (with `--vep local`; skips ClinVar, gnomAD, UniProt and AlphaFold) |
 | `--common-af AF` | gnomAD grpmax at which damaging/uncertain calls become benign (default `0.05` = BA1; `0` = off) |
+| `--acmg-source revel` | PP3/BP4 from REVEL with ClinGen's published thresholds, instead of the model score |
+| `--no-gnomad-check` | do not ask gnomAD about variants without a frequency in Ensembl's data (faster; no PM2) |
 | `--no-cache` | ignore the local cache |
 | `missensexplorer cache clear` | empty the local cache |
 
@@ -150,7 +152,7 @@ res.sequences      # wild-type and mutant protein sequences per row
 |---|---|
 | Protein change | `gene`, `protein_change` (V600E), `hgvsp`, `hgvsc`, `consequence`, `transcript` (MANE Select preferred), `exon`, `codons` |
 | **Prediction** | `prediction`, `effect_score` (0–1; the model score for missense variants), `prediction_basis` (model score, contributions, predictors) |
-| ACMG evidence | `acmg_pp3_bp4` (e.g. `PP3_Strong (model 0.994)`), `acmg_points`, `population_frequency` (BA1 / BS1 candidate / rare / not in gnomAD) |
+| ACMG evidence | `acmg_codes` (e.g. `PP3_Strong +4, PS1 +4, PM2_Supporting +1`), `acmg_pp3_bp4` (e.g. `PP3_Strong (model 0.994)`), `acmg_points`, `acmg_ps1_pm5`, `acmg_pm2`, `population_frequency` (BA1 / BS1 candidate / rare / absent from gnomAD) |
 | Predictors | `alphamissense`, `revel`, `cadd_phred`, `eve`, `popeve`, `sift`, `polyphen`, `spliceai_max` |
 | Physico-chemistry | `grantham`, `blosum62`, `hydropathy_change`, `volume_change`, `charge_change`, `physchem_notes` |
 | Protein context | `protein_name`, `protein_window` (e.g. `GDFGLAT[V>E]KSRWSGS`), `key_site`, `protein_features`, `uniprot_variants_here`, `uniprot_mutagenesis_here`, `plddt`, `protein_function` |
@@ -192,9 +194,21 @@ res.sequences      # wild-type and mutant protein sequences per row
   - The calibration is this project's, not one published by ClinGen. `--acmg-source revel` (desktop
     app: *Options → PP3/BP4*) uses REVEL with ClinGen's published thresholds instead, or AlphaMissense
     when REVEL is missing ([Bergquist et al. 2025](https://www.ccs.neu.edu/home/radivojac/papers/bergquist_genetmed_2025.pdf)).
-  - `population_frequency` says whether the variant meets BA1, is a BS1 candidate (≥ 1%), is rare or
-    was not found in gnomAD.
-  - These columns are one input of an ACMG classification, not a classification.
+- **More ACMG criteria, computed automatically** ([details](docs/model.md#ps1-pm5-and-pm2)):
+  - **PS1 / PM5**: ClinVar's reviewed pathogenic missense variants at the same residue. The same
+    amino-acid change made by another nucleotide change gives PS1 (+4; +2 if that variant is only
+    likely pathogenic). Another pathogenic change at the residue gives PM5 (+2; +1 if only likely
+    pathogenic ones). Not given when SpliceAI suggests a splicing effect.
+  - **PM2_Supporting** (+1, as ClinGen recommends since 2020): only when gnomAD itself confirms the
+    variant is absent at a position where at least half of its 730,947 exomes have ≥ 20 reads. A
+    variant that is present but rare may still meet PM2 for a given disease; that depends on the
+    disease's maximum credible allele frequency, so the tool leaves it to you.
+  - `acmg_codes` lists the criteria met, with points. They are one input of an ACMG classification,
+    not a classification: segregation, de novo status, functional data and phenotype are missing.
+- **Population frequency**: `population_frequency` says whether the variant meets BA1, is a BS1
+  candidate (≥ 1%), is rare or is absent from gnomAD. Ensembl gives no gnomAD frequency to many rare
+  variants (singletons above all), so the tool asks gnomAD directly about those
+  (`--no-gnomad-check` skips this).
 - **Synonymous, splice-region and intronic** variants are judged with SpliceAI
   (≥ 0.5 likely splice-altering, ≥ 0.2 possible).
 - ClinVar is shown next to the prediction, never mixed into it.
@@ -207,6 +221,11 @@ through the slower predictor plugins. Every answer is cached in `~/.cache/missen
 repeated run is almost instant. As a reference, 1,000 VCF variants take about 40 s the first time
 and about 1 s from the cache.
 
+The direct gnomAD check is slower: gnomAD's public API takes about 10 requests a minute (25
+variants each, or the coverage of 4 positions), and only variants without a frequency in Ensembl's
+data are sent. A few hundred such variants add a few minutes the first time;
+`--no-gnomad-check` skips it.
+
 For exomes and genomes, pass `--genes` (or fill *Only these genes* in the web app). The VCF is then
 filtered locally before anything is sent. The public Ensembl REST API is not meant for millions of
 variants; for whole genomes, use the [local VEP mode](docs/local-vep.md). VCF files are read as a
@@ -215,7 +234,7 @@ stream, so large files do not have to fit in memory.
 ## Privacy
 
 The tool sends only variant descriptions (coordinates, HGVS, rsIDs, gene symbols) to the public
-APIs of Ensembl, UniProt, AlphaFold DB and NCBI. Sample names and genotypes stay on your
+APIs of Ensembl, UniProt, AlphaFold DB, NCBI and gnomAD. Sample names and genotypes stay on your
 computer. Even so, check your institution's rules before you analyse patient data with public web
 services. With `--vep local --offline` (or *Local VEP* + *Offline* in the desktop app) nothing
 leaves the computer.
@@ -302,6 +321,7 @@ python benchmarks/compare_tools.py      # same benchmark, 31 other predictors (d
 python benchmarks/validate_proteingym.py  # independent check on deep mutational scanning data
 python benchmarks/feature_tests.py      # inputs tested for the model and rejected
 python benchmarks/calibrate_acmg.py     # ACMG PP3/BP4 thresholds of the model score (ClinGen method)
+python benchmarks/acmg_criteria.py      # how informative the automated PS1, PM5 and PM2 are
 ```
 
 ## Data sources

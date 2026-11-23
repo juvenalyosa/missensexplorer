@@ -10,6 +10,13 @@ counting of several tools). Two sources (PredictOptions.acmg_source):
 Points follow the ACMG/AMP point system: Supporting 1, Moderate 2, (3), Strong 4; negative for BP4.
 The 3-point intervals count as Moderate under the 2015 guidelines.
 
+PM2 (absent from controls) is given at Supporting strength (ClinGen SVI, 2020) only when gnomAD itself
+confirms the variant is absent and at least half of its exome samples have >= 20 reads at the
+position (gnomad.py). Absence meets any disease's maximum credible allele frequency; a variant that
+is present but rare may or may not, so then PM2 is left to the user (ClinGen, 2025: thresholds are
+disease-specific). PS1/PM5 come from residue.py. PM2 and BS1 may be combined with PP3/BP4 without
+limits (Pejaver et al. 2022).
+
 Population frequency uses the highest allele frequency among gnomAD's main genetic ancestry groups
 (grpmax: African/African American, Admixed American, East Asian, non-Finnish European, South Asian;
 bottlenecked groups excluded, as gnomAD does). BA1 (>= 5%) is stand-alone benign evidence; >= 1% is
@@ -109,14 +116,62 @@ def ba1_exception(row: dict) -> str | None:
     return None
 
 
+def pm2(row: dict, info: dict | None) -> tuple[str | None, int | None]:
+    """PM2 from the direct gnomAD check (`info`, from gnomad.lookup) or Ensembl's frequency."""
+    from .gnomad import covered
+
+    af = _num(row.get("gnomad_popmax_af")) or _num(row.get("gnomad_af"))
+    if af is not None and af >= BS1_AF:
+        return "not met (frequent in gnomAD)", 0
+    if info and not info.get("found"):
+        cov = (info.get("over_20") or {}).get("exome")
+        shown = "no exome data" if cov is None else f"{cov:.0%} of exomes"
+        if covered(info):
+            return f"PM2_Supporting (absent from {info['dataset']}; >= 20 reads in {shown})", 1
+        return f"not applicable (absent from {info['dataset']}, but few reads there: >= 20 reads in {shown})", 0
+    if af is not None or (info and info.get("found")):
+        filt = "" if not info or info.get("passes_filters", True) else ", failing gnomAD quality filters"
+        return f"depends on the disease (present in gnomAD{filt}; compare with its maximum credible frequency)", 0
+    return None, None
+
+
+def codes(row: dict) -> str | None:
+    """The criteria this row meets, with points: 'PP3_Strong +4, PM5 +2, PM2_Supporting +1'."""
+    out = []
+    for col, pts_col in (("acmg_pp3_bp4", "acmg_points"), ("acmg_ps1_pm5", None), ("acmg_pm2", None)):
+        text = str(row.get(col) or "")
+        code = text.split(" ")[0]
+        if code[:3] in ("PP3", "BP4", "PS1", "PM5", "PM2"):
+            pts = row.get(pts_col) if pts_col else CODE_POINTS.get(code)
+            out.append(f"{code} {int(pts):+d}" if pts is not None else code)
+    freq = str(row.get("population_frequency") or "")
+    if freq.startswith("common: BA1"):
+        out.append("BA1 (stand-alone benign)")
+    return ", ".join(out) or None
+
+
+CODE_POINTS = {"PS1": 4, "PS1_Moderate": 2, "PM5": 2, "PM5_Supporting": 1, "PM2_Supporting": 1}
+
+
+def _pct(af: float) -> str:
+    """6.2%, 0.0012%, 0.00009% (two significant digits, never in scientific notation)."""
+    v = af * 100
+    return f"{v:.2g}%" if v >= 1e-3 else f"{float(f'{v:.2g}'):.10f}".rstrip("0").rstrip(".") + "%"
+
+
 def frequency(row: dict) -> str | None:
     """Population-frequency evidence from the gnomAD grpmax allele frequency."""
     if str(row.get("chrom") or "").upper() in ("MT", "M", "CHRM"):
         return None  # mitochondrial heteroplasmy is not in the gnomAD nuclear frequencies
     af = _num(row.get("gnomad_popmax_af"))
     if af is None:
-        return "not found in gnomAD" if _num(row.get("gnomad_af")) is None else None
-    pct = f"{af * 100:.2g}%"
+        if _num(row.get("gnomad_af")) is not None:
+            return None
+        g = row.get("_gnomad")
+        if g and not g.get("found"):
+            return f"absent from {g['dataset']}"
+        return "not found in gnomAD" if g else "no gnomAD frequency in Ensembl's data (not checked in gnomAD)"
+    pct = _pct(af)
     if af >= BS1_AF and ba1_exception(row):
         return f"frequent, but on the ClinGen BA1 exception list (grpmax {pct})"
     if af >= BA1_AF:

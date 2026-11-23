@@ -33,7 +33,8 @@ def _result():
          "protein_position": 600, "protein_length": 766, "protein_window": "GDFGLAT[V>E]KSRWSGS", "uniprot": "P15056",
          "clinvar": "Pathogenic", "clinvar_stars": 2, "gnomad_af": 4e-6, "chrom": "7", "pos": 140753336,
          "ref": "A", "alt": "T", "acmg_pp3_bp4": "PP3_Moderate (REVEL 0.930)", "acmg_points": 3,
-         "population_frequency": "rare (grpmax 0.0004%)"},
+         "acmg_ps1_pm5": "PM5 (p.Val600Gly: Pathogenic, 3★, VCV000040389)",
+         "acmg_codes": "PP3_Moderate +3, PM5 +2", "population_frequency": "rare (grpmax 0.0004%)"},
         {"input": "TP53 P72R", "gene": "TP53", "protein_change": "P72R", "consequence": "missense_variant",
          "prediction": "Likely benign", "effect_score": 0.0, "protein_position": 72, "protein_length": 393},
         {"input": "TP53 R213*", "gene": "TP53", "protein_change": "R213*", "consequence": "stop_gained",
@@ -75,6 +76,8 @@ def test_window_shows_results_and_details(app, lang):
     assert "BRAF p.Val600Glu" in texts
     assert ("Probablemente dañina" if lang == "es" else "Likely damaging") in texts
     assert "PP3_Moderate" in texts and ("rara (grpmax" if lang == "es" else "rare (grpmax") in texts
+    assert ("PM5 (p.Val600Gly: patogénica, 3★" if lang == "es" else "PM5 (p.Val600Gly: Pathogenic, 3★") in texts
+    assert "PP3_Moderate +3, PM5 +2" in texts
     from missensexplorer.gui.widgets import ContributionChart
     charts = w.detail.findChildren(ContributionChart)
     assert len(charts) == 1 and {n for n, _ in charts[0].items} == {"AlphaMissense", "REVEL", "CADD"}
