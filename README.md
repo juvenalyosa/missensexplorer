@@ -150,7 +150,7 @@ res.sequences      # wild-type and mutant protein sequences per row
 |---|---|
 | Protein change | `gene`, `protein_change` (V600E), `hgvsp`, `hgvsc`, `consequence`, `transcript` (MANE Select preferred), `exon`, `codons` |
 | **Prediction** | `prediction`, `effect_score` (0–1; the model score for missense variants), `prediction_basis` (model score, contributions, predictors) |
-| ACMG evidence | `acmg_pp3_bp4` (e.g. `PP3_Strong (REVEL 0.951)`), `acmg_points`, `population_frequency` (BA1 / BS1 candidate / rare / not in gnomAD) |
+| ACMG evidence | `acmg_pp3_bp4` (e.g. `PP3_Strong (model 0.994)`), `acmg_points`, `population_frequency` (BA1 / BS1 candidate / rare / not in gnomAD) |
 | Predictors | `alphamissense`, `revel`, `cadd_phred`, `eve`, `popeve`, `sift`, `polyphen`, `spliceai_max` |
 | Physico-chemistry | `grantham`, `blosum62`, `hydropathy_change`, `volume_change`, `charge_change`, `physchem_notes` |
 | Protein context | `protein_name`, `protein_window` (e.g. `GDFGLAT[V>E]KSRWSGS`), `key_site`, `protein_features`, `uniprot_variants_here`, `uniprot_mutagenesis_here`, `plddt`, `protein_function` |
@@ -181,12 +181,20 @@ res.sequences      # wild-type and mutant protein sequences per row
   also mislabels pathogenic variants of recessive and founder conditions. The nine variants on
   ClinGen's BA1 exception list (Ghosh et al., 2018; for example HFE C282Y and H63D, GJB2 V37I,
   BTD D444H) are never called benign for being common.
-- **ACMG computational evidence**: `acmg_pp3_bp4` and `acmg_points` give PP3/BP4 with the
-  ClinGen-calibrated intervals for one predictor, REVEL ([Pejaver et al. 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9748256/))
-  or, when REVEL is missing, AlphaMissense ([Bergquist et al. 2025](https://www.ccs.neu.edu/home/radivojac/papers/bergquist_genetmed_2025.pdf)),
-  for example `PP3_Strong (REVEL 0.951)` = +4 points. `population_frequency` says whether the
-  variant meets BA1, is a BS1 candidate (≥ 1%), is rare or was not found in gnomAD. These columns
-  are one input of an ACMG classification, not a classification.
+- **ACMG computational evidence**: `acmg_pp3_bp4` and `acmg_points` give PP3/BP4 from the model
+  score, for example `PP3_Strong (model 0.994)` = +4 points.
+  - The thresholds were calibrated with ClinGen's method
+    ([Pejaver et al. 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9748256/)) on the same ClinVar
+    data that set REVEL's ClinGen thresholds, and checked on two independent sets
+    ([details](docs/model.md#acmg-pp3bp4-from-the-model-score)).
+  - At the same strength of evidence, the model gives PP3 Strong to 46% of the pathogenic variants of
+    ClinVar's 2020 test set (REVEL: 28%) and BP4 to 76% of the benign ones (REVEL: 66%).
+  - The calibration is this project's, not one published by ClinGen. `--acmg-source revel` (desktop
+    app: *Options → PP3/BP4*) uses REVEL with ClinGen's published thresholds instead, or AlphaMissense
+    when REVEL is missing ([Bergquist et al. 2025](https://www.ccs.neu.edu/home/radivojac/papers/bergquist_genetmed_2025.pdf)).
+  - `population_frequency` says whether the variant meets BA1, is a BS1 candidate (≥ 1%), is rare or
+    was not found in gnomAD.
+  - These columns are one input of an ACMG classification, not a classification.
 - **Synonymous, splice-region and intronic** variants are judged with SpliceAI
   (≥ 0.5 likely splice-altering, ≥ 0.2 possible).
 - ClinVar is shown next to the prediction, never mixed into it.
@@ -251,6 +259,11 @@ leaves the computer.
   score correlates best with the measured loss of function: Spearman 0.469, against popEVE 0.460,
   AlphaMissense 0.458, MetaRNN 0.438, REVEL 0.425 and CADD 0.344
   ([results](benchmarks/results/proteingym_validation.md)).
+- **ACMG evidence calibrated like REVEL's.** The thresholds behind PP3/BP4 were set with ClinGen's
+  method on ClinGen's own calibration data. A port of the authors' code reproduces REVEL's published
+  thresholds to within 0.002. On ClinVar's 2020 test set every evidence band reaches the likelihood
+  ratio its strength needs, and the model gives stronger evidence more often than REVEL
+  ([calibration](benchmarks/results/acmg_calibration.md)).
 - The desktop app writes an error log (*Help → Open error log*; on macOS
   `~/Library/Logs/MissensExplorer`).
 
@@ -288,6 +301,7 @@ python benchmarks/clinvar_benchmark.py  # held-out ClinVar benchmark
 python benchmarks/compare_tools.py      # same benchmark, 31 other predictors (dbNSFP)
 python benchmarks/validate_proteingym.py  # independent check on deep mutational scanning data
 python benchmarks/feature_tests.py      # inputs tested for the model and rejected
+python benchmarks/calibrate_acmg.py     # ACMG PP3/BP4 thresholds of the model score (ClinGen method)
 ```
 
 ## Data sources

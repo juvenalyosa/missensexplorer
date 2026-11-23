@@ -24,7 +24,8 @@ next to the predictors those programs rely on. Checked in November 2026. The ful
 - It combines AlphaMissense, REVEL, CADD and popEVE in one fitted model and shows each predictor's
   contribution to the call. None of the tools above has a combined model with that kind of breakdown.
 - It shows the AlphaFold structure and the protein-level consequence, as ProtVar does.
-- It gives PP3/BP4 with the ClinGen-calibrated intervals and a separate, visible frequency rule.
+- It gives PP3/BP4 from its own score, calibrated with ClinGen's method on ClinGen's data
+  ([details](model.md#acmg-pp3bp4-from-the-model-score)), and keeps frequency as a separate, visible rule.
 - It is open source, with a desktop app and a command line.
 - It does **not** produce a full ACMG classification, as VarSome, Franklin, GeneBe or InterVar do.
   Those need evidence that a predictor cannot give: segregation, de novo status, functional studies.

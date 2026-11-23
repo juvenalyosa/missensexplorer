@@ -50,6 +50,9 @@ def _predict_parser() -> argparse.ArgumentParser:
     p.add_argument("--common-af", type=float, default=0.05, metavar="AF",
                    help="gnomAD grpmax frequency at which damaging/uncertain calls become benign "
                         "(default 0.05 = ACMG BA1; 0 turns the rule off)")
+    p.add_argument("--acmg-source", choices=["model", "revel"], default="model",
+                   help="score for ACMG PP3/BP4: the model, with its own calibration by the ClinGen method "
+                        "(default), or REVEL with the thresholds ClinGen published (AlphaMissense if no REVEL)")
     p.add_argument("-o", "--output", action="append", default=[], metavar="FILE",
                    help="write results (.csv, .tsv, .xlsx, .json); repeatable")
     p.add_argument("--fasta", metavar="FILE", help="write wild-type and mutant protein sequences")
@@ -90,7 +93,7 @@ def run_predict(argv: list[str]) -> int:
         predictors=not args.no_predictors, protein_context=not args.no_protein_context,
         workers=args.workers, cache=not args.no_cache,
         vep=args.vep, vep_command=args.vep_cmd, vep_args=args.vep_args, offline=args.offline,
-        common_af=args.common_af or None,
+        common_af=args.common_af or None, acmg_source=args.acmg_source,
     )
     if args.offline and args.vep != "local":
         err.print("[red]--offline needs --vep local[/]")

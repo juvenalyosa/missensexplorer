@@ -1,9 +1,12 @@
 """ACMG/AMP evidence that can be read off the annotation: PP3/BP4 and population frequency.
 
-PP3/BP4 (computational evidence) uses ONE predictor with ClinGen-calibrated score intervals, as
-ClinGen recommends (no combining of tools):
-  * REVEL — Pejaver et al., AJHG 2022 (intervals as reprinted in Bergquist et al. 2025, Table 1);
-  * AlphaMissense, when REVEL has no score — Bergquist et al., Genet Med 2025, Table 1.
+PP3/BP4 (computational evidence) uses ONE score with calibrated intervals, as ClinGen recommends (no
+counting of several tools). Two sources (PredictOptions.acmg_source):
+  * "model" (default): the MissensExplorer model score, calibrated with the ClinGen method (Pejaver et
+    al., AJHG 2022) on the same ClinVar data as REVEL's ClinGen intervals; see docs/model.md and
+    benchmarks/calibrate_acmg.py. The calibration is this project's, not one published by ClinGen.
+  * "revel": the intervals ClinGen published: REVEL (Pejaver et al. 2022, as reprinted in Bergquist et
+    al. 2025, Table 1); AlphaMissense when REVEL has no score (Bergquist et al., Genet Med 2025).
 Points follow the ACMG/AMP point system: Supporting 1, Moderate 2, (3), Strong 4; negative for BP4.
 The 3-point intervals count as Moderate under the 2015 guidelines.
 
@@ -16,6 +19,15 @@ BA1 exception list are never called benign for being common.
 """
 
 from __future__ import annotations
+
+from . import model
+from .calibration_params import CALIBRATION
+from .model_params import MODEL
+
+SOURCES = ("model", "revel")
+# The thresholds belong to one trained model: after retraining they apply only once recalibrated.
+MODEL_CALIBRATED = bool(CALIBRATION["pp3"]) and (CALIBRATION["model_version"], CALIBRATION["model_trained"]) == (
+    MODEL["version"], MODEL["trained"])
 
 REVEL_PP3 = ((0.932, 4), (0.879, 3), (0.773, 2), (0.644, 1))
 REVEL_BP4 = ((0.016, -4), (0.052, -3), (0.183, -2), (0.290, -1))
@@ -61,19 +73,28 @@ def _points(s: float, pp3, bp4) -> int:
     return 0
 
 
-def computational(row: dict) -> tuple[str | None, int | None]:
-    """('PP3_Strong (REVEL 0.95)', 4), ('none (REVEL 0.50, indeterminate)', 0) or (None, None)."""
-    for tool, col, pp3, bp4, fmt in (("REVEL", "revel", REVEL_PP3, REVEL_BP4, "{:.3f}"),
-                                     ("AlphaMissense", "alphamissense", AM_PP3, AM_BP4, "{:.3f}")):
+def _evidence(s: float, pp3, bp4, shown: str) -> tuple[str, int]:
+    pts = _points(s, pp3, bp4)
+    if pts == 0:
+        return f"none ({shown}, indeterminate)", 0
+    return f"{'PP3_' if pts > 0 else 'BP4_'}{STRENGTH[abs(pts)]} ({shown})", pts
+
+
+def computational(row: dict, source: str = "model") -> tuple[str | None, int | None]:
+    """('PP3_Strong (model 0.995)', 4), ('none (REVEL 0.500, indeterminate)', 0) or (None, None)."""
+    if source not in SOURCES:
+        raise ValueError(f"unknown PP3/BP4 source {source!r}; use one of {SOURCES}")
+    if source == "model" and MODEL_CALIBRATED:
+        ms = model.score(row)
+        if ms is None:
+            return None, None
+        s = round(ms.p, 3)              # the value shown is the value compared (thresholds lie on a 0.001 grid)
+        return _evidence(s, CALIBRATION["pp3"], CALIBRATION["bp4"], f"model {s:.3f}")
+    for tool, col, pp3, bp4 in (("REVEL", "revel", REVEL_PP3, REVEL_BP4),
+                                ("AlphaMissense", "alphamissense", AM_PP3, AM_BP4)):
         s = _num(row.get(col))
-        if s is None:
-            continue
-        pts = _points(s, pp3, bp4)
-        shown = f"{tool} {fmt.format(s)}"
-        if pts == 0:
-            return f"none ({shown}, indeterminate)", 0
-        code = ("PP3_" if pts > 0 else "BP4_") + STRENGTH[abs(pts)]
-        return f"{code} ({shown})", pts
+        if s is not None:
+            return _evidence(s, pp3, bp4, f"{tool} {s:.3f}")
     return None, None
 
 

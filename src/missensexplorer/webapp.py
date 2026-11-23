@@ -347,7 +347,9 @@ if res is not None:
                                                                  ("Population frequency", "population_frequency"))
                              if _val(r[c])]
                 if acmg_bits:
-                    st.markdown(" · ".join(acmg_bits) + "  \n:gray[ClinGen-calibrated thresholds; one part of an "
+                    how = ("model score, thresholds calibrated by the ClinGen method (this project's calibration)"
+                           if "(model " in str(_val(r["acmg_pp3_bp4"], "")) else "ClinGen-calibrated thresholds")
+                    st.markdown(" · ".join(acmg_bits) + f"  \n:gray[{how}; one part of an "
                                 "ACMG classification, not a replacement for expert review.]")
                 preds = []
                 for name, val, extra, rng in [

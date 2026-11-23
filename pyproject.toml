@@ -29,7 +29,7 @@ dependencies = [
 web = ["streamlit>=1.40"]
 gui = ["PySide6>=6.6"]
 dev = ["pytest>=8", "streamlit>=1.40"]
-benchmark = ["scikit-learn>=1.6"]
+benchmark = ["scikit-learn>=1.6", "openpyxl>=3.1"]
 
 [project.scripts]
 missensexplorer = "missensexplorer.cli:main"

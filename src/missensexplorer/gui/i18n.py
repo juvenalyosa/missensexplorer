@@ -46,6 +46,17 @@ S = {
                  "A variant that is common in gnomAD (highest genetic ancestry group) is called benign whatever the "
                  "predictors say. 5% is the ACMG BA1 criterion; 1% is stricter but mislabels pathogenic variants of "
                  "recessive or founder conditions."),
+    "acmg_src": ("PP3/BP4", "PP3/BP4"),
+    "acmg_src_model": ("Puntaje del modelo (calibración propia)", "Model score (own calibration)"),
+    "acmg_src_revel": ("REVEL (umbrales de ClinGen)", "REVEL (ClinGen thresholds)"),
+    "acmg_src_tip": ("Puntaje usado para la evidencia computacional ACMG PP3/BP4. El del modelo se calibró con el método "
+                     "de ClinGen (Pejaver et al. 2022) sobre los mismos datos de ClinVar que REVEL; la calibración es "
+                     "de este proyecto, no publicada por ClinGen. REVEL usa los umbrales que publicó ClinGen "
+                     "(AlphaMissense si falta REVEL).",
+                     "Score used for the ACMG computational evidence PP3/BP4. The model's was calibrated with the "
+                     "ClinGen method (Pejaver et al. 2022) on the same ClinVar data as REVEL's; the calibration is this "
+                     "project's, not one published by ClinGen. REVEL uses the thresholds ClinGen published "
+                     "(AlphaMissense when REVEL is missing)."),
     "engine": ("Anotación", "Annotation"),
     "engine_rest": ("Ensembl en línea", "Ensembl online"),
     "engine_local": ("VEP local", "Local VEP"),
@@ -128,6 +139,12 @@ S = {
                   "clasificación ACMG: no reemplaza la revisión de un especialista.",
                   "ClinGen-calibrated thresholds (REVEL; AlphaMissense when REVEL is missing). This is only part of "
                   "an ACMG classification: it does not replace review by a specialist."),
+    "acmg_note_model": ("Puntaje del modelo con umbrales calibrados por el método de ClinGen (Pejaver et al. 2022) "
+                        "sobre los mismos datos que REVEL; calibración propia, no publicada por ClinGen. Es solo una "
+                        "parte de la clasificación ACMG: no reemplaza la revisión de un especialista.",
+                        "Model score with thresholds calibrated by the ClinGen method (Pejaver et al. 2022) on the same "
+                        "data as REVEL's; this project's calibration, not one published by ClinGen. This is only part "
+                        "of an ACMG classification: it does not replace review by a specialist."),
     "predictors": ("PREDICTORES", "PREDICTORS"),
     "physchem": ("CAMBIO FISICOQUÍMICO", "PHYSICO-CHEMISTRY"),
     "sequence": ("SECUENCIA", "SEQUENCE"),

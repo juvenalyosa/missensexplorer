@@ -240,9 +240,114 @@ four-predictor logistic regression is at its ceiling.
     because curators use the same frequencies to call variants benign. In the 5,874-variant run,
     13 pathogenic variants were ≥ 1% (CYP21A2, HBB E7K, TTR V142I, BBS1 M390R …), mostly in
     recessive conditions. That is why the default is 5%.
-- **ACMG PP3/BP4.**
-  - Uses the ClinGen-calibrated intervals of one predictor: REVEL (Pejaver et al., AJHG 2022), or
-    AlphaMissense when REVEL is missing (Bergquist et al., Genet Med 2025).
-  - Points: Supporting ±1, Moderate ±2 (±3 for the intermediate interval), Strong ±4.
-  - Used alone, it is right more often when it decides (97.2%) but decides less often (84.8%) than
-    the model.
+- **ACMG PP3/BP4.** Computed from the model score, with thresholds calibrated by ClinGen's method;
+  see the next section. `--acmg-source revel` (desktop app: *Options → PP3/BP4*) uses REVEL with the
+  thresholds ClinGen published instead (AlphaMissense when REVEL is missing).
+
+## ACMG PP3/BP4 from the model score
+
+PP3 and BP4 are the ACMG/AMP criteria for computational evidence. ClinGen recommends taking them from
+**one** score whose thresholds were calibrated with the method of
+[Pejaver et al. (AJHG 2022)](https://pmc.ncbi.nlm.nih.gov/articles/PMC9748256/). That paper set the
+thresholds of REVEL and other tools. MissensExplorer calibrates its own score with the same method,
+on the same data, so its evidence has the same meaning as REVEL's.
+`python benchmarks/calibrate_acmg.py` reproduces everything below; the full tables are in
+[benchmarks/results/acmg_calibration.md](../benchmarks/results/acmg_calibration.md).
+
+| Evidence (points) | Likelihood ratio needed | Model score |
+|---|---|---|
+| PP3 Strong (+4) | 33.5 | ≥ 0.985 |
+| PP3 Moderate (+3) | 13.9 | ≥ 0.975 |
+| PP3 Moderate (+2) | 5.8 | ≥ 0.941 |
+| PP3 Supporting (+1) | 2.4 | ≥ 0.816 |
+| BP4 Supporting (−1) | 1/2.4 | ≤ 0.271 |
+| BP4 Moderate (−2) | 1/5.8 | ≤ 0.105 |
+| BP4 Moderate (−3) | 1/13.9 | ≤ 0.017 |
+| BP4 Strong (−4) | 1/33.5 | ≤ 0.005 |
+
+The +3/−3 intervals count as Moderate under the 2015 guidelines, as for REVEL. The output reads, for
+example, `PP3_Strong (model 0.994)` = +4 points.
+
+**How the thresholds were set.**
+- **Method.** A Python port of the authors' MATLAB code
+  ([vpejaver/clingen-svi-comp_calibration](https://github.com/vpejaver/clingen-svi-comp_calibration)).
+  - It assumes a prior probability of pathogenicity of 0.0441.
+  - It estimates the posterior probability at each score in a window of at least 100 ClinVar
+    variants and 3% of rare gnomAD variants.
+  - The threshold of a level is where that posterior stops meeting the level's likelihood ratio.
+    It is taken at the one-sided 95% bound over 10,000 bootstrap samples.
+- **Check of the port.** On the paper's own data it reproduces the published thresholds of REVEL
+  (0.644 / 0.774 / 0.879 / 0.932 for PP3; 0.290 / 0.181 / 0.052 / 0.016 for BP4), VEST4, MutPred2
+  and PolyPhen-2. Every value is within 0.002, the size of bootstrap noise.
+- **Data.**
+  - The paper's ClinVar 2019 set: the data behind REVEL's ClinGen thresholds.
+    - It has missense variants below 1% in gnomAD, with the training variants of REVEL and other
+      tools removed.
+    - 11,201 of its 11,834 variants are missense on the transcript MissensExplorer reports.
+  - Each variant is scored by a model fitted without its gene, because the shipped model was trained
+    on ClinVar variants of many of these genes. These scores agree with the shipped model's on genes
+    neither model saw (correlation 0.9999).
+  - The gnomAD part is 5,615 rare gnomAD v4 missense variants that are not in ClinVar.
+- **Effect of the substitutions.** Done on REVEL's own scores:
+  - **gnomAD set.** A set of 5,615 variants instead of 364,000 makes BP4 Moderate a little stricter
+    (0.159 instead of 0.183) and leaves PP3 unchanged.
+  - **Variant subset.** Keeping only the 11,201 variants that are missense on the current transcript
+    moves BP4 Supporting from 0.290 to 0.342. The 633 variants left out include 344 pathogenic ones
+    with middling REVEL scores, probably pathogenic for other reasons such as splicing.
+    MissensExplorer gives PP3/BP4 only to variants that are missense on the reported transcript, so
+    this is the right population. The tests below check the BP4 bands for exactly this reason.
+
+**Tests on data not used for the calibration.** For each band, the likelihood ratio was compared
+with the one the level needs:
+- the paper's ClinVar 2020 set (8,723 variants), as in the paper;
+- the rare variants of the held-out benchmark (1,163 variants, genes the shipped model never saw);
+- among those, the ones labelled since 2023.
+
+| ClinVar 2020 set | Pathogenic | Benign | Likelihood ratio (95% CI) | Needed |
+|---|---|---|---|---|
+| PP3 Strong | 1,233 | 50 | 55.6 (43.5–75.6) | 33.5 |
+| PP3 +3 | 269 | 37 | 16.4 (12.0–23.8) | 13.9 |
+| PP3 Moderate | 352 | 106 | 7.5 (6.1–9.4) | 5.8 |
+| PP3 Supporting | 333 | 200 | 3.8 (3.2–4.5) | 2.4 |
+| BP4 Supporting | 89 | 976 | 4.9 (4.0–6.1) | 2.4 |
+| BP4 Moderate | 71 | 2,202 | 13.8 (11.1–17.9) | 5.8 |
+| BP4 −3 | 10 | 982 | 43.5 (26.2–108.5) | 13.9 |
+| BP4 Strong | 1 | 452 | 200 (62–∞) | 33.5 |
+
+- **ClinVar 2020 set:** every band reaches the ratio it needs.
+- **Held-out benchmark:** every band reaches it too.
+- **Labelled since 2023:** one band falls short, PP3 +3 at 11.3 against 13.9. It rests on a single
+  benign variant (31 pathogenic, 1 benign).
+
+**Compared with REVEL at ClinGen's published thresholds** (the `revel` source):
+
+| | ClinVar 2020: model | ClinVar 2020: REVEL | Held-out, rare: model | Held-out, rare: REVEL |
+|---|---|---|---|---|
+| Pathogenic with PP3 | **81.6%** | 73.2% | 87.8% | 88.5% |
+| … PP3 Strong | **46.0%** | 28.2% | **46.5%** | 34.4% |
+| Benign with BP4 | **76.3%** | 65.6% | **78.9%** | 71.4% |
+| … BP4 Moderate or more | **60.2%** | 47.4% | **68.8%** | 51.3% |
+| Pathogenic with BP4 (wrong way) | 6.4% | 6.7% | 2.2% | 1.5% |
+| Benign with PP3 (wrong way) | 6.5% | 7.3% | 5.0% | 6.0% |
+
+- The model gives stronger evidence more often, in both directions.
+- Its wrong-way evidence is about as frequent as REVEL's:
+  - ClinVar 2020 set: a little lower on both sides.
+  - Held-out benchmark: 7 more pathogenic variants out of 964 get BP4 Supporting, and 2 fewer benign
+    variants out of 199 get PP3.
+- Among rare gnomAD variants, 20% get no computational evidence, against 28% with REVEL.
+
+**Using it.**
+- **Not published by ClinGen.** The calibration follows ClinGen's method on ClinGen's data, but it is
+  this project's work, not reviewed by ClinGen. A laboratory that requires a ClinGen-published
+  calibration should use `--acmg-source revel`.
+- **One source only.** Use either the model or REVEL, chosen in advance, never both for the same
+  variant. Pejaver et al. also recommend limiting PP3 and PM1 together to Strong (4 points).
+- **Two different standards on one score.**
+  - The verdict (*Likely damaging* from 0.76) is tuned to find pathogenic variants.
+  - PP3 needs the likelihood ratio of the ACMG point system (from 0.816).
+  - A variant between 0.76 and 0.816 is therefore *Likely damaging* without PP3. Likewise, BP4
+    starts at 0.271 while *Likely benign* starts at 0.30.
+- **Tied to one trained model.** The thresholds apply to model 2.3 as trained on 2026-11-23. After a
+  retrain, the app falls back to REVEL until `benchmarks/calibrate_acmg.py` is run again, and a test
+  fails as a reminder.

@@ -373,6 +373,15 @@ class MainWindow(QMainWindow):
         self.freq_rule.setMinimumWidth(10)
         frow.addWidget(self.freq_rule, 1)
         op.addLayout(frow)
+        arow = QHBoxLayout()
+        arow.addWidget(label(t("acmg_src")))
+        self.acmg_src = QComboBox()
+        self.acmg_src.addItem(t("acmg_src_model"), "model")
+        self.acmg_src.addItem(t("acmg_src_revel"), "revel")
+        self.acmg_src.setToolTip(t("acmg_src_tip"))
+        self.acmg_src.setMinimumWidth(10)
+        arow.addWidget(self.acmg_src, 1)
+        op.addLayout(arow)
         wrow = QHBoxLayout()
         wrow.addWidget(label(t("workers")))
         wrow.addStretch(1)
@@ -731,6 +740,7 @@ class MainWindow(QMainWindow):
             w.setChecked(str(s.value(key, default)).lower() == "true")
         self.workers.setValue(int(s.value("workers", 4)))
         self.freq_rule.setCurrentIndex(max(0, self.freq_rule.findData(float(s.value("common_af", 0.05) or 0))))
+        self.acmg_src.setCurrentIndex(max(0, self.acmg_src.findData(s.value("acmg_source", "model"))))
         self.opt_btn.setChecked(str(s.value("options_open", False)).lower() == "true")
         self.engine.setCurrentIndex(max(0, self.engine.findData(s.value("engine", "rest"))))
         self.vep_cmd.setText(s.value("vep_cmd", "") or "")
@@ -749,6 +759,7 @@ class MainWindow(QMainWindow):
         s.setValue("noncoding", self.opt_nc.isChecked())
         s.setValue("workers", self.workers.value())
         s.setValue("common_af", self.freq_rule.currentData())
+        s.setValue("acmg_source", self.acmg_src.currentData())
         s.setValue("options_open", self.opt_btn.isChecked())
         s.setValue("engine", self.engine.currentData())
         s.setValue("vep_cmd", self.vep_cmd.text())
@@ -839,7 +850,7 @@ class MainWindow(QMainWindow):
             vep=self.engine.currentData(), vep_command=self.vep_cmd.text().strip() or None,
             vep_args=self.vep_args.text().strip() or None,
             offline=self.offline.isChecked() and self.engine.currentData() == "local",
-            common_af=self.freq_rule.currentData() or None,
+            common_af=self.freq_rule.currentData() or None, acmg_source=self.acmg_src.currentData(),
         )
 
     def run_prediction(self):
@@ -1094,7 +1105,8 @@ class MainWindow(QMainWindow):
                 lw = label(f"<b>{k}:</b> {html.escape(tr_text(v))}{extra}", "Body", wrap=True, selectable=True)
                 lw.setTextFormat(Qt.TextFormat.RichText)
                 self.dl.addWidget(lw)
-            self.dl.addWidget(label(t("acmg_note"), "Muted", wrap=True))
+            own = "(model " in str(g("acmg_pp3_bp4") or "")
+            self.dl.addWidget(label(t("acmg_note_model" if own else "acmg_note"), "Muted", wrap=True))
 
         rows = []
         for name, col, call_col, rng, thr, hb in PREDICTORS:

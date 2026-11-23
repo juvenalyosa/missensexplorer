@@ -60,13 +60,33 @@ def test_classify_uses_model_and_falls_back_to_votes():
     ({"revel": 0.95, "alphamissense": 0.1}, "PP3_Strong", 4),          # REVEL first, as ClinGen recommends one tool
 ])
 def test_pp3_bp4_intervals(row, code, pts):
-    text, p = acmg.computational(row)
+    text, p = acmg.computational(row, "revel")
     assert text.startswith(code) and p == pts
 
 
 def test_pp3_bp4_without_scores():
-    assert acmg.computational({"cadd_phred": 30}) == (None, None)
-    assert acmg.computational({"revel": 0.5})[0] == "none (REVEL 0.500, indeterminate)"
+    for source in acmg.SOURCES:
+        assert acmg.computational({"cadd_phred": 30}, source) == (None, None)
+    assert acmg.computational({"revel": 0.5}, "revel")[0] == "none (REVEL 0.500, indeterminate)"
+    with pytest.raises(ValueError):
+        acmg.computational({"revel": 0.5}, "cadd")
+
+
+def test_model_pp3_bp4_follows_its_calibration():
+    assert acmg.MODEL_CALIBRATED, "the model was retrained: run benchmarks/calibrate_acmg.py"
+    cal = acmg.CALIBRATION
+    assert [p for _, p in cal["pp3"]] == sorted((p for _, p in cal["pp3"]), reverse=True)
+    assert cal["pp3"][-1][0] > cal["bp4"][-1][0]         # weakest PP3 cut-off above the weakest BP4 one
+    seen = set()
+    for v in json.loads((DATA / "model_vectors.json").read_text()):
+        text, pts = acmg.computational(v)              # the model is the default source
+        if v["alphamissense"] is None and v["revel"] is None:
+            assert (text, pts) == (None, None)
+            continue
+        p = round(model.score(v).p, 3)
+        assert f"model {p:.3f}" in text and pts == acmg._points(p, cal["pp3"], cal["bp4"])
+        seen.add((pts > 0) - (pts < 0))
+    assert seen == {-1, 0, 1}                          # the vectors reach PP3, BP4 and no evidence
 
 
 def test_frequency_evidence():

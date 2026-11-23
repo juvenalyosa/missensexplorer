@@ -75,6 +75,7 @@ class PredictOptions:
     vep_args: str | None = None             # extra local VEP arguments, e.g. plugin data files
     offline: bool = False                   # never use the internet (local VEP only; no ClinVar/UniProt/AlphaFold)
     common_af: float | None = 0.05          # gnomAD grpmax at/above which damaging/uncertain calls become benign (None = off)
+    acmg_source: str = "model"              # PP3/BP4 from: model (own ClinGen-method calibration) | revel (ClinGen's)
     workers: int = 4
     cache: bool = True
     cache_path: str | None = None
@@ -864,7 +865,7 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
             label, score, basis = classify(r, terms)
             r.pop("_truncation", None)
             if "missense_variant" in terms:
-                r["acmg_pp3_bp4"], r["acmg_points"] = acmg.computational(r)
+                r["acmg_pp3_bp4"], r["acmg_points"] = acmg.computational(r, opt.acmg_source)
             r["population_frequency"] = acmg.frequency(r)
             if not acmg.ba1_exception(r):     # common but pathogenic/uncertain (ClinGen list): no frequency rule
                 label, basis = apply_frequency(label, basis, r.get("gnomad_popmax_af"), opt.common_af)
