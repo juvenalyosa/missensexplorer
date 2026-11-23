@@ -163,11 +163,12 @@ res.sequences      # wild-type and mutant protein sequences per row
 - **Truncating variants** (stop-gained, frameshift, canonical splice site, start-lost) are reported
   as *Loss of function*, with an NMD estimate and the percentage of the protein that is lost.
 - For a **missense** variant, a logistic regression combines the scores of AlphaMissense, REVEL,
-  CADD and popEVE into a *model score* (0–1). At 0.7 or more the variant is
-  *Likely damaging*; at 0.3 or less, *Likely benign*; in between, *Uncertain*. The model was
-  trained on expert-reviewed ClinVar variants from genes that the benchmark does not use, and every
-  call shows how much each predictor pushed it (desktop app: *Why* chart). The coefficients, the
-  training data and the validation are described in the [model card](docs/model.md).
+  CADD and popEVE into a *model score* (0–1). At 0.76 or more the variant is
+  *Likely damaging*; at 0.30 or less, *Likely benign*; in between, *Uncertain*. The model was
+  trained on expert-reviewed ClinVar variants from genes that the benchmark does not use, with
+  extra weight on the hard cases (rare benign variants), and every call shows how much each
+  predictor pushed it (desktop app: *Why* chart). The coefficients, the training data, the choice
+  of cut-offs and the validation are described in the [model card](docs/model.md).
 
   The model needs AlphaMissense or REVEL. Without both (for example local VEP without plugins), a
   weighted vote of CADD and EVE decides, and SIFT/PolyPhen-2 vote only when nothing better exists;
@@ -228,12 +229,14 @@ leaves the computer.
   splice-altering synonymous, mitochondrial, chromosome X, multi-allelic and GRCh37 variants. A
   nightly GitHub workflow checks that the external APIs still return the fields the tool reads.
 - **Measured against ClinVar, on genes the model never saw.** On 1,972 expert-reviewed (≥ 2 stars)
-  germline missense variants from 1,181 genes, version 2.2 calls 93% of the pathogenic variants
-  *damaging* (v2.1: 89%) and 88% of the benign ones *benign* (v2.1: 87%). 94.5% of the variants get
-  a decisive call, and decisive calls are right 96% of the time (2.4% of pathogenic variants are
-  called benign; 5.1% of benign variants are called damaging). The AUC of the model score is 0.985
-  (v2.1: 0.959); on rare variants it is 0.973 (v2.1: 0.937). Some predictors were trained or
-  calibrated on similar data, so treat absolute figures as optimistic. The
+  germline missense variants from 1,181 genes, version 2.3 calls 91% of the pathogenic variants
+  *damaging* (v2.1: 89%) and 88% of the benign ones *benign* (v2.1: 87%). 92.7% of the variants get
+  a decisive call, and decisive calls are right 97% of the time (2.4% of pathogenic variants are
+  called benign; 3.2% of benign variants are called damaging, against 5.2% with v2.1). On **rare**
+  variants (gnomAD < 0.1%), where most of a patient's variants are, 6.0% of the benign ones are
+  called damaging (v2.1: 9.0%) and 91.6% of the pathogenic ones are found (v2.1: 89.2%). The AUC of
+  the model score is 0.985 (v2.1: 0.959); on rare variants it is 0.974 (v2.1: 0.937). Some predictors
+  were trained or calibrated on similar data, so treat absolute figures as optimistic. The
   [benchmark](benchmarks/results/clinvar_benchmark.md) has per-predictor, rare-variant and
   since-2024 results, and the [model card](docs/model.md) explains training, validation and limits.
   `benchmarks/clinvar_benchmark.py` and `benchmarks/train_model.py` reproduce them.

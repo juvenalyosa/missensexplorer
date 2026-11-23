@@ -35,14 +35,16 @@ class ModelScore:
     contributions: list[tuple[str, float]]  # (predictor, log-odds), largest absolute value first
 
 
-def score(row: dict) -> ModelScore | None:
-    feats = MODEL["features"]
+def score(row: dict, params: dict | None = None) -> ModelScore | None:
+    """Model score of a row; `params` defaults to the shipped model (other values: benchmarks)."""
+    m = params or MODEL
+    feats = m["features"]
     vals = {f: _num(row.get(f)) for f in feats}
     if all(vals[f] is None for f in REQUIRED):
         return None
-    z = MODEL["intercept"]
+    z = m["intercept"]
     contrib = []
-    for f, med, mu, sd, c in zip(feats, MODEL["median"], MODEL["mean"], MODEL["scale"], MODEL["coef"]):
+    for f, med, mu, sd, c in zip(feats, m["median"], m["mean"], m["scale"], m["coef"]):
         v = vals[f]
         term = c * ((med if v is None else v) - mu) / sd
         z += term

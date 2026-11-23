@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from missensexplorer import clinvar
+from missensexplorer import clinvar, model
 from missensexplorer.inputs import parse_text
 from missensexplorer.predict import _rows_for_variant, classify, colocated_info, short_protein_change
 from missensexplorer.protein import context_window, features_at, mutate_protein
@@ -110,4 +110,4 @@ def test_sift_polyphen_only_as_fallback():
     # modern scores in their intermediate range: uncertain, not "no scores"
     grey = {"revel": 0.5, "cadd_phred": 24.0, "sift": "deleterious"}
     label, score, _ = classify(grey, {"missense_variant"})
-    assert label == "Uncertain (intermediate scores)" and 0.3 < score < 0.7
+    assert label == "Uncertain (intermediate scores)" and model.BENIGN < score < model.DAMAGING

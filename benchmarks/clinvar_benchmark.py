@@ -8,7 +8,7 @@
    without conflicts, expert panel or practice guideline), labelled Pathogenic/Likely
    pathogenic or Benign/Likely benign; at most 8 per gene so a few genes do not dominate.
 3. Runs the pipeline on the genomic coordinates WITHOUT ClinVar (it is never an input of the verdict).
-4. Reports, for the v2.2 verdict (model + frequency rule), the model alone, the v2.1 vote, the
+4. Reports, for the verdict (model + frequency rule), the model alone, the previous v2.2 model, the v2.1 vote, the
    ClinGen PP3/BP4 call and each predictor: sensitivity (pathogenic called damaging), specificity
    (benign called benign), how many stay uncertain, and the AUC; for all variants, rare variants
    and variants evaluated since 2024.
@@ -167,6 +167,20 @@ def scheme_call(row: dict, weights: dict, hi: float, lo: float, min_weight: floa
 
 V21 = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen": 0, "SIFT": 0}
 
+# The v2.2 model (trained on a plain random ClinVar sample), kept to compare with the current one.
+V22 = {"features": ["alphamissense", "revel", "cadd_phred", "popeve"],
+       "median": [0.3227, 0.3915, 24.5, -3.469], "mean": [0.4726, 0.455065, 22.068322, -3.591189],
+       "scale": [0.385334, 0.341274, 9.409868, 0.764894], "coef": [1.150214, 1.752403, 0.837612, -0.827833],
+       "intercept": 0.010747, "damaging": 0.7, "benign": 0.3}
+
+
+def params_call(row: dict, params: dict) -> str | None:
+    """Call of a model with the given parameters; the v2.1 vote when the model does not apply."""
+    ms = model.score(row, params)
+    if ms is None:
+        return scheme_call(row, V21, 0.7, 0.3, 0.0, True)
+    return "damaging" if ms.p >= params["damaging"] else "benign" if ms.p <= params["benign"] else None
+
 
 def vote_fraction(row: dict) -> float | None:
     """Weighted share of damaging votes, as the v2.1 verdict computed it (its effect score)."""
@@ -229,6 +243,7 @@ def main(argv=None) -> int:
         x["model_label"] = classify(r, {"missense_variant"})[0]   # model without the frequency rule
         x["grpmax"] = _num(r.get("gnomad_popmax_af"))
         x["v21"] = scheme_call(r, V21, 0.7, 0.3, 0.0, True)
+        x["v22"] = params_call(r, V22)
         pts = r.get("acmg_points")
         x["clingen"] = None if not isinstance(pts, (int, float)) or pts != pts or pts == 0 else (
             "damaging" if pts > 0 else "benign")
@@ -237,17 +252,19 @@ def main(argv=None) -> int:
         common = x["grpmax"] is not None and x["grpmax"] >= af and not acmg.ba1_exception(x["row"])
         return "benign" if common else call
 
+    ver = f"v{MODEL['version']}"
     methods = {
-        "v2.2 default: model + frequency rule (BA1, gnomAD grpmax ≥ 5%)": lambda x: verdict_call(x["row"]["prediction"]),
-        "v2.2 model alone (no frequency rule)": lambda x: verdict_call(x["model_label"]),
-        "v2.2 model + frequency ≥ 1%": lambda x: with_freq(verdict_call(x["model_label"]), x, 0.01),
+        f"{ver} default: model + frequency rule (BA1, gnomAD grpmax ≥ 5%)": lambda x: verdict_call(x["row"]["prediction"]),
+        f"{ver} model alone (no frequency rule)": lambda x: verdict_call(x["model_label"]),
+        f"{ver} model + frequency ≥ 1%": lambda x: with_freq(verdict_call(x["model_label"]), x, 0.01),
+        "v2.2 model + frequency rule (BA1, 5%)": lambda x: with_freq(x["v22"], x, 0.05),
         "v2.1 vote": lambda x: x["v21"],
         "v2.1 vote + frequency rule (BA1, 5%)": lambda x: with_freq(x["v21"], x, 0.05),
         "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": lambda x: x["clingen"],
     }
     report: dict = {"clinvar_file": URL, "seed": args.seed, "sampled": len(picked), "annotated": len(rows),
                     "genes": len({x["gene"] for x in rows}), "run": res.run,
-                    "model": {k: MODEL[k] for k in ("version", "trained", "training")}}
+                    "model": {k: MODEL[k] for k in ("version", "trained", "training", "damaging", "benign")}}
     groups = {"all": rows,
               "rare (gnomAD grpmax < 0.1% or absent)": subset(rows, lambda x: (x["grpmax"] or 0) < 0.001),
               "evaluated since 2024": subset(rows, lambda x: (x["year"] or 0) >= 2024)}
@@ -257,7 +274,8 @@ def main(argv=None) -> int:
         report["predictors"][gname] = {name: call_metrics([(predictor_calls(x["row"])[name], x["label"]) for x in items])
                                        for name in WEIGHTS}
         aucs = {}
-        for name, get in (("v2.2 model score", lambda r: (model.score(r).p if model.score(r) else None)),
+        for name, get in ((f"{ver} model score", lambda r: (model.score(r).p if model.score(r) else None)),
+                          ("v2.2 model score", lambda r: (model.score(r, V22).p if model.score(r, V22) else None)),
                           ("v2.1 vote fraction", vote_fraction),
                           ("AlphaMissense", lambda r: _num(r.get("alphamissense"))),
                           ("REVEL", lambda r: _num(r.get("revel"))), ("CADD", lambda r: _num(r.get("cadd_phred"))),
@@ -269,13 +287,12 @@ def main(argv=None) -> int:
             aucs[name] = {"auc": auc(sc), "coverage": len(sc) / max(1, len(items))}
         report["auc"][gname] = aucs
     report["model_cut_offs"] = {}
-    for hi, lo in ((0.6, 0.4), (0.7, 0.3), (0.8, 0.2)):
-        calls = []
-        for x in rows:
-            ms = model.score(x["row"])
-            c = x["v21"] if ms is None else "damaging" if ms.p >= hi else "benign" if ms.p <= lo else None
-            calls.append((c, x["label"]))
-        report["model_cut_offs"][f"{hi:.1f}/{lo:.1f}" + (" (default)" if hi == model.DAMAGING else "")] = call_metrics(calls)
+    rare_rows = groups["rare (gnomAD grpmax < 0.1% or absent)"]
+    for hi, lo in sorted({(0.6, 0.4), (0.7, 0.3), (0.8, 0.2), (model.DAMAGING, model.BENIGN)}):
+        name = f"{hi:.2f}/{lo:.2f}" + (" (default)" if (hi, lo) == (model.DAMAGING, model.BENIGN) else "")
+        report["model_cut_offs"][name] = {
+            g: call_metrics([(params_call(x["row"], {**MODEL, "damaging": hi, "benign": lo}), x["label"])
+                             for x in items]) for g, items in (("all", rows), ("rare", rare_rows))}
     report["seconds"] = round(time.time() - t0, 1)
 
     OUT.mkdir(exist_ok=True)
@@ -303,7 +320,9 @@ def markdown(rep: dict) -> str:
          "",
          f"The missense model (v{rep['model']['version']}, trained {rep['model']['trained']}) was fitted on "
          f"{tr['n']} other ClinVar variants from {tr['genes']} genes; **no gene of this benchmark was used for "
-         "training**, so these are held-out results (benchmarks/train_model.py).", "",
+         "training**, so these are held-out results (benchmarks/train_model.py). Its cut-offs "
+         f"({rep['model']['damaging']}/{rep['model']['benign']}) were chosen by cross-validation on the training "
+         "genes, not on this benchmark.", "",
          "Sensitivity = pathogenic variants called *damaging*; specificity = benign variants called *benign*; "
          "coverage = share of variants that get a decisive call (not *uncertain*/*not assessed*).", ""]
     for g, ms in rep["methods"].items():
@@ -320,8 +339,9 @@ def markdown(rep: dict) -> str:
                 L.append(f"| {name} | {fmt(pm['sensitivity'])} | {fmt(pm['specificity'])} | {fmt(pm['coverage'])} | "
                          f"{fmt(pm['accuracy_when_decisive'])} |")
             L.append("")
-    L += ["## Model cut-offs (all variants, no frequency rule)", ""] + HEAD
-    L += [_metric_row(k, m) for k, m in rep["model_cut_offs"].items()]
+    for g in ("all", "rare"):
+        L += [f"## Model cut-offs ({'all' if g == 'all' else 'rare'} variants, no frequency rule)", ""] + HEAD
+        L += [_metric_row(k, m[g]) for k, m in rep["model_cut_offs"].items()] + [""]
     L += ["", "Caveats: REVEL was trained on disease-variant databases and AlphaMissense's thresholds were calibrated "
           "on ClinVar, so absolute figures are optimistic; the comparison between methods is the robust part. "
           "The frequency rule looks better here than it will in practice because ClinVar curators use the same "
