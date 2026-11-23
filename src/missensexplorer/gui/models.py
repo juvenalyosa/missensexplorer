@@ -54,6 +54,7 @@ COLUMNS = [
     ("consequence", "col_consequence", "consequence"),
     ("prediction", "col_prediction", "status"),
     ("effect_score", "col_effect", "bar"),
+    ("score_with_frequency", "col_with_freq", "bar"),
     ("alphamissense", "AlphaMissense", "bar"),
     ("revel", "REVEL", "bar"),
     ("cadd_phred", "CADD", "num1"),

@@ -293,6 +293,7 @@ if res is not None:
             "Consequence": view["consequence"].fillna("").str.replace("_variant", "").str.replace("_", " "),
             "Prediction": view["status"].map(lambda k: STATUS[k][2]) + " " + view["prediction"].fillna(""),
             "Effect": view["effect_score"],
+            "With frequency": view["score_with_frequency"],
             "ACMG": view["acmg_codes"].fillna(""),
             "AlphaMissense": view["alphamissense"],
             "REVEL": view["revel"],
@@ -308,7 +309,11 @@ if res is not None:
             disp, hide_index=True, on_select="rerun", selection_mode="single-row", key="grid",
             column_config={
                 "Effect": st.column_config.ProgressColumn("Effect", min_value=0, max_value=1, format="%.2f",
-                                                          help="Weighted fraction of predictors calling the variant damaging (1 = loss of function)"),
+                                                          help="Model score for missense variants (1 = loss of function)"),
+                "With frequency": st.column_config.ProgressColumn(
+                    "With frequency", min_value=0, max_value=1, format="%.2f",
+                    help="Model score combined with the gnomAD frequency, for ranking a sample's variants. Not ACMG "
+                         "evidence: frequency already counts in BA1, BS1 and PM2."),
                 "AlphaMissense": st.column_config.ProgressColumn("AlphaMissense", min_value=0, max_value=1, format="%.2f"),
                 "REVEL": st.column_config.ProgressColumn("REVEL", min_value=0, max_value=1, format="%.2f"),
                 "CADD": st.column_config.NumberColumn("CADD", format="%.1f"),

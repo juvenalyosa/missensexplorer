@@ -76,8 +76,10 @@ release, so no tool trained before then can have seen it.
 - **MetaRNN ranks higher, because of frequency.**
   - MetaRNN is significantly ahead on all three sets (+0.009 to +0.012).
   - MetaRNN takes allele frequency as input. Adding frequency to the MissensExplorer score as a second
-    feature (an exploratory test, not used by the tool) gives the same AUC as MetaRNN: 0.996, 0.983
-    and 0.982.
+    feature gives the same AUC as MetaRNN: 0.996, 0.983 and 0.982. The tool now offers that
+    combination as an extra column for ranking variants
+    ([score with frequency](model.md#score-with-frequency-for-ranking)). It is not used for the
+    verdict or for ACMG evidence.
   - The gap is therefore the frequency, not better protein-level prediction.
 - **ClinPred, BayesDel with AF and MutationTaster2021** are ahead on all variants but level with
   MissensExplorer on rare and new ones. Their edge sits in the common benign variants, which

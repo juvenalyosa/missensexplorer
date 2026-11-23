@@ -13,12 +13,15 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from .frequency_params import FREQUENCY
 from .model_params import MODEL
 
 NAMES = {"alphamissense": "AlphaMissense", "revel": "REVEL", "cadd_phred": "CADD", "eve": "EVE",
          "popeve": "popEVE", "sift_score": "SIFT", "polyphen_score": "PolyPhen"}
 REQUIRED = ("alphamissense", "revel")  # the model is used only when at least one of these has a score
 DAMAGING, BENIGN = MODEL["damaging"], MODEL["benign"]
+# The score with frequency is fitted on this model's scores: it applies only to the model it was fitted for.
+FREQUENCY_FITTED = (FREQUENCY["model_version"], FREQUENCY["model_trained"]) == (MODEL["version"], MODEL["trained"])
 
 
 def _num(x) -> float | None:
@@ -59,3 +62,24 @@ def describe(ms: ModelScore, top: int = 3) -> str:
     """'model score 0.93 (REVEL +1.9, CADD +0.8, AlphaMissense +0.7)'."""
     parts = [f"{n} {t:+.1f}" for n, t in ms.contributions[:top] if abs(t) >= 0.05]
     return f"model score {ms.p:.2f}" + (f" ({', '.join(parts)})" if parts else "")
+
+
+def frequency_features(p: float, grpmax: float | None) -> list[float]:
+    """[logit of the model score, log10 of gnomAD grpmax + floor]; a variant absent from gnomAD's main
+    ancestry groups counts as 0 (log10 of the floor, about one allele in a million)."""
+    p = min(max(p, 1e-6), 1 - 1e-6)
+    af = _num(grpmax) or 0.0
+    return [math.log(p / (1 - p)), math.log10(af + FREQUENCY["af_floor"])]
+
+
+def with_frequency(p: float | None, grpmax: float | None, params: dict | None = None) -> float | None:
+    """Model score combined with the gnomAD grpmax frequency (0-1), for ranking variants.
+
+    Not for ACMG PP3/BP4: frequency has its own criteria there (BA1, BS1, PM2), and ClinGen asks for
+    computational evidence that does not use it. None when the model gave no score."""
+    f = params or FREQUENCY
+    if p is None or (params is None and not FREQUENCY_FITTED):
+        return None
+    z = f["intercept"] + sum(c * x for c, x in zip(f["coef"], frequency_features(p, grpmax)))
+    return 1.0 / (1.0 + math.exp(-z))
+

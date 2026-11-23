@@ -1079,6 +1079,10 @@ class MainWindow(QMainWindow):
         srow.addWidget(pl)
         if isnum(r.get("effect_score")):
             srow.addWidget(label(f"· {t('col_effect').lower()} {r['effect_score']:.2f}", "Muted"))
+        if isnum(r.get("score_with_frequency")):
+            fw = label(f"· {t('col_with_freq').lower()} {r['score_with_frequency']:.2f}", "Muted")
+            fw.setToolTip(t("with_freq_tip"))
+            srow.addWidget(fw)
         srow.addStretch(1)
         self.dl.addLayout(srow)
         meta = [x for x in (str(g("consequence", "")).replace("_variant", "").replace("_", " ").replace(",", ", "),

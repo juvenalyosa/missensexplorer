@@ -15,7 +15,8 @@ from .predict import PredictionResult, is_damaging
 SUMMARY_COLUMNS = {
     "input": "Input", "sample": "Sample", "zygosity": "Zygosity", "gene": "Gene",
     "protein_change": "Protein change", "hgvsp": "HGVS p.", "consequence": "Consequence",
-    "prediction": "Prediction", "effect_score": "Effect score", "alphamissense": "AlphaMissense",
+    "prediction": "Prediction", "effect_score": "Effect score", "score_with_frequency": "Score with frequency",
+    "alphamissense": "AlphaMissense",
     "revel": "REVEL", "cadd_phred": "CADD", "eve": "EVE", "grantham": "Grantham", "plddt": "pLDDT",
     "key_site": "Functional site", "protein_features": "Protein region", "clinvar": "ClinVar",
     "clinvar_review": "ClinVar review",
@@ -162,7 +163,8 @@ def print_result(res: PredictionResult, console=None, details: bool | None = Non
     if details:
         for _, r in df.iterrows():
             body = []
-            for label, key in [("Prediction", "prediction_basis"), ("ACMG criteria", "acmg_codes"),
+            for label, key in [("Prediction", "prediction_basis"), ("Score with frequency", "score_with_frequency"),
+                               ("ACMG criteria", "acmg_codes"),
                                ("ACMG PP3/BP4", "acmg_pp3_bp4"), ("ACMG PS1/PM5", "acmg_ps1_pm5"),
                                ("ACMG PM2", "acmg_pm2"), ("Population frequency", "population_frequency"), ("Protein", "protein_name"),
                                ("Sequence", "protein_window"), ("Mutant protein", "mutant_protein"),
@@ -178,6 +180,8 @@ def print_result(res: PredictionResult, console=None, details: bool | None = Non
                     continue
                 if key == "plddt_class":
                     v = f"{r.get('plddt')} ({v})"
+                if key == "score_with_frequency":
+                    v = f"{v:.2f} (model score and gnomAD frequency together; for ranking, not ACMG evidence)"
                 if key == "grantham_class":
                     v = f"{int(r.get('grantham'))} ({v}); BLOSUM62 {int(r.get('blosum62'))}"
                 s = str(v)

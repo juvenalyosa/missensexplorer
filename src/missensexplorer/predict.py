@@ -44,7 +44,7 @@ CADD_DAMAGING, CADD_BENIGN = 25.3, 22.7
 COLUMNS = [
     "input", "source", "sample", "zygosity", "genotype", "carriers",
     "gene", "protein_change", "hgvsp", "hgvsc", "consequence", "impact",
-    "prediction", "effect_score", "prediction_basis", "acmg_codes", "acmg_pp3_bp4", "acmg_points", "acmg_ps1_pm5",
+    "prediction", "effect_score", "score_with_frequency", "prediction_basis", "acmg_codes", "acmg_pp3_bp4", "acmg_points", "acmg_ps1_pm5",
     "acmg_pm2", "population_frequency",
     "alphamissense", "alphamissense_class", "revel", "cadd_phred", "eve", "eve_class", "popeve",
     "sift", "sift_score", "polyphen", "polyphen_score", "spliceai_max", "spliceai_effect",
@@ -917,6 +917,8 @@ def predict(text: str = "", files=(), options: PredictOptions | None = None, pro
                 notes.append("gnomAD check unavailable (service error)")
             r["population_frequency"] = acmg.frequency(r)
             r.pop("_gnomad")
+            if "missense_variant" in terms and (ms := model.score(r)) is not None:
+                r["score_with_frequency"] = model.with_frequency(ms.p, r.get("gnomad_popmax_af"))
             r["acmg_codes"] = acmg.codes(r)
             if not acmg.ba1_exception(r):     # common but pathogenic/uncertain (ClinGen list): no frequency rule
                 label, basis = apply_frequency(label, basis, r.get("gnomad_popmax_af"), opt.common_af)

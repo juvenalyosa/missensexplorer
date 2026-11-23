@@ -189,3 +189,4 @@ def test_pipeline_adds_ps1_pm5_and_pm2(monkeypatch):
     assert seen == []                       # Ensembl already gave V600E a gnomAD frequency: no direct check
     assert r["acmg_pm2"].startswith("depends on the disease")
     assert "PM5 +2" in r["acmg_codes"]
+    assert 0 < r["score_with_frequency"] < 1

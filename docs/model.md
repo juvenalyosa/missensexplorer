@@ -424,3 +424,49 @@ points in `acmg_codes`, and explained in `acmg_ps1_pm5` and `acmg_pm2`.
   variants, so the labels are not independent of the evidence. The time split limits this for
   PS1/PM5 but does not remove it.
 - The strengths are therefore kept at the published ones, not raised.
+
+## Score with frequency (for ranking)
+
+`score_with_frequency` combines the model score with the gnomAD grpmax frequency into one number for
+ranking the variants of a sample. Desktop app: column *With frequency*.
+
+```
+z = −6.937 + 0.855·logit(model score) − 1.822·log10(gnomAD grpmax + 10⁻⁶)
+score with frequency = 1 / (1 + e^(−z))
+```
+
+**How it was made.**
+- **Specification.** Fixed earlier, as the exploratory *frequency as a feature* row of the tool
+  comparison. It is a logistic regression on the model's training set (9,218 variants).
+- **Not retuned.** So the held-out benchmark is not used a second time to choose it.
+- **Absent variants.** A variant absent from gnomAD's main ancestry groups counts as frequency 0,
+  that is about one allele in a million.
+- **Reproduce.** `python benchmarks/train_frequency_score.py`; the
+  [results](../benchmarks/results/frequency_score.md) are in the repository.
+
+| AUC, held-out benchmark | Model alone | Score with frequency | Frequency alone | MetaRNN |
+|---|---|---|---|---|
+| All variants (1,969) | 0.985 | **0.996** (+0.010; 95% CI +0.007 to +0.014) | 0.978 | 0.996 |
+| Rare, < 0.1% (1,163) | 0.974 | **0.983** (+0.009; +0.003 to +0.014) | 0.909 | 0.983 |
+| Labelled since 2023 (454) | 0.971 | **0.982** (+0.011; +0.003 to +0.022) | 0.938 | 0.983 |
+
+With frequency, the score separates pathogenic from benign variants as well as MetaRNN, the best
+tool in the comparison.
+
+**Read it as a ranking, not as a probability or a call.**
+- **Frequency weighs heavily, the way ClinVar's variants do.** A variant absent from gnomAD gets a
+  high value even with a low model score: 0.98 at model score 0.5, 0.89 at 0.1, and about 0.5 at
+  0.01. In ClinVar most absent variants are pathogenic. In a patient's exome, most absent variants
+  are private and benign.
+- **Use it to sort a sample's variants.** It brings forward the rare and absent variants with high
+  model scores. Do not compare it with the model's cut-offs (0.76 / 0.30), and do not cut it at a
+  threshold.
+- **Not ACMG evidence.** Frequency has its own criteria (BA1, BS1, PM2), and ClinGen asks for PP3/BP4
+  from a score that leaves frequency out, which the model score does. Using this score for PP3/BP4
+  would count frequency twice.
+- **Common pathogenic variants rank low.** Variants that are frequent but pathogenic (recessive or
+  founder conditions, for example HFE C282Y) rank low here. The main prediction keeps them, through
+  ClinGen's BA1 exception list.
+- **Tied to one trained model.** The coefficients belong to model 2.3 as trained on 2026-11-23. After
+  a retrain the column stays empty until `train_frequency_score.py` is run again, and a test fails
+  as a reminder.

@@ -1,0 +1,89 @@
+{
+ "params": {
+  "model_version": "2.3",
+  "model_trained": "2026-11-23",
+  "trained": "2026-11-23",
+  "n": 9218,
+  "features": [
+   "logit(model score)",
+   "log10(gnomAD grpmax + 1e-6)"
+  ],
+  "intercept": -6.93693,
+  "coef": [
+   0.854619,
+   -1.822034
+  ],
+  "af_floor": 1e-06
+ },
+ "evaluation": {
+  "all variants": {
+   "variants": 1969,
+   "pathogenic": 978,
+   "benign": 991,
+   "model": 0.9852,
+   "with_frequency": {
+    "auc": 0.9956,
+    "vs_model": 0.0104,
+    "vs_model_ci": [
+     0.0073,
+     0.0141
+    ]
+   },
+   "frequency_alone": {
+    "auc": 0.9782,
+    "vs_model": -0.007,
+    "vs_model_ci": [
+     -0.0128,
+     -0.001
+    ]
+   },
+   "MetaRNN (tool comparison)": 0.9959
+  },
+  "rare (< 0.1%)": {
+   "variants": 1163,
+   "pathogenic": 964,
+   "benign": 199,
+   "model": 0.9741,
+   "with_frequency": {
+    "auc": 0.9828,
+    "vs_model": 0.0086,
+    "vs_model_ci": [
+     0.0031,
+     0.0144
+    ]
+   },
+   "frequency_alone": {
+    "auc": 0.9093,
+    "vs_model": -0.0649,
+    "vs_model_ci": [
+     -0.0844,
+     -0.0443
+    ]
+   },
+   "MetaRNN (tool comparison)": 0.9832
+  },
+  "labelled since 2023": {
+   "variants": 454,
+   "pathogenic": 282,
+   "benign": 172,
+   "model": 0.9709,
+   "with_frequency": {
+    "auc": 0.9822,
+    "vs_model": 0.0112,
+    "vs_model_ci": [
+     0.0025,
+     0.0216
+    ]
+   },
+   "frequency_alone": {
+    "auc": 0.9375,
+    "vs_model": -0.0335,
+    "vs_model_ci": [
+     -0.0574,
+     -0.0103
+    ]
+   },
+   "MetaRNN (tool comparison)": 0.9829
+  }
+ }
+}

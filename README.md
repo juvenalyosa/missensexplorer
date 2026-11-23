@@ -151,7 +151,7 @@ res.sequences      # wild-type and mutant protein sequences per row
 | Group | Columns |
 |---|---|
 | Protein change | `gene`, `protein_change` (V600E), `hgvsp`, `hgvsc`, `consequence`, `transcript` (MANE Select preferred), `exon`, `codons` |
-| **Prediction** | `prediction`, `effect_score` (0–1; the model score for missense variants), `prediction_basis` (model score, contributions, predictors) |
+| **Prediction** | `prediction`, `effect_score` (0–1; the model score for missense variants), `score_with_frequency` (model score and gnomAD frequency together, for ranking a sample's variants), `prediction_basis` (model score, contributions, predictors) |
 | ACMG evidence | `acmg_codes` (e.g. `PP3_Strong +4, PS1 +4, PM2_Supporting +1`), `acmg_pp3_bp4` (e.g. `PP3_Strong (model 0.994)`), `acmg_points`, `acmg_ps1_pm5`, `acmg_pm2`, `population_frequency` (BA1 / BS1 candidate / rare / absent from gnomAD) |
 | Predictors | `alphamissense`, `revel`, `cadd_phred`, `eve`, `popeve`, `sift`, `polyphen`, `spliceai_max` |
 | Physico-chemistry | `grantham`, `blosum62`, `hydropathy_change`, `volume_change`, `charge_change`, `physchem_notes` |
@@ -205,6 +205,15 @@ res.sequences      # wild-type and mutant protein sequences per row
     disease's maximum credible allele frequency, so the tool leaves it to you.
   - `acmg_codes` lists the criteria met, with points. They are one input of an ACMG classification,
     not a classification: segregation, de novo status, functional data and phenotype are missing.
+- **Score with frequency**, for ranking a sample's variants (`score_with_frequency`; desktop app:
+  column *With frequency*).
+  - It combines the model score with the gnomAD frequency. On the held-out benchmark it reaches the
+    AUC of MetaRNN, the best tool in the comparison: 0.996 on all variants and 0.983 on rare ones,
+    against 0.985 and 0.974 for the model alone.
+  - It is a ranking, not a probability: a variant absent from gnomAD scores high even with a low model
+    score.
+  - It is not ACMG evidence, because frequency already counts through BA1/BS1/PM2
+    ([details](docs/model.md#score-with-frequency-for-ranking)).
 - **Population frequency**: `population_frequency` says whether the variant meets BA1, is a BS1
   candidate (≥ 1%), is rare or is absent from gnomAD. Ensembl gives no gnomAD frequency to many rare
   variants (singletons above all), so the tool asks gnomAD directly about those
@@ -322,6 +331,7 @@ python benchmarks/validate_proteingym.py  # independent check on deep mutational
 python benchmarks/feature_tests.py      # inputs tested for the model and rejected
 python benchmarks/calibrate_acmg.py     # ACMG PP3/BP4 thresholds of the model score (ClinGen method)
 python benchmarks/acmg_criteria.py      # how informative the automated PS1, PM5 and PM2 are
+python benchmarks/train_frequency_score.py  # the score with frequency (model score + gnomAD grpmax)
 ```
 
 ## Data sources

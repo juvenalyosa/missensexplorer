@@ -22,6 +22,21 @@ def test_scorer_matches_scikit_learn():
             assert ms.p == pytest.approx(v["expected"], abs=1e-4)
 
 
+def test_score_with_frequency_matches_scikit_learn():
+    assert model.FREQUENCY_FITTED, "the model was retrained: run benchmarks/train_frequency_score.py"
+    vectors = json.loads((DATA / "frequency_vectors.json").read_text())
+    assert len(vectors) >= 20
+    for v in vectors:
+        assert model.with_frequency(v["p"], v["grpmax"]) == pytest.approx(v["expected"], abs=1e-4)
+
+
+def test_score_with_frequency_direction():
+    f = model.with_frequency
+    assert f(0.9, 1e-5) > f(0.5, 1e-5) > f(0.1, 1e-5)          # higher model score, higher
+    assert f(0.9, None) > f(0.9, 1e-4) > f(0.9, 1e-2)        # more frequent, lower; absent counts as 0
+    assert f(None, 1e-5) is None
+
+
 def test_model_needs_alphamissense_or_revel():
     assert model.score({"cadd_phred": 30, "sift_score": 0.0}) is None
     assert model.score({"revel": 0.9}) is not None

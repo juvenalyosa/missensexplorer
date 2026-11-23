@@ -121,7 +121,7 @@ S = {
     "errors_title": ("Entradas sin analizar", "Inputs not analysed"),
     "col_input": ("Entrada", "Input"), "col_gene": ("Gen", "Gene"), "col_change": ("Cambio", "Change"),
     "col_consequence": ("Consecuencia", "Consequence"), "col_prediction": ("Predicción", "Prediction"),
-    "col_effect": ("Efecto", "Effect"), "col_clinvar": ("ClinVar", "ClinVar"), "col_gnomad": ("gnomAD AF", "gnomAD AF"),
+    "col_effect": ("Efecto", "Effect"), "col_with_freq": ("Con frecuencia", "With frequency"), "col_clinvar": ("ClinVar", "ClinVar"), "col_gnomad": ("gnomAD AF", "gnomAD AF"),
     "col_zyg": ("Cigosidad", "Zygosity"), "col_source": ("Origen", "Source"), "col_error": ("Motivo", "Reason"),
     # detail
     "why": ("POR QUÉ", "WHY"),
@@ -135,6 +135,12 @@ S = {
     "acmg_pp3": ("Computacional PP3/BP4", "Computational PP3/BP4"),
     "acmg_freq": ("Frecuencia poblacional", "Population frequency"),
     "acmg_codes": ("Criterios", "Criteria"),
+    "with_freq_tip": ("Puntaje del modelo combinado con la frecuencia en gnomAD, para ordenar las variantes de una muestra. "
+                      "Una variante ausente de gnomAD puntúa alto casi siempre. No es evidencia ACMG: la frecuencia ya "
+                      "cuenta en BA1, BS1 y PM2.",
+                      "Model score combined with the gnomAD frequency, for ranking a sample's variants. A variant absent "
+                      "from gnomAD almost always scores high. Not ACMG evidence: frequency already counts in BA1, BS1 "
+                      "and PM2."),
     "acmg_ps1pm5": ("Mismo residuo PS1/PM5", "Same residue PS1/PM5"),
     "acmg_pm2": ("Ausencia PM2", "Absence PM2"),
     "acmg_note_residue": ("PS1/PM5: variantes missense patogénicas de ClinVar en el mismo residuo (no se comprueba si su "
