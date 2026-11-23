@@ -240,6 +240,12 @@ leaves the computer.
   [benchmark](benchmarks/results/clinvar_benchmark.md) has per-predictor, rare-variant and
   since-2024 results, and the [model card](docs/model.md) explains training, validation and limits.
   `benchmarks/clinvar_benchmark.py` and `benchmarks/train_model.py` reproduce them.
+- **Compared with 31 other predictors** on the same held-out variants
+  ([comparison](docs/comparison.md)). Among the predictors that leave out allele frequency, as ClinGen
+  recommends for ACMG PP3/BP4, MissensExplorer ranks best (AUC 0.985; REVEL 0.982; AlphaMissense
+  0.964). MetaRNN ranks higher (0.996), but the gap is allele frequency, which MetaRNN takes as input.
+  Adding frequency to the MissensExplorer score gives the same AUC. The comparison also lists similar
+  software (ProtVar, VarSome, Franklin, InterVar, OpenCRAVAT…) and what each one uses.
 - The desktop app writes an error log (*Help → Open error log*; on macOS
   `~/Library/Logs/MissensExplorer`).
 
@@ -274,6 +280,7 @@ pytest -m network      # live end-to-end tests against the public APIs
 pip install -e ".[benchmark]"
 python benchmarks/train_model.py        # retrain the missense model (benchmark genes held out)
 python benchmarks/clinvar_benchmark.py  # held-out ClinVar benchmark
+python benchmarks/compare_tools.py      # same benchmark, 31 other predictors (dbNSFP)
 ```
 
 ## Data sources

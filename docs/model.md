@@ -147,6 +147,8 @@ The v2.2 and v2.3 columns include the frequency rule (BA1); the v2.1 column is t
 - **Variants evaluated since 2024:** AUC 0.984 (v2.1: 0.960). 3.4% of the benign variants are
   called damaging (v2.1: 5.1%).
 
+Compared with 31 other predictors on the same variants, see [comparison.md](comparison.md).
+
 The benchmark had already shown the v2.2 problem, so this is its second use for the model. The
 benchmark took no part in choosing v2.3's design or cut-offs, which were set by the rule above on
 the training genes alone.
