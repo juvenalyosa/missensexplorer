@@ -88,6 +88,28 @@ release, so no tool trained before then can have seen it.
   twice. Frequency on ClinVar is also partly circular, since curators use it to call variants benign.
   The tool applies frequency as a separate rule; with it, the default verdict's AUC is 0.986.
 
+### On laboratory data (independent of ClinVar)
+
+Deep mutational scanning data from [ProteinGym](https://proteingym.org): 13,408 variants measured on
+61 human proteins
+([full results](../benchmarks/results/proteingym_validation.md)). The order changes:
+
+| Spearman with measured loss of function | |
+|---|---|
+| **MissensExplorer v2.3** | **0.469** |
+| popEVE | 0.460 |
+| AlphaMissense | 0.458 |
+| MetaRNN | 0.438 |
+| VARITY_R | 0.431 |
+| REVEL | 0.425 |
+| ClinPred | 0.405 |
+| CADD | 0.344 |
+
+- MissensExplorer ranks first.
+- MetaRNN and ClinPred, ahead on ClinVar thanks to allele frequency, fall significantly behind it.
+- popEVE and AlphaMissense, which use no clinical labels, come next. Their gap to MissensExplorer is
+  within noise.
+
 ### Calls on rare variants
 
 Each predictor used alone at its ClinGen-calibrated *supporting* thresholds, against the
@@ -118,7 +140,6 @@ MissensExplorer verdict:
   indicative.
 - **dbNSFP carries the 2018 PrimateAI,** not PrimateAI-3D, so PrimateAI-3D is not tested here.
 - **This benchmark was already used for MissensExplorer's design.** It showed the v2.2 problem, so it
-  is not a fully fresh test. An independent check against deep mutational scanning data (MaveDB) is
-  still pending.
+  is not a fully fresh test. The ProteinGym check is: it was run once, after the design was fixed.
 - **Small sets.** With 199 rare benign and 172 new benign variants, differences below about 0.01 AUC
   are within noise.

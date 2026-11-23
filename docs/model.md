@@ -153,13 +153,72 @@ The benchmark had already shown the v2.2 problem, so this is its second use for 
 benchmark took no part in choosing v2.3's design or cut-offs, which were set by the rule above on
 the training genes alone.
 
+## Independent validation on laboratory data (ProteinGym)
+
+[Full results](../benchmarks/results/proteingym_validation.md), from `benchmarks/validate_proteingym.py`.
+
+**Data.** Deep mutational scanning measures, in the laboratory, how each amino-acid substitution
+changes a protein's function. The check used 13,408 single-nucleotide missense variants from 71
+human assays on 61 proteins of [ProteinGym](https://proteingym.org). No ClinVar label is involved.
+
+**Measure.** Spearman correlation with the measured loss of function, averaged per protein.
+
+| | Spearman | vs MissensExplorer |
+|---|---|---|
+| **MissensExplorer v2.3** | **0.469** | — |
+| popEVE | 0.460 | −0.009, not significant |
+| AlphaMissense | 0.458 | −0.012, borderline |
+| MetaRNN | 0.438 | −0.035, significant |
+| REVEL | 0.425 | −0.044, significant |
+| ClinPred | 0.405 | −0.065, significant |
+| CADD | 0.344 | −0.126, significant |
+
+- **The model generalizes beyond ClinVar.** It ranks first of the 34 scores tested.
+- **It beats every input but one.** It does better than REVEL and CADD, and level with popEVE and
+  AlphaMissense.
+- **The ClinVar-trained meta-predictors drop back.** MetaRNN and ClinPred lead on ClinVar, where
+  allele frequency helps them, but fall behind here.
+- **Correlations are moderate for every tool,** because an assay measures one function in one
+  experimental system, not disease.
+
+## Inputs that did not help
+
+`benchmarks/feature_tests.py` adds one input at a time to the four predictors and measures the change
+in AUC on rare training variants, with cross-validation split by gene.
+
+**Rule.** Set before testing: an input is adopted only with a gain of at least 0.003, an interval
+that excludes zero, and a coefficient of the expected sign.
+
+**Result.** Nothing qualified:
+
+| Added input | Gain in rare-variant AUC | Why it was rejected |
+|---|---|---|
+| Gene LoF constraint (gnomAD LOEUF) | +0.0030 | Wrong sign: it rewards LoF-tolerant genes |
+| PrimateAI | +0.0024 | Below the rule's bar, and wrong sign next to the other predictors |
+| Gene missense constraint (o/e, z) | +0.0006 to +0.0011 | Too small, and wrong sign |
+| phyloP | +0.0006 | Too small, and wrong sign next to the other predictors |
+| ESM1b, MutationAssessor | +0.0001 to +0.0002 | Too small |
+| AlphaFold pLDDT, UniProt functional sites | +0.0003 | Too small (pLDDT available for half of the variants) |
+| PROVEAN, SIFT4G | negative | — |
+
+**Why gene constraint was rejected.**
+- All three gene-constraint inputs took the wrong sign: they push towards *damaging* in genes that
+  tolerate variation.
+- In ClinVar, constrained genes carry many rare *benign* variants, found by clinical testing of
+  dominant-disease genes. The model learns which genes get tested, not how damaging a substitution is.
+- In the most constrained genes it would lower sensitivity on rare variants from 91.7% to 88.0%.
+- Gene-level evidence also has its own ACMG criteria (PP2, BP1), so it would be counted twice.
+
+**Earlier tests.** Non-linear models (splines, monotone boosting) and up-weighting rare benign variants
+did not rank variants better either (see *Choice of cut-offs*). With the inputs available today, the
+four-predictor logistic regression is at its ceiling.
+
 ## Limitations
 
 - **ClinVar labels on both sides.** The model is trained and tested on ClinVar labels. REVEL was
   itself trained on disease-variant databases, and AlphaMissense's thresholds were calibrated on
   ClinVar. Absolute figures are therefore optimistic; the comparison between methods is the robust
-  part. An independent check against deep mutational scanning data (for example MaveDB) has not
-  been done yet.
+  part. The check on laboratory data below does not depend on ClinVar.
 - **Well-studied genes are over-represented.** ClinVar variants with ≥ 2 stars cluster in such genes.
 - **Germline missense only.** The model is not trained for somatic or cancer variants, or for other
   consequences; those keep their rules (loss of function, SpliceAI, CADD for in-frame changes).

@@ -246,6 +246,11 @@ leaves the computer.
   0.964). MetaRNN ranks higher (0.996), but the gap is allele frequency, which MetaRNN takes as input.
   Adding frequency to the MissensExplorer score gives the same AUC. The comparison also lists similar
   software (ProtVar, VarSome, Franklin, InterVar, OpenCRAVAT…) and what each one uses.
+- **Checked on laboratory data, without ClinVar.** On 13,408 variants whose effect was measured by deep
+  mutational scanning (61 human proteins, [ProteinGym](https://proteingym.org)), MissensExplorer's
+  score correlates best with the measured loss of function: Spearman 0.469, against popEVE 0.460,
+  AlphaMissense 0.458, MetaRNN 0.438, REVEL 0.425 and CADD 0.344
+  ([results](benchmarks/results/proteingym_validation.md)).
 - The desktop app writes an error log (*Help → Open error log*; on macOS
   `~/Library/Logs/MissensExplorer`).
 
@@ -281,6 +286,8 @@ pip install -e ".[benchmark]"
 python benchmarks/train_model.py        # retrain the missense model (benchmark genes held out)
 python benchmarks/clinvar_benchmark.py  # held-out ClinVar benchmark
 python benchmarks/compare_tools.py      # same benchmark, 31 other predictors (dbNSFP)
+python benchmarks/validate_proteingym.py  # independent check on deep mutational scanning data
+python benchmarks/feature_tests.py      # inputs tested for the model and rejected
 ```
 
 ## Data sources
