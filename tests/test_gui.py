@@ -191,6 +191,9 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "protein notation: other DNA changes can give the same F508del; this is the one Ensembl maps "
         "(c.1522_1524del). Give the c. or genomic change to analyse a specific one",
         "not checked (no MANE Select transcript, on which ClinVar names its variants)",
+        "protein change given as p.Gly396Asp (another isoform's numbering); on the reported transcript it is G368D",
+        "protein change given as p.Ala175His exists only on another isoform; on the reported transcript this DNA "
+        "change is C182S: check the input",
     ],
 )
 def test_new_pipeline_messages_are_translated(text):

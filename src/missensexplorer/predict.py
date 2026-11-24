@@ -1300,6 +1300,33 @@ def _annotate_two_passes(
     return part, no_predictors
 
 
+_PROTEIN_POS = re.compile(r"^p\.\(?([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})?")
+
+
+def _renumbered(v: VariantInput, row: Row) -> str | None:
+    """Say so when a protein change was given at another position than the reported transcript's.
+
+    Ensembl resolves a protein change on any isoform of the gene, so a change written in an older or
+    another isoform's numbering (MUTYH p.Gly396Asp) is reported on the MANE transcript at its position
+    there (G368D). The note keeps that change of numbering from going unnoticed.
+    """
+    gene, _, protein = v.query.partition(":")
+    m = _PROTEIN_POS.match(protein)
+    pos = row.get("protein_position")
+    if v.kind != "hgvs" or not m or not pos or str(row.get("gene") or "").upper() != gene.upper():
+        return None
+    if int(m.group(2)) == int(pos):
+        return None
+    shown = row.get("protein_change") or pos
+    given = (AA3_TO_1.get(m.group(1).upper()), AA3_TO_1.get((m.group(3) or "").upper()))
+    if m.group(3) and given != (row.get("ref_aa"), row.get("alt_aa")):  # not even the same amino acids
+        return (
+            f"protein change given as {protein} exists only on another isoform; on the reported transcript this "
+            f"DNA change is {shown}: check the input"
+        )
+    return f"protein change given as {protein} (another isoform's numbering); on the reported transcript it is {shown}"
+
+
 _PROTEIN_INDEL = re.compile(r"^p\.\(?[A-Z][a-z]{2}\d+(?:_[A-Z][a-z]{2}\d+)?(?:del|dup|ins)(?!.*fs)", re.I)
 INDEL_WINDOW = 100  # bases of genome fetched before an insertion or deletion, to left-align it
 
@@ -1478,6 +1505,9 @@ def _build_rows(
             notes = []
             if val.get("ambiguous", 0) > 1:
                 notes.append(f"{val['ambiguous']} nucleotide changes give this protein change; each is reported")
+            renumbered = _renumbered(v, r)
+            if renumbered:
+                notes.append(renumbered)
             if v.kind == "hgvs" and _PROTEIN_INDEL.match(v.query.split(":", 1)[-1]):
                 notes.append(
                     f"protein notation: other DNA changes can give the same {r.get('protein_change') or 'change'}; "

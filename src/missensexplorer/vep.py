@@ -352,13 +352,14 @@ def _needs_ambiguous_retry(query: str, answer: dict[str, Any]) -> bool:
 
 
 def protein_matches(query: str, results: list[JSON]) -> list[JSON]:
-    """Keep the VEP results of an ambiguous protein query that really give the requested change.
+    """Keep the VEP results of an ambiguous protein query that give the requested change on the reported transcript.
 
-    With ``ambiguous_hgvs`` VEP answers once per transcript and genomic allele, so the same allele
-    comes back several times, and a transcript with other numbering can yield an allele that changes
-    another residue on the reported transcript. A result is kept when one of its consequences, in the
-    query's gene, has the requested reference and alternate amino acids; those that also have the
-    requested position are preferred (the others are legacy-numbering matches). Duplicates are dropped.
+    With ``ambiguous_hgvs`` VEP answers once per transcript and genomic allele: the same allele comes back
+    several times, and the change is also looked for on every other isoform, whose numbering can differ.
+    A result is kept when one of its consequences, in the query's gene, has the requested reference
+    amino acid, position and alternate amino acid; so a wrong reference amino acid (``BRAF:p.Ala600Glu``;
+    residue 600 is a valine) is not moved to another residue (A557E) that happens to match on some isoform.
+    Duplicates are dropped.
 
     Args:
         query: The protein HGVS sent to VEP, e.g. ``"KRAS:p.Gln61His"``.
@@ -375,16 +376,12 @@ def protein_matches(query: str, results: list[JSON]) -> list[JSON]:
     pos = int(m.group(2))
     symbols = {(tc.get("gene_symbol") or "").upper() for r in results for tc in r.get("transcript_consequences") or []}
     only = gene.upper() if gene.upper() in symbols else None  # a transcript or protein id: any gene
-    exact: dict[tuple[Any, ...], JSON] = {}
-    same_change: dict[tuple[Any, ...], JSON] = {}
+    kept: dict[tuple[Any, ...], JSON] = {}
     for r in results:
         key = (r.get("seq_region_name"), r.get("start"), r.get("end"), r.get("allele_string"))
         for tc in r.get("transcript_consequences") or []:
             if only and (tc.get("gene_symbol") or "").upper() != only:
                 continue
-            if tc.get("amino_acids") != want:
-                continue
-            same_change.setdefault(key, r)
-            if tc.get("protein_start") == pos:
-                exact.setdefault(key, r)
-    return list((exact or same_change).values())
+            if tc.get("amino_acids") == want and tc.get("protein_start") == pos:
+                kept.setdefault(key, r)
+    return list(kept.values())

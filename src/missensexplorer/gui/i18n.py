@@ -590,6 +590,16 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         r"Indica el cambio c. o genómico para analizar uno concreto",
     ),
     (
+        r"protein change given as (\S+) exists only on another isoform; on the reported transcript this DNA "
+        r"change is (\S+): check the input",
+        r"el cambio de proteína indicado, \1, solo existe en otra isoforma; en el transcrito informado este cambio "
+        r"de ADN es \2: revisa la entrada",
+    ),
+    (
+        r"protein change given as (\S+) \(another isoform's numbering\); on the reported transcript it is (\S+)",
+        r"cambio de proteína indicado como \1 (numeración de otra isoforma); en el transcrito informado es \2",
+    ),
+    (
         r"not checked \(no MANE Select transcript, on which ClinVar names its variants\)",
         "no comprobado (sin transcrito MANE Select, en el que ClinVar nombra sus variantes)",
     ),

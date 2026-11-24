@@ -51,6 +51,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   it now says "not checked" and why.
 - VCF records removed by *FILTER = PASS only* are now counted in the skipped note of the desktop and
   web apps and in the terminal summary, which also lists the other skipped records.
+- Ensembl resolves a protein change on any isoform of the gene, so a change written in another
+  numbering (MUTYH p.Gly396Asp) is reported at its position on the MANE transcript (G368D). Such rows
+  now say so, and say *check the input* when the amino acids differ too (TP53 p.Ala175His is C182S on
+  the MANE transcript), instead of changing the variant silently.
 - Readable messages replace Ensembl's internal errors for a position outside the protein, a wrong
   reference amino acid and a frameshift written as a protein change. Errors cached by older versions
   are shown with the new wording.

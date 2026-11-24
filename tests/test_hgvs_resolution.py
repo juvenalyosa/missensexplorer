@@ -62,17 +62,17 @@ def test_protein_matches_keeps_each_allele_that_gives_the_change_once():
     assert alleles == [("12", 25227341, "A/C"), ("12", 25227341, "A/T")]
 
 
-def test_protein_matches_prefers_the_requested_position_then_accepts_legacy_numbering():
+def test_protein_matches_needs_the_requested_position_on_the_reported_transcript():
     def result(start, aa, pos):
-        tc = {"gene_symbol": "MUTYH", "amino_acids": aa, "protein_start": pos}
-        return {"seq_region_name": "1", "start": start, "end": start, "allele_string": "C/T", "strand": -1,
+        tc = {"gene_symbol": "BRAF", "amino_acids": aa, "protein_start": pos}
+        return {"seq_region_name": "7", "start": start, "end": start, "allele_string": "C/A", "strand": 1,
                 "transcript_consequences": [tc]}  # fmt: skip
 
-    legacy = [result(100, "G/D", 368)]  # the change is p.Gly396Asp in older numbering
-    assert V.protein_matches("MUTYH:p.Gly396Asp", legacy) == legacy
+    # BRAF:p.Ala600Glu (residue 600 is a valine): an isoform has an alanine there, which is A557E on MANE
+    assert V.protein_matches("BRAF:p.Ala600Glu", [result(140776936, "A/E", 557)]) == []
     both = [result(100, "G/D", 368), result(200, "G/D", 396), result(300, "S/T", 396)]
-    assert V.protein_matches("MUTYH:p.Gly396Asp", both) == [both[1]]
-    assert V.protein_matches("MUTYH:p.Phe508del", both) == []  # only substitutions are resolved this way
+    assert V.protein_matches("BRAF:p.Gly396Asp", both) == [both[1]]
+    assert V.protein_matches("BRAF:p.Phe508del", both) == []  # only substitutions are resolved this way
 
 
 class FakeVepHttp:
@@ -112,6 +112,26 @@ def test_an_error_cached_in_vep_wording_is_reworded_and_retried(tmp_path):
         out = vep.annotate({"hgvs": ["KRAS:p.Gln61His"]}, V.BASE_PARAMS)
     assert out[("hgvs", "KRAS:p.Gln61His")]["ambiguous"] == 2
     assert [p.get("ambiguous_hgvs") for p, _ in http.calls] == [1]  # the cached error itself is not asked again
+
+
+def test_a_protein_change_reported_at_another_position_gets_a_note():
+    from missensexplorer.inputs import parse_text
+
+    v = parse_text("MUTYH G396D").variants[0]
+    row = {"gene": "MUTYH", "protein_position": 368, "protein_change": "G368D", "ref_aa": "G", "alt_aa": "D"}
+    assert P._renumbered(v, row) == (
+        "protein change given as p.Gly396Asp (another isoform's numbering); on the reported transcript it is G368D"
+    )
+    assert P._renumbered(v, {**row, "protein_position": 396}) is None
+    assert P._renumbered(v, {**row, "gene": "TOE1"}) is None  # an overlapping gene
+    assert P._renumbered(parse_text("chr1:45331556 C>T").variants[0], row) is None  # not a protein change
+    # TP53 p.Ala175His: residue 175 is an arginine; Ensembl finds an isoform with an alanine there, whose
+    # SNV is C182S on the reported transcript, so the amino acids differ too
+    wrong = {"gene": "TP53", "protein_position": 182, "protein_change": "C182S", "ref_aa": "C", "alt_aa": "S"}
+    assert P._renumbered(parse_text("TP53 A175H").variants[0], wrong) == (
+        "protein change given as p.Ala175His exists only on another isoform; on the reported transcript this DNA "
+        "change is C182S: check the input"
+    )
 
 
 # --------------------------------------------------------------------------- indel alignment
