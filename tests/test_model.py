@@ -104,6 +104,22 @@ def test_pp3_bp4_without_scores():
         acmg.computational({"revel": 0.5}, "cadd")
 
 
+@pytest.mark.parametrize(
+    ("evidence", "used"),
+    [
+        ("PP3_Strong (model 0.994)", "model"),
+        ("BP4_Moderate (model 0.052)", "model"),
+        ("PP3_Moderate (REVEL 0.930)", "clingen"),
+        ("none (AlphaMissense 0.500, indeterminate)", "clingen"),
+        (None, None),  # not missense: no PP3/BP4
+        ("", None),
+        (float("nan"), None),  # a missing cell of the results table
+    ],
+)
+def test_thresholds_used_names_the_pp3_bp4_calibration(evidence, used):
+    assert acmg.thresholds_used(evidence) == used
+
+
 def test_model_pp3_bp4_follows_its_calibration():
     assert acmg.MODEL_CALIBRATED, "the model was retrained: run benchmarks/calibrate_acmg.py"
     cal = acmg.CALIBRATION

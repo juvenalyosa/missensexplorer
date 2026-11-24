@@ -334,6 +334,10 @@ def _code_points(text: object) -> int | None:
     return acmg.CODE_POINTS.get(str(text or "").split(" ")[0])
 
 
+# UI string of the note under the ACMG evidence, by the thresholds behind PP3/BP4 (acmg.thresholds_used).
+ACMG_NOTE_KEY = {"model": "acmg_note_model", "clingen": "acmg_note", None: "acmg_note_general"}
+
+
 def _fact_box(value: str, caption: str) -> QFrame:
     """Return a tile of the physico-chemical grid: a large value over a small caption."""
     box = QFrame()
@@ -1492,8 +1496,8 @@ class MainWindow(QMainWindow):
             for k, v, pts in ev:
                 extra = f" · {t('points', n=f'{int(pts):+d}')}" if isnum(pts) and pts else ""
                 self.dl.addWidget(_rich(f"<b>{k}:</b> {html.escape(tr_text(v))}{extra}"))
-            own = "(model " in str(g("acmg_pp3_bp4") or "")
-            self.dl.addWidget(label(t("acmg_note_model" if own else "acmg_note"), "Muted", wrap=True))
+            note = ACMG_NOTE_KEY[acmg.thresholds_used(g("acmg_pp3_bp4"))]
+            self.dl.addWidget(label(t(note), "Muted", wrap=True))
             if g("acmg_ps1_pm5") or g("acmg_pm2"):
                 self.dl.addWidget(label(t("acmg_note_residue"), "Muted", wrap=True))
 

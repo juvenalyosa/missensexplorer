@@ -26,6 +26,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - Desktop app: the *Prediction* column sorts consistently when a variant has no score. The popEVE
   caption now goes through the translation table.
 - A VEP error response that is JSON but not an object is now read as an error message.
+- Desktop app: the welcome page describes the prediction as the model (AlphaMissense, REVEL, CADD
+  and popEVE) instead of the weighted vote it replaced in 2.2.
+- Desktop and web apps: variants without PP3/BP4 (everything that is not missense, such as a
+  stop-gained variant) no longer show a note about REVEL's PP3/BP4 thresholds under their ACMG
+  evidence.
+- `missensexplorer cache --help` prints the help. Before, it printed the cache path, and any other
+  word was taken as "path". `missensexplorer cache path` is now also accepted.
+- `missensexplorer web` sets the upload limit (1 GB), the toolbar and the theme colours itself.
+  Before, they applied only when the app was started from the repository folder, and elsewhere
+  Streamlit's 200 MB upload limit applied.
+
+### Added
+- A tutorial [wiki](https://github.com/juvenalyosa/missensexplorer/wiki) with screenshots of every
+  feature.
 
 ## [2.3.0] — 2026-11-23
 

@@ -127,8 +127,10 @@ S: dict[str, tuple[str, str]] = {
     ),
     "step2_t": ("2 · Predicción", "2 · Prediction"),
     "step2_b": (
-        "Votación ponderada de AlphaMissense, REVEL, CADD, EVE, SIFT y PolyPhen-2; SpliceAI para splicing.",
-        "Weighted vote of AlphaMissense, REVEL, CADD, EVE, SIFT and PolyPhen-2; SpliceAI for splicing.",
+        "Un modelo entrenado con ClinVar combina AlphaMissense, REVEL, CADD y popEVE; SpliceAI para "
+        "splicing; criterios ACMG.",
+        "A model trained on ClinVar combines AlphaMissense, REVEL, CADD and popEVE; SpliceAI for splicing; "
+        "ACMG criteria.",
     ),
     "step3_t": ("3 · Contexto", "3 · Context"),
     "step3_b": (
@@ -218,6 +220,11 @@ S: dict[str, tuple[str, str]] = {
         "Model score with thresholds calibrated by the ClinGen method (Pejaver et al. 2022) on the same "
         "data as REVEL's; this project's calibration, not one published by ClinGen. This is only part "
         "of an ACMG classification: it does not replace review by a specialist.",
+    ),
+    # Rows without PP3/BP4 (it applies to missense variants only), so no note on its thresholds.
+    "acmg_note_general": (
+        "Es solo una parte de la clasificación ACMG: no reemplaza la revisión de un especialista.",
+        "This is only part of an ACMG classification: it does not replace review by a specialist.",
     ),
     "predictors": ("PREDICTORES", "PREDICTORS"),
     "physchem": ("CAMBIO FISICOQUÍMICO", "PHYSICO-CHEMISTRY"),

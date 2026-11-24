@@ -163,6 +163,23 @@ def computational(row: Row, source: str = "model") -> tuple[str | None, int | No
     return None, None
 
 
+def thresholds_used(evidence: object) -> str | None:
+    """Return which thresholds produced a row's PP3/BP4 evidence, for the note shown under it.
+
+    Args:
+        evidence: The row's ``acmg_pp3_bp4``, as written by :func:`computational`.
+
+    Returns:
+        ``"model"`` (the model score with this project's calibration), ``"clingen"`` (REVEL or
+        AlphaMissense at ClinGen's published thresholds), or None when the row has no PP3/BP4, as for
+        variants that are not missense.
+    """
+    text = evidence if isinstance(evidence, str) else ""
+    if not text:
+        return None
+    return "model" if "(model " in text else "clingen"
+
+
 def ba1_exception(row: Row) -> str | None:
     """Return the ClinGen BA1 exception this variant matches, if any.
 

@@ -141,6 +141,28 @@ def test_window_shows_results_and_details(app, lang):
     w.close()
 
 
+def test_acmg_note_names_pp3_bp4_thresholds_only_when_given(app):
+    i18n.set_language("en")
+    from missensexplorer.gui.window import MainWindow
+
+    res = _result()
+    res.table.loc[2, "population_frequency"] = "rare (grpmax 0.00009%)"  # stop-gained: ACMG evidence, no PP3/BP4
+    w = MainWindow()
+    w.show_result(res)
+
+    def detail_text() -> str:
+        return " ".join(lbl.text() for lbl in w.detail.findChildren(QtWidgets.QLabel))
+
+    w.select_index(0)  # PP3_Moderate (REVEL 0.930)
+    assert i18n.t("acmg_note") in detail_text()
+    w.select_index(2)
+    text = detail_text()
+    assert "rare (grpmax" in text
+    assert i18n.t("acmg_note_general") in text
+    assert "REVEL" not in text
+    w.close()
+
+
 def test_language_switch_keeps_state(app):
     from missensexplorer.gui.window import MainWindow
 

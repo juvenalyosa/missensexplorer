@@ -1,3 +1,7 @@
+# Read by Streamlit only when it starts in this folder (Docker, `streamlit run streamlit_app.py`).
+# `missensexplorer web` passes the same settings as flags: keep STREAMLIT_SETTINGS in
+# src/missensexplorer/cli.py in step with this file.
+
 [server]
 maxUploadSize = 1024
 

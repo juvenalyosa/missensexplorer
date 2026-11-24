@@ -16,7 +16,7 @@ import httpx
 import pandas as pd
 import streamlit as st
 
-from missensexplorer import __version__
+from missensexplorer import __version__, acmg
 from missensexplorer.aa import AA_NAMES
 from missensexplorer.cache import Cache
 from missensexplorer.inputs import vcf_samples
@@ -471,15 +471,19 @@ def _why_and_acmg(r: pd.Series) -> None:
         if _val(r[c])
     ]
     if acmg_bits:
-        how = (
-            "model score, thresholds calibrated by the ClinGen method (this project's calibration)"
-            if "(model " in str(_val(r["acmg_pp3_bp4"], ""))
-            else "ClinGen-calibrated thresholds"
-        )
+        how = ACMG_THRESHOLDS[acmg.thresholds_used(_val(r["acmg_pp3_bp4"]))]
         st.markdown(
-            " · ".join(acmg_bits) + f"  \n:gray[{how}; one part of an "
-            "ACMG classification, not a replacement for expert review.]"
+            " · ".join(acmg_bits) + f"  \n:gray[{how}One part of an ACMG classification, not a replacement for "
+            "expert review.]"
         )
+
+
+# How the PP3/BP4 thresholds were set (acmg.thresholds_used); nothing for rows without PP3/BP4.
+ACMG_THRESHOLDS = {
+    "model": "Model score, thresholds calibrated by the ClinGen method (this project's calibration). ",
+    "clingen": "ClinGen-calibrated thresholds. ",
+    None: "",
+}
 
 
 def _predictors(r: pd.Series) -> None:

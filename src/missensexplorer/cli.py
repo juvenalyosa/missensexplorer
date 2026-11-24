@@ -250,30 +250,62 @@ def run_web(argv: list[str]) -> int:
         print("The web interface needs Streamlit:  pip install 'missensexplorer[web]'", file=sys.stderr)
         return 1
     app = Path(__file__).with_name("webapp.py")
-    sys.argv = [
-        "streamlit",
-        "run",
-        str(app),
-        "--server.port",
-        str(args.port),
-        "--server.address",
-        args.host,
-        "--browser.gatherUsageStats",
-        "false",
-    ]
+    sys.argv = ["streamlit", "run", str(app), "--server.port", str(args.port), "--server.address", args.host]
+    sys.argv += [arg for name, value in _streamlit_settings().items() for arg in (f"--{name}", value)]
     return stcli.main()
 
 
+# The settings of the repository's .streamlit/config.toml. Streamlit reads that file only from the current
+# directory, so `missensexplorer web` passes them as flags to apply them wherever it is started.
+STREAMLIT_SETTINGS = {
+    "server.maxUploadSize": "1024",  # MB; Streamlit's default (200) is too small for exome VCFs
+    "browser.gatherUsageStats": "false",
+    "client.toolbarMode": "minimal",
+    "theme.light.primaryColor": "#2a78d6",
+    "theme.dark.primaryColor": "#3987e5",
+}
+
+
+def _streamlit_settings() -> dict[str, str]:
+    """Return the :data:`STREAMLIT_SETTINGS` that the installed Streamlit knows (an unknown flag is an error).
+
+    The separate light/dark themes, for example, only exist in recent Streamlit versions.
+    """
+    from streamlit import config
+
+    known: dict[str, str] = {}
+    for name, value in STREAMLIT_SETTINGS.items():
+        try:
+            config.get_option(name)
+        except RuntimeError:
+            continue
+        known[name] = value
+    return known
+
+
 def run_cache(argv: list[str]) -> int:
-    """Print the path of the response cache, or clear it (``missensexplorer cache clear``).
+    """Print the path of the response cache, or clear it (``missensexplorer cache [path|clear]``).
 
     Returns:
-        Exit status 0.
+        Exit status 0 (argparse exits with 2 on an unknown action, and with 0 after ``--help``).
     """
+    ap = argparse.ArgumentParser(
+        prog="missensexplorer cache",
+        description="Show where the cache of web-service answers is, or empty it.",
+    )
+    ap.add_argument(
+        "action",
+        nargs="?",
+        choices=("path", "clear"),
+        default="path",
+        help="path: print the cache file (default); clear: delete every stored answer",
+    )
+    args = ap.parse_args(argv)  # before opening the cache: --help must not create or touch it
+
     from .cache import Cache
 
     with Cache() as c:
-        if argv[:1] == ["clear"]:
+        if args.action == "clear":
             c.clear()
             print(f"Cache cleared ({c.path})")
         else:
