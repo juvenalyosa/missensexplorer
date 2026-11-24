@@ -47,7 +47,7 @@ which the desktop app shows as a progress bar.
 |---|---|---|---|---|
 | 1 | Read and parse the input | `inputs.py` | — | — |
 | 2 | Detect the genome build: from the VCF header, or else by checking the REF bases against GRCh38 and GRCh37 | `predict.py` | Ensembl | 30 days |
-| 3 | Annotate: consequence, transcript, HGVS, gnomAD frequency | `vep.py` / `vep_local.py` | Ensembl VEP | 30 days |
+| 3 | Annotate: consequence, transcript, HGVS, gnomAD frequency. A protein substitution that several SNVs produce is asked again with `ambiguous_hgvs`; HGVS insertions and deletions are re-annotated in their left-aligned VCF form | `vep.py` / `vep_local.py`, `predict.py` | Ensembl VEP | 30 days |
 | 4 | Predictor scores for protein-altering and splice variants only (a slower second pass on large inputs) | `vep.py` | Ensembl VEP plugins | 30 days |
 | 5 | ClinVar record of the exact allele | `clinvar.py` | NCBI | 7 days |
 | 6 | ClinVar pathogenic variants at the same residue (PS1/PM5) | `clinvar.py`, `residue.py` | NCBI | 7 days |

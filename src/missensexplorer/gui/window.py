@@ -1288,6 +1288,7 @@ class MainWindow(QMainWindow):
                 ("file_skipped_not_carried", "skip_carried"),
                 ("file_skipped_outside_genes", "skip_genes"),
                 ("file_skipped_symbolic", "skip_symbolic"),
+                ("file_skipped_filter", "skip_filter"),
             )
             if s.get(key)
         ]

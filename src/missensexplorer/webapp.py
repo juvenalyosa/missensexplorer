@@ -344,6 +344,7 @@ def _summary(res: PredictionResult) -> None:
             ("file_skipped_not_carried", "not carried by the sample(s)"),
             ("file_skipped_outside_genes", "outside the selected genes"),
             ("file_skipped_symbolic", "symbolic/structural alleles"),
+            ("file_skipped_filter", "not passing FILTER"),
         ]
         if s.get(k)
     ]

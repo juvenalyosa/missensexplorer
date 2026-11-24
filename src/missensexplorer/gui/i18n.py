@@ -156,6 +156,7 @@ S: dict[str, tuple[str, str]] = {
     "skip_carried": ("{n} no portadas por la muestra", "{n} not carried by the sample(s)"),
     "skip_genes": ("{n} fuera de los genes elegidos", "{n} outside the selected genes"),
     "skip_symbolic": ("{n} alelos simbólicos/estructurales", "{n} symbolic/structural alleles"),
+    "skip_filter": ("{n} sin FILTER = PASS", "{n} not passing FILTER"),
     "no_rows": (
         "No se encontraron consecuencias a nivel de proteína. Activa «Incluir variantes no codificantes» "
         "para ver todo lo que reporta VEP.",
@@ -565,6 +566,33 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         r"Elige una muestra para ver su cigosidad.",
     ),
     (r"could not parse", "no se pudo interpretar"),
+    (
+        r"the amino acid at this position is not the one given \(check the position and the isoform\)",
+        "el aminoácido de esa posición no es el indicado (revisa la posición y la isoforma)",
+    ),
+    (
+        r"position outside the protein \(check the position and the isoform\)",
+        "posición fuera de la proteína (revisa la posición y la isoforma)",
+    ),
+    (
+        r"a frameshift written as a protein change cannot be traced to one DNA change: give the c\. change",
+        "un desplazamiento del marco escrito como cambio de proteína no lleva a un único cambio de ADN: "
+        "indica el cambio c.",
+    ),
+    (
+        r"(\d+) nucleotide changes give this protein change; each is reported",
+        r"\1 cambios de nucleótido producen este cambio de proteína; se informa cada uno",
+    ),
+    (
+        r"protein notation: other DNA changes can give the same (\S+); this is the one Ensembl maps \(([^)]*)\)\. "
+        r"Give the c\. or genomic change to analyse a specific one",
+        r"notación de proteína: otros cambios de ADN pueden dar el mismo \1; este es el que asigna Ensembl (\2). "
+        r"Indica el cambio c. o genómico para analizar uno concreto",
+    ),
+    (
+        r"not checked \(no MANE Select transcript, on which ClinVar names its variants\)",
+        "no comprobado (sin transcrito MANE Select, en el que ClinVar nombra sus variantes)",
+    ),
 ]
 
 AA_CLASS_ES: dict[str, str] = {

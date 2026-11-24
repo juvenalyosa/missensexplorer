@@ -25,7 +25,7 @@ from ._types import JSON, KeyValueCache, Progress, Row
 from .aa import AA3_TO_1, substitution_profile
 from .api import ENSEMBL, ApiError, Http, OfflineError, SourceStatus, ensembl_release
 from .cache import Cache, NullCache
-from .inputs import CHROMS, ParsedInput, VariantInput, _assembly_from_header, parse_text, read_file
+from .inputs import CHROMS, ParsedInput, VariantInput, _assembly_from_header, parse_text, read_file, region_query
 from .vep import BASE_PARAMS, DETAIL_CONSEQUENCES, PREDICTOR_PARAMS, Vep
 from .vep_local import LocalVep
 
@@ -1063,6 +1063,7 @@ def predict(
         queries = _vep_queries(parsed)
         ctx.n_unique = sum(len(set(q)) for q in queries.values())
         answers, no_predictors = _annotate(ctx, queries)
+        _normalise_indels(ctx, answers, no_predictors)
         rows, errors = _build_rows(ctx, parsed, answers, no_predictors, ref_note)
 
         # ---- ClinVar, gnomAD and protein context, then the verdict per row
@@ -1299,6 +1300,144 @@ def _annotate_two_passes(
     return part, no_predictors
 
 
+_PROTEIN_INDEL = re.compile(r"^p\.\(?[A-Z][a-z]{2}\d+(?:_[A-Z][a-z]{2}\d+)?(?:del|dup|ins)(?!.*fs)", re.I)
+INDEL_WINDOW = 100  # bases of genome fetched before an insertion or deletion, to left-align it
+
+
+def _normalise_indels(
+    ctx: _Context, answers: dict[tuple[str, str], dict[str, Any]], no_predictors: set[tuple[str, str]]
+) -> None:
+    """Re-annotate the insertions and deletions resolved from HGVS in their left-aligned VCF form.
+
+    A deletion inside a repeat can be placed at several equivalent positions, and Ensembl resolves an
+    HGVS notation to the position the notation implies. CADD's indel scores, gnomAD's frequencies and
+    ClinVar's records are keyed by the left-aligned VCF form that variant callers produce, so another
+    placement misses them: ``CFTR:c.1521_1523del`` got no CADD score, while ``chr7:117559590 ATCT>A``
+    (the same deletion) did. Each such result is replaced, in ``answers``, by the annotation of its
+    left-aligned form; the input keeps what the user wrote. Needs the Ensembl REST API (not offline).
+    """
+    if not ctx.net:
+        return
+    todo: dict[tuple[str, str], list[tuple[int, tuple[str, int, str, str]]]] = {}
+    for key, val in answers.items():
+        if key[0] != "hgvs":
+            continue
+        for j, r in enumerate(val.get("results") or []):
+            loc = _indel_location(r)
+            if loc:
+                todo.setdefault(key, []).append((j, loc))
+    if not todo:
+        return
+    locs = {loc for items in todo.values() for _, loc in items}
+    windows = _genome_windows(ctx, locs)
+    region_of: dict[tuple[str, int, str, str], str] = {}
+    for loc in locs:
+        norm = left_align(*loc, windows[loc]) if loc in windows else None
+        if norm:
+            region_of[loc] = region_query(*norm)
+    if not region_of:
+        return
+    extra, extra_np = _annotate(ctx, {"region": sorted(set(region_of.values()))})
+    for key, items in todo.items():
+        results = list(answers[key]["results"])
+        for j, loc in items:
+            rq = region_of.get(loc)
+            got = extra.get(("region", rq), {}).get("results") if rq else None
+            if got:
+                results[j] = {**got[0], "input": key[1]}
+                if ("region", rq) in extra_np:
+                    no_predictors.add(key)
+        answers[key] = {**answers[key], "results": results}
+
+
+def _indel_location(result: dict[str, Any]) -> tuple[str, int, str, str] | None:
+    """Return a VEP result's insertion or deletion on the forward strand: (chrom, start, deleted, inserted).
+
+    ``start`` is VEP's: the first deleted base, or the base after an insertion. The empty allele is "-".
+    None for anything else (substitutions, delins, non-nuclear sequences).
+    """
+    deleted, _, inserted = str(result.get("allele_string") or "").partition("/")
+    chrom, start = str(result.get("seq_region_name") or ""), result.get("start")
+    if "/" in inserted or chrom not in CHROMS or not start or (deleted == "-") == (inserted == "-"):
+        return None
+    if result.get("strand", 1) == -1:
+        deleted, inserted = (revcomp(a) if a != "-" else a for a in (deleted, inserted))
+    if not re.fullmatch(r"[ACGT]+|-", deleted) or not re.fullmatch(r"[ACGT]+|-", inserted):
+        return None
+    return chrom, int(start), deleted, inserted
+
+
+def _genome_windows(
+    ctx: _Context, locs: Iterable[tuple[str, int, str, str]]
+) -> dict[tuple[str, int, str, str], tuple[int, str]]:
+    """Return, per indel location, (first position, genome sequence) from INDEL_WINDOW bases before it to just after it.
+
+    Answers are cached; a failed request is logged and its locations are left out.
+    """
+    want = {}
+    for loc in locs:
+        chrom, start, deleted, _ = loc
+        length = 0 if deleted == "-" else len(deleted)
+        want[loc] = (chrom, max(1, start - INDEL_WINDOW), start + length + 1)
+    key = {loc: f"refwin|{ctx.assembly}|{c}:{a}-{b}" for loc, (c, a, b) in want.items()}
+    hit = ctx.cache.get_many(list(set(key.values())))
+    out = {loc: (want[loc][1], hit[k]) for loc, k in key.items() if k in hit}
+    missing = [loc for loc in want if loc not in out]
+    for i in range(0, len(missing), 50):
+        chunk = {f"{c}:{a}..{b}:1": loc for loc in missing[i : i + 50] for c, a, b in [want[loc]]}
+        try:
+            data = ctx.http.post_json(
+                f"{ENSEMBL[ctx.assembly]}/sequence/region/human",
+                {"regions": list(chunk)},
+                headers={"Content-Type": "application/json"},
+            )
+        except ApiError as e:
+            log.warning("genome sequence for indel alignment failed: %s", e)
+            continue
+        for item in data:
+            found = chunk.get(item.get("query"))
+            if found is not None and item.get("seq"):
+                seq = str(item["seq"]).upper()
+                out[found] = (want[found][1], seq)
+                ctx.cache.set(key[found], seq)
+    return out
+
+
+def left_align(
+    chrom: str, start: int, deleted: str, inserted: str, window: tuple[int, str]
+) -> tuple[str, int, str, str] | None:
+    """Shift an insertion or deletion as far left as it goes, and write it in VCF form.
+
+    Args:
+        chrom: Chromosome.
+        start: VEP's start: the first deleted base, or the base after the insertion point.
+        deleted: Deleted bases, or "-" for an insertion.
+        inserted: Inserted bases, or "-" for a deletion.
+        window: (position of the first base, genome sequence) around the variant.
+
+    Returns:
+        ``(chrom, pos, ref, alt)`` with the preceding base included, as in a VCF; None when the window
+        does not cover the variant or the genome does not hold the deleted bases.
+    """
+    first, seq = window
+
+    def base(x: int) -> str | None:
+        return seq[x - first] if 0 <= x - first < len(seq) else None
+
+    if inserted == "-":  # deletion of `deleted` at start..start+len-1
+        if seq[start - first : start - first + len(deleted)] != deleted:
+            return None
+        while (b := base(start - 1)) and base(start - 2) and b == deleted[-1]:
+            deleted, start = b + deleted[:-1], start - 1
+        anchor = base(start - 1)
+        return (chrom, start - 1, anchor + deleted, anchor) if anchor else None
+    at = start - 1  # insertion after this base
+    while (b := base(at)) and base(at - 1) and b == inserted[-1]:
+        inserted, at = b + inserted[:-1], at - 1
+    anchor = base(at)
+    return (chrom, at, anchor, anchor + inserted) if anchor else None
+
+
 def _needs_predictors(result: dict[str, Any], genes: list[str]) -> bool:
     """Return True when a VEP result has a consequence in DETAIL_CONSEQUENCES (in ``genes``, if given)."""
     return any(
@@ -1337,6 +1476,14 @@ def _build_rows(
             ctx.n_no_protein += 1
         for r in vrows:
             notes = []
+            if val.get("ambiguous", 0) > 1:
+                notes.append(f"{val['ambiguous']} nucleotide changes give this protein change; each is reported")
+            if v.kind == "hgvs" and _PROTEIN_INDEL.match(v.query.split(":", 1)[-1]):
+                notes.append(
+                    f"protein notation: other DNA changes can give the same {r.get('protein_change') or 'change'}; "
+                    f"this is the one Ensembl maps ({r.get('hgvsc') or 'see HGVS c.'}). Give the c. or genomic "
+                    "change to analyse a specific one"
+                )
             if v.query in ref_note:
                 notes.append(ref_note[v.query])
             if (v.kind, v.query) in no_predictors:
@@ -1385,12 +1532,14 @@ def _search_same_residue(
         found in it, for the rows whose search and records were obtained.
     """
     windows = {i: w for i, r in enumerate(rows) if (w := residue.window(r))}
+    # ClinVar names its variants on the MANE Select transcript: without one (GRCh37) nothing can be compared
+    searched = {i: w for i, w in windows.items() if rows[i].get("mane_select")}
     residue_refs: dict[int, list[residue.Reference]] = {}
-    if windows and ctx.opt.clinvar and ctx.net:
+    if searched and ctx.opt.clinvar and ctx.net:
         ctx.say("ClinVar: same residue", 0, 1)
-        found = cv.search_windows(ctx.http, ctx.cache, list(windows.values()), ctx.assembly, status=ctx.status)
+        found = cv.search_windows(ctx.http, ctx.cache, list(searched.values()), ctx.assembly, status=ctx.status)
         recs = cv.fetch(ctx.http, ctx.cache, {v for w in found.values() for v in w}, status=ctx.status)
-        for i, w in windows.items():
+        for i, w in searched.items():
             if w in found and all(v in recs for v in found[w]):
                 residue_refs[i] = residue.references(rows[i], {v: recs[v] for v in found[w]}, ctx.assembly)
         ctx.say("ClinVar: same residue", 1, 1)
@@ -1450,6 +1599,11 @@ def _fetch_protein_context(
     prot_rows = [r for r in rows if r.get("protein_position")]
     if prot_rows and ctx.opt.protein_context and ctx.net:
         ctx.say("Protein context (UniProt, AlphaFold)", 0, 1)
+        # Ensembl's GRCh37 server gives UniProt entry names (BRAF_HUMAN) where GRCh38 gives accessions
+        names = prot.uniprot_accessions(ctx.http, ctx.cache, {r.get("uniprot") for r in prot_rows}, status=ctx.status)
+        for r in prot_rows:
+            if r.get("uniprot") in names:
+                r["uniprot"] = names[r["uniprot"]]
         accs = {r["uniprot"] for r in prot_rows if r.get("uniprot")}
         uni = prot.fetch_uniprot(ctx.http, ctx.cache, accs, workers=ctx.opt.workers, status=ctx.status)
         afd = prot.fetch_alphafold(ctx.http, ctx.cache, accs, workers=ctx.opt.workers, status=ctx.status)
@@ -1580,6 +1734,8 @@ def _ps1_pm5(ctx: _Context, i: int, r: Row, found: _Lookups) -> str | None:
     """Return the PS1/PM5 evidence of row ``i``, or why the same residue was not checked."""
     if i in found.residue_refs:
         return residue.evidence(r, found.residue_refs[i])[0]
+    if not r.get("mane_select"):
+        return "not checked (no MANE Select transcript, on which ClinVar names its variants)"
     reason = "ClinVar turned off" if not ctx.opt.clinvar else "offline" if not ctx.net else "ClinVar did not respond"
     return f"not checked ({reason})"
 

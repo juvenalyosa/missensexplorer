@@ -46,6 +46,20 @@ CASES = {
     ),
 }
 
+# A protein change that two SNVs produce (CAA -> CAC or CAT), asked with ambiguous_hgvs: VEP answers once per
+# transcript and allele, including alleles that change another residue on the reported transcript. Only the
+# fields that vep.protein_matches reads are kept.
+AMBIGUOUS = ("vep_ambiguous_kras_q61h", "KRAS:p.Gln61His")
+KEEP = ("input", "seq_region_name", "start", "end", "allele_string", "strand")
+KEEP_TC = ("gene_symbol", "transcript_id", "amino_acids", "protein_start", "consequence_terms")
+
+
+def _trim(result):
+    out = {k: result.get(k) for k in KEEP}
+    out["transcript_consequences"] = [{k: tc.get(k) for k in KEEP_TC} for tc in result["transcript_consequences"]]
+    return out
+
+
 if __name__ == "__main__":
     http = Http()
     for name, (asm, path, key, inputs) in CASES.items():
@@ -54,3 +68,12 @@ if __name__ == "__main__":
         )
         (HERE / f"{name}.json").write_text(json.dumps(data, indent=1))
         print(name, len(data), "results")
+    name, query = AMBIGUOUS
+    data = http.post_json(
+        ENSEMBL["GRCh38"] + "/vep/human/hgvs",
+        {"hgvs_notations": [query]},
+        params={**BASE_PARAMS, "ambiguous_hgvs": 1},
+        headers={"Content-Type": "application/json"},
+    )
+    (HERE / f"{name}.json").write_text(json.dumps([_trim(r) for r in data], indent=1))
+    print(name, len(data), "results")

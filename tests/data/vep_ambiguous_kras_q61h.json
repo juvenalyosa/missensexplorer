@@ -1,0 +1,842 @@
+[
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227330,
+  "end": 25227330,
+  "allele_string": "G/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "S/T",
+    "protein_start": 65,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227330,
+  "end": 25227330,
+  "allele_string": "G/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "S/I",
+    "protein_start": 65,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/C",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   },
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   }
+  ]
+ },
+ {
+  "input": "KRAS:p.Gln61His",
+  "seq_region_name": "12",
+  "start": 25227341,
+  "end": 25227341,
+  "allele_string": "A/T",
+  "strand": -1,
+  "transcript_consequences": [
+   {
+    "gene_symbol": null,
+    "transcript_id": "ENST00000620933",
+    "amino_acids": null,
+    "protein_start": null,
+    "consequence_terms": [
+     "downstream_gene_variant"
+    ]
+   },
+   {
+    "gene_symbol": "KRAS",
+    "transcript_id": "ENST00000311936",
+    "amino_acids": "Q/H",
+    "protein_start": 61,
+    "consequence_terms": [
+     "missense_variant"
+    ]
+   }
+  ]
+ }
+]

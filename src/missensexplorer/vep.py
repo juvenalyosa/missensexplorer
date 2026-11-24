@@ -14,6 +14,7 @@ from typing import Any
 import httpx
 
 from ._types import JSON, KeyValueCache, Progress
+from .aa import to_one_letter
 from .api import ENSEMBL, ApiError, Http, SourceStatus
 
 log = logging.getLogger(__name__)
@@ -146,10 +147,34 @@ class Vep:
             stage: Stage name passed to `progress`.
             source: Source name used in `status`.
 
+        A protein substitution that several nucleotide changes produce (``KRAS:p.Gln61His``: CAA to CAC
+        or CAT) is rejected by VEP; it is asked again with ``ambiguous_hgvs`` and answered with every
+        genomic allele that gives the change: {"results": [...], "ambiguous": number of alleles}.
+
         Returns:
             (kind, query) -> {"results": [VEP JSON object per consequence block]}, or
             {"error": message} with "cache_error" or "service_error" set to True.
         """
+        out = self._annotate(queries, params, progress, stage, source)
+        if AMBIGUOUS not in params:
+            retry = [q for (kind, q), val in out.items() if kind == "hgvs" and _needs_ambiguous_retry(q, val)]
+            if retry:
+                again = self._annotate({"hgvs": retry}, {**params, AMBIGUOUS: 1}, progress, stage, source)
+                for q in retry:
+                    hits = protein_matches(q, again.get(("hgvs", q), {}).get("results", []))
+                    if hits:
+                        out[("hgvs", q)] = {"results": hits, "ambiguous": len(hits)}
+        return out
+
+    def _annotate(
+        self,
+        queries: dict[str, list[str]],
+        params: Mapping[str, int | str],
+        progress: Progress | None,
+        stage: str,
+        source: str,
+    ) -> dict[tuple[str, str], dict[str, Any]]:
+        """Annotate the queries as they are (see `annotate`, which adds the retry of ambiguous protein changes)."""
         out: dict[tuple[str, str], dict[str, Any]] = {}
         todo: list[tuple[str, list[str]]] = []
         for kind, qs in queries.items():
@@ -159,7 +184,10 @@ class Vep:
             missing = []
             for q, k in zip(qs, keys, strict=True):
                 if k in hit:
-                    out[(kind, q)] = hit[k]
+                    val = hit[k]
+                    if "error" in val:  # cached by an older version: give it today's wording
+                        val = {**val, "error": _short_error(val["error"])}
+                    out[(kind, q)] = val
                 else:
                     missing.append(q)
             # small jobs: spread over the workers so requests run in parallel
@@ -283,11 +311,80 @@ def _parse_json(text: str) -> JSON:
         return None
 
 
+AA_MISMATCH = "the amino acid at this position is not the one given (check the position and the isoform)"
+OUTSIDE_PROTEIN = "position outside the protein (check the position and the isoform)"
+PROTEIN_FRAMESHIFT = "a frameshift written as a protein change cannot be traced to one DNA change: give the c. change"
+_PROTEIN_FS = re.compile(r"'[^']*:p\.[^']*fs[^']*'")
+
+
 def _short_error(msg: str) -> str:
     """Return a short, readable version of a VEP error message for the results table."""
     msg = str(msg).strip()
     if "Could not get a Transcript object" in msg:
         return "unknown gene or transcript symbol"
+    if _PROTEIN_FS.search(msg):  # VEP maps protein substitutions, not frameshifts, back to the genome
+        return PROTEIN_FRAMESHIFT
+    if "does not match input sequence" in msg:  # protein HGVS: the reference amino acid differs
+        return AA_MISMATCH
+    if "Bio::EnsEMBL::Mapper::Gap" in msg:  # the position maps beyond the transcript or into a gap
+        return OUTSIDE_PROTEIN
     if "does not match reference" in msg.lower() or "reference allele" in msg.lower():
         return "reference allele does not match the genome/transcript"
     return msg.split(" at /")[0][:240]
+
+
+# --------------------------------------------------------------------------- ambiguous protein changes
+
+AMBIGUOUS = "ambiguous_hgvs"  # VEP parameter: resolve a protein change to every SNV that produces it
+_PROTEIN_SUB = re.compile(r"^p\.\(?([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})\)?$")
+
+
+def _needs_ambiguous_retry(query: str, answer: dict[str, Any]) -> bool:
+    """Whether VEP rejected a protein substitution because several nucleotide changes produce it.
+
+    Without ``ambiguous_hgvs`` VEP tries one codon per transcript and reports that the amino acid
+    does not match; with it, VEP returns every SNV that gives the change. Cached answers from older
+    versions still hold VEP's own wording, hence both tests.
+    """
+    err = str(answer.get("error") or "")
+    protein = query.split(":", 1)[-1]
+    return bool(_PROTEIN_SUB.match(protein)) and (err == AA_MISMATCH or "does not match input sequence" in err)
+
+
+def protein_matches(query: str, results: list[JSON]) -> list[JSON]:
+    """Keep the VEP results of an ambiguous protein query that really give the requested change.
+
+    With ``ambiguous_hgvs`` VEP answers once per transcript and genomic allele, so the same allele
+    comes back several times, and a transcript with other numbering can yield an allele that changes
+    another residue on the reported transcript. A result is kept when one of its consequences, in the
+    query's gene, has the requested reference and alternate amino acids; those that also have the
+    requested position are preferred (the others are legacy-numbering matches). Duplicates are dropped.
+
+    Args:
+        query: The protein HGVS sent to VEP, e.g. ``"KRAS:p.Gln61His"``.
+        results: VEP's results for it.
+
+    Returns:
+        One result per genomic allele, in VEP's order; empty when none gives the change.
+    """
+    gene, _, protein = query.partition(":")
+    m = _PROTEIN_SUB.match(protein)
+    if not m:
+        return []
+    want = f"{to_one_letter(m.group(1))}/{to_one_letter(m.group(3))}"
+    pos = int(m.group(2))
+    symbols = {(tc.get("gene_symbol") or "").upper() for r in results for tc in r.get("transcript_consequences") or []}
+    only = gene.upper() if gene.upper() in symbols else None  # a transcript or protein id: any gene
+    exact: dict[tuple[Any, ...], JSON] = {}
+    same_change: dict[tuple[Any, ...], JSON] = {}
+    for r in results:
+        key = (r.get("seq_region_name"), r.get("start"), r.get("end"), r.get("allele_string"))
+        for tc in r.get("transcript_consequences") or []:
+            if only and (tc.get("gene_symbol") or "").upper() != only:
+                continue
+            if tc.get("amino_acids") != want:
+                continue
+            same_change.setdefault(key, r)
+            if tc.get("protein_start") == pos:
+                exact.setdefault(key, r)
+    return list((exact or same_change).values())

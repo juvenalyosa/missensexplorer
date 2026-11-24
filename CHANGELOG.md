@@ -37,9 +37,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   Before, they applied only when the app was started from the repository folder, and elsewhere
   Streamlit's 200 MB upload limit applied.
 
+- A protein substitution that several nucleotide changes produce, such as KRAS Q61H (CAA to CAC or
+  CAT), used to be rejected by Ensembl. It is now asked again with `ambiguous_hgvs` and gives one row
+  per nucleotide change, with a note.
+- Insertions and deletions typed as HGVS (`CFTR:c.1521_1523del`) are re-annotated in their
+  left-aligned VCF form. Before, the position Ensembl resolved them to missed CADD's indel scores,
+  and sometimes gnomAD's frequency and the ClinVar record, that the same variant gets from a VCF.
+  An insertion or deletion written as a protein change (`p.Phe508del`) now says that other DNA
+  changes can give the same protein and which one Ensembl mapped.
+- GRCh37: UniProt features and the AlphaFold structure were missing, because Ensembl's GRCh37 server
+  reports UniProt entry names (BRAF_HUMAN); they are now converted to accessions. PS1/PM5 said
+  "none" for rows without a MANE Select transcript (all of GRCh37), where nothing could be compared;
+  it now says "not checked" and why.
+- VCF records removed by *FILTER = PASS only* are now counted in the skipped note of the desktop and
+  web apps and in the terminal summary, which also lists the other skipped records.
+- Readable messages replace Ensembl's internal errors for a position outside the protein, a wrong
+  reference amino acid and a frameshift written as a protein change. Errors cached by older versions
+  are shown with the new wording.
+
 ### Added
 - A tutorial [wiki](https://github.com/juvenalyosa/missensexplorer/wiki) with screenshots of every
-  feature.
+  feature, and worked examples of every input format and kind of variant.
 
 ## [2.3.0] — 2026-11-23
 

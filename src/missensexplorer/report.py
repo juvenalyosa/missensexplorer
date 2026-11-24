@@ -277,6 +277,18 @@ def _print_header(con: Console, res: PredictionResult) -> None:
         con.print(
             f"[dim]{st['no_protein_effect']} variant(s) have no coding/splice consequence (use --all to list them).[/]"
         )
+    skipped = [
+        f"{st[key]} {what}"
+        for key, what in (
+            ("file_skipped_not_carried", "not carried by the sample(s)"),
+            ("file_skipped_outside_genes", "outside the selected genes"),
+            ("file_skipped_symbolic", "symbolic/structural alleles"),
+            ("file_skipped_filter", "not passing FILTER"),
+        )
+        if st.get(key)
+    ]
+    if skipped:
+        con.print(f"[dim]Skipped file records: {' · '.join(skipped)}.[/]")
 
 
 def _print_table(con: Console, df: pd.DataFrame) -> None:

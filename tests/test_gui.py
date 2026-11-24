@@ -163,6 +163,44 @@ def test_acmg_note_names_pp3_bp4_thresholds_only_when_given(app):
     w.close()
 
 
+@pytest.mark.parametrize("lang", ["es", "en"])
+def test_skipped_note_counts_records_that_failed_filter(app, lang):
+    i18n.set_language(lang)
+    from missensexplorer.gui.window import MainWindow
+
+    res = _result()
+    res.stats.update({"file_skipped_filter": 1, "file_skipped_not_carried": 2})
+    w = MainWindow()
+    w.show_result(res)
+    note = w.skipped.text()
+    assert (
+        "2 no portadas por la muestra · 1 sin FILTER = PASS"
+        if lang == "es"
+        else "2 not carried by the sample(s) · 1 not passing FILTER"
+    ) in note
+    w.close()
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "the amino acid at this position is not the one given (check the position and the isoform)",
+        "position outside the protein (check the position and the isoform)",
+        "a frameshift written as a protein change cannot be traced to one DNA change: give the c. change",
+        "2 nucleotide changes give this protein change; each is reported",
+        "protein notation: other DNA changes can give the same F508del; this is the one Ensembl maps "
+        "(c.1522_1524del). Give the c. or genomic change to analyse a specific one",
+        "not checked (no MANE Select transcript, on which ClinVar names its variants)",
+    ],
+)
+def test_new_pipeline_messages_are_translated(text):
+    i18n.set_language("es")
+    out = i18n.tr_text(text)
+    assert out != text
+    assert not any(w in out for w in ("the ", "position", "change", "transcript,")), out
+    i18n.set_language("en")
+
+
 def test_language_switch_keeps_state(app):
     from missensexplorer.gui.window import MainWindow
 

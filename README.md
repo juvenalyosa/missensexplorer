@@ -89,6 +89,12 @@ Free text accepts one or more variants per line, separated by commas or semicolo
 | `rs113488022` | dbSNP ID (all alternate alleles are reported) |
 | `CFTR p.Phe508del` · `chr7:117559590 ATCT>A` | in-frame indels |
 
+A protein change that several nucleotide changes produce (`KRAS Q61H`: CAA to CAC or CAT) gives one row
+per nucleotide change. A protein notation does not say which DNA change you mean, so for insertions
+and deletions prefer the cDNA or genomic notation: those are aligned to the left before annotation,
+as in a VCF, so they get the same scores and database matches as the VCF record.
+The [wiki](https://github.com/juvenalyosa/missensexplorer/wiki) has worked examples of every format.
+
 You can also upload files:
 
 - **VCF / VCF.gz**: single- or multi-sample, multi-allelic, SNVs and indels. Zygosity is taken

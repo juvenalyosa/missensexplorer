@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -180,6 +181,58 @@ def fetch_uniprot(
         for res in ex.map(run, chunks):
             out.update(res)
             cache.set_many({keys[a]: v for a, v in res.items() if a in keys})
+    return out
+
+
+ENTRY_NAME = re.compile(r"^[A-Z0-9]{1,11}_[A-Z0-9]{1,5}$")  # UniProtKB entry name, e.g. BRAF_HUMAN
+
+
+def uniprot_accessions(
+    http: Http,
+    cache: KeyValueCache,
+    ids: Iterable[str | None],
+    status: SourceStatus | None = None,
+) -> dict[str, str]:
+    """Return entry name -> accession for the UniProtKB entry names among ``ids`` (BRAF_HUMAN -> P15056).
+
+    Ensembl's GRCh37 server reports UniProt entry names where GRCh38 reports accessions; the other
+    UniProt and AlphaFold calls need accessions. Accessions in ``ids`` are left out of the answer.
+
+    Args:
+        http: Client used for the requests (UniProt search, 50 names per request).
+        cache: Cache read and written under "uniprot_name|<entry name>".
+        ids: UniProt identifiers as Ensembl reports them; empty values are ignored.
+        status: Where failed requests are recorded (source "UniProt").
+
+    Returns:
+        Entry name -> primary accession, for the names UniProt knows.
+    """
+    names = sorted({i for i in ids if i and ENTRY_NAME.match(i)})
+    keys = {n: f"uniprot_name|{n}" for n in names}
+    hit = cache.get_many(list(keys.values()))
+    out = {n: hit[keys[n]] for n in names if keys[n] in hit}
+    missing = [n for n in names if n not in out]
+    for i in range(0, len(missing), 50):
+        chunk = missing[i : i + 50]
+        try:
+            data = http.get_json(
+                f"{UNIPROT}/uniprotkb/search",
+                params={
+                    "query": " OR ".join(f"id:{n}" for n in chunk),
+                    "fields": "accession,id",
+                    "format": "json",
+                    "size": 500,
+                },
+            )
+        except ApiError as e:
+            log.warning("UniProt entry-name lookup failed: %s", e)
+            if status is not None:
+                status.fail("UniProt", str(e), chunk)
+            continue
+        found = {r.get("uniProtkbId"): r.get("primaryAccession") for r in data.get("results", [])}
+        new = {n: found[n] for n in chunk if found.get(n)}
+        out.update(new)
+        cache.set_many({keys[n]: a for n, a in new.items()})
     return out
 
 
