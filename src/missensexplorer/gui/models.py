@@ -4,12 +4,24 @@ from __future__ import annotations
 
 import math
 import numbers
+from collections.abc import Callable, Iterable
+from typing import Any, TypeGuard, cast
 
 import pandas as pd
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, QPointF, QRectF, QSortFilterProxyModel, Qt
+from PySide6.QtCore import (
+    QAbstractTableModel,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    QPointF,
+    QRectF,
+    QSortFilterProxyModel,
+    Qt,
+)
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QStyle, QStyledItemDelegate
+from PySide6.QtWidgets import QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
+from .._types import Row
 from ..predict import prediction_status
 from . import theme as th
 from .i18n import t, tr_prediction, tr_text
@@ -17,12 +29,16 @@ from .i18n import t, tr_prediction, tr_text
 STATUS_ROLE = Qt.ItemDataRole.UserRole + 1
 SORT_ROLE = Qt.ItemDataRole.UserRole + 2
 
+_ROOT = QModelIndex()  # the invalid index: the parent of every row of a flat table
 
-def isnum(v) -> bool:
+
+def isnum(v: object) -> TypeGuard[float]:
+    """Return True for a real number that is neither a bool nor NaN."""
     return isinstance(v, numbers.Real) and not isinstance(v, bool) and not (isinstance(v, float) and math.isnan(v))
 
 
-def val(v, default=None):
+def val(v: Any, default: Any = None) -> Any:
+    """Return ``v``, or ``default`` when it is missing: None, NaN, pandas NA or a blank string."""
     if v is None or (isinstance(v, float) and math.isnan(v)) or (isinstance(v, str) and not v.strip()):
         return default
     try:
@@ -33,12 +49,14 @@ def val(v, default=None):
     return v
 
 
-def consequence_text(c) -> str:
+def consequence_text(c: object) -> str:
+    """Return comma-separated VEP consequence terms as plain words (``splice_region_variant`` -> ``splice region``)."""
     c = val(c, "")
     return ", ".join(x.replace("_variant", "").replace("_", " ") for x in str(c).split(",") if x)
 
 
-def clinvar_text(r) -> str:
+def clinvar_text(r: Row) -> str:
+    """Return the ClinVar classification of a row, followed by its review stars when it has any."""
     c = val(r.get("clinvar"), "")
     stars = r.get("clinvar_stars")
     if c and isnum(stars) and stars > 0:
@@ -47,7 +65,7 @@ def clinvar_text(r) -> str:
 
 
 # (key, header string key, kind)
-COLUMNS = [
+COLUMNS: list[tuple[str, str, str]] = [
     ("input", "col_input", "text"),
     ("gene", "col_gene", "gene"),
     ("protein_change", "col_change", "change"),
@@ -66,48 +84,68 @@ COLUMNS = [
 
 
 class ResultsModel(QAbstractTableModel):
-    def __init__(self, parent=None):
+    """The results table as a Qt model, with the columns of :data:`COLUMNS`.
+
+    Attributes:
+        df: The results table shown (with the extra ``status`` column added by the window).
+        rows: ``df`` as a list of row dicts, for fast cell access.
+        index_labels: The index label of ``df`` for each model row.
+        zyg_from_carriers: Show the ``carriers`` column under the zygosity header (multi-sample VCF without a
+            chosen sample).
+    """
+
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.df = pd.DataFrame()
-        self.rows: list[dict] = []
-        self.index_labels: list = []
+        self.rows: list[Row] = []
+        self.index_labels: list[int] = []
         self.zyg_from_carriers = False
 
     def set_frame(self, df: pd.DataFrame) -> None:
+        """Show ``df`` (reset the model)."""
         self.beginResetModel()
         self.df = df
-        self.rows = df.to_dict("records") if len(df) else []
+        self.rows = cast("list[Row]", df.to_dict("records")) if len(df) else []
         self.index_labels = list(df.index)
-        self.zyg_from_carriers = bool(len(df)) and df["zygosity"].isna().all() and df["carriers"].notna().any()
+        self.zyg_from_carriers = bool(len(df) and df["zygosity"].isna().all() and df["carriers"].notna().any())
         self.endResetModel()
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = _ROOT) -> int:
+        """Return the number of result rows (0 under a valid parent: the table is flat)."""
         return 0 if parent.isValid() else len(self.rows)
 
-    def columnCount(self, parent=QModelIndex()):
+    def columnCount(self, parent: QModelIndex | QPersistentModelIndex = _ROOT) -> int:
+        """Return the number of columns of :data:`COLUMNS` (0 under a valid parent)."""
         return 0 if parent.isValid() else len(COLUMNS)
 
-    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+        """Return the upper-case, translated column title and its alignment (numbers right-aligned)."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             key = COLUMNS[section][1]
             return t(key).upper() if key.startswith("col_") else key.upper()
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.TextAlignmentRole:
             kind = COLUMNS[section][2]
-            return int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter) if kind in ("num1", "num0", "sci") \
+            return (
+                int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                if kind in ("num1", "num0", "sci")
                 else int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            )
         return None
 
-    def raw(self, row: int, key: str):
+    def raw(self, row: int, key: str) -> Any:
+        """Return the value of column ``key`` in model row ``row``, or None when it is missing."""
         r = self.rows[row]
         if key == "zygosity" and self.zyg_from_carriers:
             return val(r.get("carriers"))
         return val(r.get(key))
 
     def column_empty(self, col: int) -> bool:
+        """Return True when column ``col`` has no value in any row (the window hides it)."""
         key = COLUMNS[col][0]
         return all(self.raw(i, key) is None for i in range(len(self.rows)))
 
-    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+        """Return a cell's text, sort key (:data:`SORT_ROLE`), status (:data:`STATUS_ROLE`), font, colour or tooltip."""
         if not index.isValid():
             return None
         key, _, kind = COLUMNS[index.column()]
@@ -134,8 +172,9 @@ class ResultsModel(QAbstractTableModel):
                 return f"{v:.1e}" if isnum(v) else str(v)
             return str(v)
         if role == SORT_ROLE:
-            if kind == "status":
-                return th.STATUS_ORDER.index(prediction_status(v)) * 10 - (r.get("effect_score") or 0)
+            if kind == "status":  # by status, then by score within it (a missing score sorts as 0)
+                score = r.get("effect_score")
+                return th.STATUS_ORDER.index(prediction_status(v)) * 10 - (score if isnum(score) else 0)
             if kind in ("bar", "num1", "num0", "sci"):
                 return float(v) if isnum(v) else -1.0
             return str(v or "").lower()
@@ -166,13 +205,21 @@ class ResultsModel(QAbstractTableModel):
 
 
 class FilterProxy(QSortFilterProxyModel):
-    def __init__(self, parent=None):
+    """Filter the results by prediction status and free text; sort by :data:`SORT_ROLE`.
+
+    Attributes:
+        statuses: The prediction statuses shown, or None for all.
+        query: Lower-case text searched in the gene, change, input, HGVS, rsID, ClinVar and sample fields.
+    """
+
+    def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.statuses: set[str] | None = None
         self.query = ""
         self.setSortRole(SORT_ROLE)
 
-    def _refilter(self, change):
+    def _refilter(self, change: Callable[[], object]) -> None:
+        """Apply ``change`` to the filter state and re-filter the rows."""
         if hasattr(self, "beginFilterChange"):  # Qt >= 6.10
             self.beginFilterChange()
             change()
@@ -181,27 +228,34 @@ class FilterProxy(QSortFilterProxyModel):
             change()
             self.invalidateFilter()
 
-    def set_statuses(self, s):
+    def set_statuses(self, s: Iterable[str] | None) -> None:
+        """Show only rows whose prediction status is in ``s`` (None: all rows)."""
         self._refilter(lambda: setattr(self, "statuses", set(s) if s is not None else None))
 
-    def set_query(self, q: str):
+    def set_query(self, q: str) -> None:
+        """Show only rows containing ``q`` (case-insensitive; blank: all rows)."""
         self._refilter(lambda: setattr(self, "query", q.strip().lower()))
 
-    def filterAcceptsRow(self, row, parent):
-        m: ResultsModel = self.sourceModel()
+    def filterAcceptsRow(self, row: int, parent: QModelIndex | QPersistentModelIndex) -> bool:
+        """Return True when source row ``row`` has an allowed status and contains the query."""
+        m = cast(ResultsModel, self.sourceModel())
         r = m.rows[row]
         if self.statuses is not None and prediction_status(r.get("prediction")) not in self.statuses:
             return False
         if self.query:
-            hay = " ".join(str(val(r.get(k), "")) for k in ("gene", "protein_change", "input", "hgvsp", "hgvsc",
-                                                             "rsid", "clinvar", "sample"))
+            hay = " ".join(
+                str(val(r.get(k), ""))
+                for k in ("gene", "protein_change", "input", "hgvsp", "hgvsc", "rsid", "clinvar", "sample")
+            )
             return self.query in hay.lower()
         return True
 
 
 # --------------------------------------------------------------------------- painting helpers
 
+
 def shape_path(shape: str, c: QPointF, r: float) -> QPainterPath:
+    """Return a status mark of radius ``r`` around ``c``: ``triangle``, ``diamond``, ``square`` or a circle."""
     p = QPainterPath()
     if shape == "triangle":
         p.moveTo(c.x(), c.y() - r * 1.1)
@@ -222,6 +276,7 @@ def shape_path(shape: str, c: QPointF, r: float) -> QPainterPath:
 
 
 def paint_status_mark(p: QPainter, status: str, c: QPointF, r: float = 5.0, ring: str | None = None) -> None:
+    """Paint the shape and colour of a prediction status (``ring``: outline colour, else no outline)."""
     path = shape_path(th.STATUS_SHAPE[status], c, r)
     if ring:
         p.setPen(QPen(QColor(ring), 2))
@@ -234,7 +289,8 @@ def paint_status_mark(p: QPainter, status: str, c: QPointF, r: float = 5.0, ring
 class StatusDelegate(QStyledItemDelegate):
     """Shape + colour + label: the status is never encoded by colour alone."""
 
-    def paint(self, p: QPainter, opt, index):
+    def paint(self, p: QPainter, opt: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
+        """Paint the status mark, then the prediction label elided to the cell width."""
         self.initStyleOption(opt, index)
         text = opt.text
         opt.text = ""
@@ -248,15 +304,19 @@ class StatusDelegate(QStyledItemDelegate):
         p.setPen(QColor(th.INK))
         p.setFont(th.font(12.5))
         tr = rect.adjusted(28, 0, -6, 0)
-        p.drawText(tr, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                   p.fontMetrics().elidedText(text, Qt.TextElideMode.ElideRight, tr.width()))
+        p.drawText(
+            tr,
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+            p.fontMetrics().elidedText(text, Qt.TextElideMode.ElideRight, tr.width()),
+        )
         p.restore()
 
 
 class BarDelegate(QStyledItemDelegate):
     """Thin 0–1 bar with the value as text (one hue: magnitude)."""
 
-    def paint(self, p: QPainter, opt, index):
+    def paint(self, p: QPainter, opt: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex) -> None:
+        """Paint the value as text followed by a bar of length value (clamped to 0–1)."""
         self.initStyleOption(opt, index)
         text = opt.text
         opt.text = ""
@@ -273,8 +333,11 @@ class BarDelegate(QStyledItemDelegate):
         p.setFont(th.font(12))
         p.setPen(QColor(th.INK))
         tw = 34
-        p.drawText(QRectF(rect.left(), rect.top(), tw, rect.height()),
-                   Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, text)
+        p.drawText(
+            QRectF(rect.left(), rect.top(), tw, rect.height()),
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+            text,
+        )
         track = QRectF(rect.left() + tw + 4, rect.center().y() - 2, max(10, rect.width() - tw - 4), 4)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QColor(th.MINERAL_100))

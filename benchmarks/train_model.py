@@ -51,6 +51,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import clinvar_benchmark as B  # noqa: E402
+
 from missensexplorer import PredictOptions, predict  # noqa: E402
 from missensexplorer.predict import _num  # noqa: E402
 
@@ -58,11 +59,11 @@ from missensexplorer.predict import _num  # noqa: E402
 # v2.2 training set) and, being collinear with them, get coefficients of the "wrong" sign, which would make
 # the per-predictor explanation misleading.
 FEATURES = ["alphamissense", "revel", "cadd_phred", "popeve"]
-RARE = 0.001             # gnomAD grpmax below 0.1% (or absent)
+RARE = 0.001  # gnomAD grpmax below 0.1% (or absent)
 MIN_DAMAGING, MAX_BENIGN = 0.70, 0.30
 PARAMS = ROOT / "src" / "missensexplorer" / "model_params.py"
 OUT = Path(__file__).resolve().parent / "results"
-OPTIONS = dict(clinvar=False, protein_context=False, sequences=False, workers=6)
+OPTIONS = {"clinvar": False, "protein_context": False, "sequences": False, "workers": 6}
 
 
 def pipeline(c: float = 1.0):
@@ -72,8 +73,7 @@ def pipeline(c: float = 1.0):
     from sklearn.preprocessing import StandardScaler
 
     # No missing-value indicators: a missing score must never count as evidence either way.
-    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
-                         LogisticRegression(C=c, max_iter=5000))
+    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), LogisticRegression(C=c, max_iter=5000))
 
 
 def _progress(s, d, n):
@@ -95,9 +95,12 @@ def _missense_rows(res, picked: list[dict]) -> list[tuple[dict, dict]]:
 
 
 def frequencies(picked: list[dict]) -> dict[str, float | None]:
-    """gnomAD grpmax of each variant from the fast VEP pass (no predictor plugins: quick)."""
-    res = predict(text="\n".join(p["input"] for p in picked),
-                  options=PredictOptions(predictors=False, **OPTIONS), progress=_progress)
+    """GnomAD grpmax of each variant from the fast VEP pass (no predictor plugins: quick)."""
+    res = predict(
+        text="\n".join(p["input"] for p in picked),
+        options=PredictOptions(predictors=False, **OPTIONS),
+        progress=_progress,
+    )
     print()
     check_sources(res)
     return {p["id"]: _num(r.get("gnomad_popmax_af")) for p, r in _missense_rows(res, picked)}
@@ -107,25 +110,33 @@ def enrich(picked: list[dict], grpmax: dict) -> list[dict]:
     """Every pathogenic and every rare benign variant, then common benign ones up to balance.
 
     `picked` is in the seeded random order of B.sample, so the common benign variants taken are a
-    random subset."""
+    random subset.
+    """
     known = [p for p in picked if p["id"] in grpmax]
     path = [p for p in known if p["label"] == 1]
     rare_benign = [p for p in known if p["label"] == 0 and (grpmax[p["id"]] or 0) < RARE]
     common_benign = [p for p in known if p["label"] == 0 and (grpmax[p["id"]] or 0) >= RARE]
-    return path + rare_benign + common_benign[:max(0, len(path) - len(rare_benign))]
+    return path + rare_benign + common_benign[: max(0, len(path) - len(rare_benign))]
 
 
 def annotate(picked: list[dict]) -> tuple[pd.DataFrame, dict]:
-    res = predict(text="\n".join(p["input"] for p in picked), options=PredictOptions(**OPTIONS),
-                  progress=_progress)
+    res = predict(text="\n".join(p["input"] for p in picked), options=PredictOptions(**OPTIONS), progress=_progress)
     print()
     check_sources(res)
-    rows = [{"clinvar_id": p["id"], "gene": p["gene"], "label": p["label"], "year": p["year"],
-             **{f: r.get(f) for f in FEATURES}, "grpmax": _num(r.get("gnomad_popmax_af")),
-             "v21_call": B.scheme_call(r, B.V21, 0.7, 0.3, 0.0, True)}
-            for p, r in _missense_rows(res, picked)]
+    rows = [
+        {
+            "clinvar_id": p["id"],
+            "gene": p["gene"],
+            "label": p["label"],
+            "year": p["year"],
+            **{f: r.get(f) for f in FEATURES},
+            "grpmax": _num(r.get("gnomad_popmax_af")),
+            "v21_call": B.scheme_call(r, B.V21, 0.7, 0.3, 0.0, True),
+        }
+        for p, r in _missense_rows(res, picked)
+    ]
     df = pd.DataFrame(rows)
-    for f in FEATURES + ["grpmax"]:
+    for f in [*FEATURES, "grpmax"]:
         df[f] = pd.to_numeric(df[f], errors="coerce")
     return df, res.run
 
@@ -134,8 +145,10 @@ def check_sources(res) -> None:
     """Never train or benchmark on a partial annotation (e.g. a dropped connection mid-run)."""
     failed = {k: v for k, v in res.sources.items() if v.startswith("failed")}
     if failed:
-        raise SystemExit(f"annotation incomplete, not using it: {failed}. Run again: answers already "
-                         "obtained are cached, so only the missing ones are fetched.")
+        raise SystemExit(
+            f"annotation incomplete, not using it: {failed}. Run again: answers already "
+            "obtained are cached, so only the missing ones are fetched."
+        )
 
 
 def class_weights(y: np.ndarray) -> np.ndarray:
@@ -160,13 +173,16 @@ def cv_predictions(df: pd.DataFrame, seed: int) -> np.ndarray:
 
 def rates(calls: np.ndarray, y: np.ndarray) -> dict:
     dec = calls != "uncertain"
-    return {"n_pathogenic": int((y == 1).sum()), "n_benign": int((y == 0).sum()),
-            "sensitivity": round(float(np.mean(calls[y == 1] == "damaging")), 4),
-            "specificity": round(float(np.mean(calls[y == 0] == "benign")), 4),
-            "pathogenic_called_benign": round(float(np.mean(calls[y == 1] == "benign")), 4),
-            "benign_called_damaging": round(float(np.mean(calls[y == 0] == "damaging")), 4),
-            "coverage": round(float(np.mean(dec)), 4),
-            "accuracy_when_decisive": round(float(np.mean((calls[dec] == "damaging") == (y[dec] == 1))), 4)}
+    return {
+        "n_pathogenic": int((y == 1).sum()),
+        "n_benign": int((y == 0).sum()),
+        "sensitivity": round(float(np.mean(calls[y == 1] == "damaging")), 4),
+        "specificity": round(float(np.mean(calls[y == 0] == "benign")), 4),
+        "pathogenic_called_benign": round(float(np.mean(calls[y == 1] == "benign")), 4),
+        "benign_called_damaging": round(float(np.mean(calls[y == 0] == "damaging")), 4),
+        "coverage": round(float(np.mean(dec)), 4),
+        "accuracy_when_decisive": round(float(np.mean((calls[dec] == "damaging") == (y[dec] == 1))), 4),
+    }
 
 
 def model_calls(p: np.ndarray, hi: float, lo: float) -> np.ndarray:
@@ -178,11 +194,15 @@ def choose_cut_offs(p: np.ndarray, df: pd.DataFrame) -> tuple[float, float]:
     rare = (df["grpmax"].fillna(0) < RARE).values
     y, pr = df["label"].values[rare], p[rare]
     v21 = rates(df["v21_call"].fillna("uncertain").values[rare], y)
-    keeps_sensitivity = [h for h in np.round(np.arange(MIN_DAMAGING, 0.99, 0.01), 2)
-                         if np.mean(pr[y == 1] >= h) >= v21["sensitivity"]]
+    keeps_sensitivity = [
+        h for h in np.round(np.arange(MIN_DAMAGING, 0.99, 0.01), 2) if np.mean(pr[y == 1] >= h) >= v21["sensitivity"]
+    ]
     hi = max(keeps_sensitivity, default=MIN_DAMAGING)
-    lo = next(lv for lv in np.round(np.arange(MAX_BENIGN, 0.0, -0.01), 2)
-              if np.mean(pr[y == 1] <= lv) <= v21["pathogenic_called_benign"])
+    lo = next(
+        lv
+        for lv in np.round(np.arange(MAX_BENIGN, 0.0, -0.01), 2)
+        if np.mean(pr[y == 1] <= lv) <= v21["pathogenic_called_benign"]
+    )
     return float(hi), float(lo)
 
 
@@ -194,10 +214,12 @@ def cv_report(df: pd.DataFrame, p: np.ndarray, hi: float, lo: float) -> dict:
     v21 = df["v21_call"].fillna("uncertain").values
     out = {}
     for name, m in (("all", np.ones(len(df), bool)), ("rare", rare)):
-        out[name] = {"auc": round(float(roc_auc_score(y[m], p[m])), 4),
-                     "model": rates(model_calls(p[m], hi, lo), y[m]),
-                     "model_at_0.7/0.3": rates(model_calls(p[m], 0.7, 0.3), y[m]),
-                     "v2.1 vote": rates(v21[m], y[m])}
+        out[name] = {
+            "auc": round(float(roc_auc_score(y[m], p[m])), 4),
+            "model": rates(model_calls(p[m], hi, lo), y[m]),
+            "model_at_0.7/0.3": rates(model_calls(p[m], 0.7, 0.3), y[m]),
+            "v2.1 vote": rates(v21[m], y[m]),
+        }
     return out
 
 
@@ -209,17 +231,23 @@ def main(argv=None) -> int:
     t0 = time.time()
 
     cands = B.load_candidates(B.download())
-    bench = B.sample(list(cands), 1000, 8, 42)            # the benchmark sample (same arguments as its defaults)
+    bench = B.sample(list(cands), 1000, 8, 42)  # the benchmark sample (same arguments as its defaults)
     held_out = {p["gene"] for p in bench}
     pool = [c for c in cands if c["gene"] not in held_out]
     picked = B.sample(pool, len(pool), args.per_gene, args.seed)
-    print(f"{len(pool)} candidates outside the {len(held_out)} benchmark genes; {len(picked)} with at most "
-          f"{args.per_gene} per gene and class", flush=True)
+    print(
+        f"{len(pool)} candidates outside the {len(held_out)} benchmark genes; {len(picked)} with at most "
+        f"{args.per_gene} per gene and class",
+        flush=True,
+    )
     grpmax = frequencies(picked)
     picked = enrich(picked, grpmax)
     n_rare_benign = sum(p["label"] == 0 and (grpmax[p["id"]] or 0) < RARE for p in picked)
-    print(f"training set: {sum(p['label'] for p in picked)} pathogenic, {n_rare_benign} rare benign, "
-          f"{sum(p['label'] == 0 for p in picked) - n_rare_benign} common benign", flush=True)
+    print(
+        f"training set: {sum(p['label'] for p in picked)} pathogenic, {n_rare_benign} rare benign, "
+        f"{sum(p['label'] == 0 for p in picked) - n_rare_benign} common benign",
+        flush=True,
+    )
 
     df, run = annotate(picked)
     print(f"{len(df)} annotated as missense", flush=True)
@@ -239,16 +267,23 @@ def main(argv=None) -> int:
     params = {
         "version": "2.3",
         "trained": dt.date.today().isoformat(),
-        "training": {"source": B.URL, "selection": "germline missense SNVs, GRCh38, >= 2 review stars, "
-                     "P/LP vs B/LB, at most %d per gene and class, benchmark genes excluded; every pathogenic "
-                     "and every rare benign variant (gnomAD grpmax < 0.1%%), common benign variants up to "
-                     "balance; classes weighted equally" % args.per_gene,
-                     "n": int(len(df)), "pathogenic": int(y.sum()), "rare_benign": int(((y == 0) & rare).sum()),
-                     "genes": int(df["gene"].nunique()), "seed": args.seed, "annotation": run.get("annotation"),
-                     "cut_off_rule": "rare variants, CV by gene: highest damaging cut-off >= 0.70 that keeps the "
-                                     "v2.1 vote's sensitivity; highest benign cut-off <= 0.30 that calls no more "
-                                     "pathogenic variants benign than the v2.1 vote",
-                     "cv_by_gene": cv},
+        "training": {
+            "source": B.URL,
+            "selection": "germline missense SNVs, GRCh38, >= 2 review stars, "
+            f"P/LP vs B/LB, at most {args.per_gene} per gene and class, benchmark genes excluded; every pathogenic "
+            "and every rare benign variant (gnomAD grpmax < 0.1%), common benign variants up to "
+            "balance; classes weighted equally",
+            "n": len(df),
+            "pathogenic": int(y.sum()),
+            "rare_benign": int(((y == 0) & rare).sum()),
+            "genes": int(df["gene"].nunique()),
+            "seed": args.seed,
+            "annotation": run.get("annotation"),
+            "cut_off_rule": "rare variants, CV by gene: highest damaging cut-off >= 0.70 that keeps the "
+            "v2.1 vote's sensitivity; highest benign cut-off <= 0.30 that calls no more "
+            "pathogenic variants benign than the v2.1 vote",
+            "cv_by_gene": cv,
+        },
         "features": FEATURES,
         "median": [round(float(x), 6) for x in imp.statistics_],
         "mean": [round(float(x), 6) for x in sc.mean_],
@@ -260,14 +295,17 @@ def main(argv=None) -> int:
     }
     PARAMS.write_text(
         '"""Missense model coefficients. Generated by benchmarks/train_model.py; do not edit by hand."""\n\n'
-        f"MODEL = {pprint.pformat(params, width=110, sort_dicts=False)}\n")
+        f"MODEL = {pprint.pformat(params, width=110, sort_dicts=False)}\n"
+    )
     OUT.mkdir(exist_ok=True)
     df.to_csv(OUT / "model_training_set.csv.gz", index=False)
     # reference predictions so the pure-Python scorer can be checked against scikit-learn
     ref = df.sample(n=min(40, len(df)), random_state=args.seed)
     ref = ref.assign(expected=model.predict_proba(ref[FEATURES])[:, 1])
-    vectors = [{f: (None if pd.isna(r[f]) else float(r[f])) for f in FEATURES} | {"expected": float(r["expected"])}
-               for _, r in ref.iterrows()]
+    vectors = [
+        {f: (None if pd.isna(r[f]) else float(r[f])) for f in FEATURES} | {"expected": float(r["expected"])}
+        for _, r in ref.iterrows()
+    ]
     (ROOT / "tests" / "data" / "model_vectors.json").write_text(json.dumps(vectors, indent=1))
     print(f"wrote {PARAMS.relative_to(ROOT)} in {time.time() - t0:.0f} s")
     print(json.dumps({k: params[k] for k in ("features", "coef", "intercept", "damaging", "benign")}, indent=1))

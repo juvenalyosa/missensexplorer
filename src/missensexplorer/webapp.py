@@ -8,6 +8,7 @@ from __future__ import annotations
 import html
 import json
 import numbers
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import quote
 
 import altair as alt
@@ -21,6 +22,9 @@ from missensexplorer.cache import Cache
 from missensexplorer.inputs import vcf_samples
 from missensexplorer.predict import PredictOptions, predict, prediction_status
 from missensexplorer.report import run_info, to_bytes, to_fasta
+
+if TYPE_CHECKING:
+    from missensexplorer.predict import PredictionResult
 
 st.set_page_config(page_title="MissensExplorer", page_icon="🧬", layout="wide")
 
@@ -54,14 +58,17 @@ STATUS = {
 
 
 def status_of(label: str | None) -> str:
+    """Return the status group of a prediction label: a key of STATUS."""
     return prediction_status(label)
 
 
-def _isnum(v) -> bool:
+def _isnum(v: Any) -> bool:
+    """Whether ``v`` is a real number (not a bool, not NaN)."""
     return isinstance(v, numbers.Real) and not isinstance(v, bool) and v == v
 
 
-def _val(v, default=None):
+def _val(v: Any, default: Any = None) -> Any:
+    """Return ``v``, or ``default`` when it is missing (None, NaN or '')."""
     if v is None or (isinstance(v, float) and v != v) or v == "":
         return default
     return v
@@ -71,19 +78,28 @@ def _val(v, default=None):
 
 with st.sidebar:
     st.header("Settings")
-    assembly = st.selectbox("Genome build", ["auto", "GRCh38", "GRCh37"],
-                            help="Used for genomic coordinates and VCF files. 'auto' reads the VCF header "
-                                 "and checks REF alleles against both builds.")
-    predictors = st.toggle("Pathogenicity predictors", True,
-                           help="AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT and PolyPhen-2 "
-                                "via the Ensembl VEP REST plugins.")
+    assembly = st.selectbox(
+        "Genome build",
+        ["auto", "GRCh38", "GRCh37"],
+        help="Used for genomic coordinates and VCF files. 'auto' reads the VCF header "
+        "and checks REF alleles against both builds.",
+    )
+    predictors = st.toggle(
+        "Pathogenicity predictors",
+        True,
+        help="AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT and PolyPhen-2 via the Ensembl VEP REST plugins.",
+    )
     context = st.toggle("Protein context (UniProt + AlphaFold)", True)
     clinvar_on = st.toggle("ClinVar classification", True)
-    noncoding = st.toggle("Include non-coding variants", False,
-                          help="Also list intronic, UTR, upstream/downstream and intergenic consequences.")
+    noncoding = st.toggle(
+        "Include non-coding variants",
+        False,
+        help="Also list intronic, UTR, upstream/downstream and intergenic consequences.",
+    )
     workers = st.slider("Parallel requests", 1, 8, 4)
     if st.button("Clear cache", help="Cached API answers make repeated analyses instant (30 days)."):
-        Cache().clear()
+        with Cache() as cache:
+            cache.clear()
         st.toast("Cache cleared")
     st.divider()
     st.caption(
@@ -107,8 +123,12 @@ tab_text, tab_files = st.tabs(["✍️  Type mutations", "📁  Upload files"])
 with tab_text:
     c1, c2 = st.columns([3, 1])
     with c2:
-        gene = st.text_input("Default gene (optional)", placeholder="e.g. TP53", value=st.query_params.get("gene", ""),
-                             help="Lets you type bare changes such as 'R175H' or 'c.524G>A'.")
+        gene = st.text_input(
+            "Default gene (optional)",
+            placeholder="e.g. TP53",
+            value=st.query_params.get("gene", ""),
+            help="Lets you type bare changes such as 'R175H' or 'c.524G>A'.",
+        )
         st.button("Load example", on_click=lambda: st.session_state.update(text=EXAMPLE), width="stretch")
         with st.popover("Accepted formats", width="stretch"):
             st.markdown(FORMATS_HELP)
@@ -116,11 +136,17 @@ with tab_text:
         text = st.text_area("Variants — one or more per line", key="text", height=190, placeholder=EXAMPLE)
 
 with tab_files:
-    uploads = st.file_uploader("VCF, VCF.gz, CSV, TSV, XLSX or TXT", accept_multiple_files=True,
-                               type=["vcf", "gz", "bgz", "csv", "tsv", "tab", "txt", "xlsx"])
+    uploads = st.file_uploader(
+        "VCF, VCF.gz, CSV, TSV, XLSX or TXT",
+        accept_multiple_files=True,
+        type=["vcf", "gz", "bgz", "csv", "tsv", "tab", "txt", "xlsx"],
+    )
     f1, f2, f3 = st.columns([2, 1.3, 1])
-    genes_txt = f1.text_input("Only these genes (optional)", placeholder="TP53, BRCA1, BRCA2",
-                              help="Keeps only variants inside these genes — much faster for exomes/genomes.")
+    genes_txt = f1.text_input(
+        "Only these genes (optional)",
+        placeholder="TP53, BRCA1, BRCA2",
+        help="Keeps only variants inside these genes — much faster for exomes/genomes.",
+    )
     samples: list[str] = []
     for up in uploads or []:
         try:
@@ -131,7 +157,7 @@ with tab_files:
             pass
     sample = None
     if samples:
-        choice = f2.selectbox("Sample", ["All carriers"] + samples, index=1 if len(samples) == 1 else 0)
+        choice = f2.selectbox("Sample", ["All carriers", *samples], index=1 if len(samples) == 1 else 0)
         sample = None if choice == "All carriers" else choice
     pass_only = f3.checkbox("FILTER = PASS only")
 
@@ -145,14 +171,21 @@ if run:
     else:
         bar = st.progress(0.0, text="Starting…")
 
-        def cb(stage, done, total):
+        def cb(stage: str, done: int, total: int) -> None:
+            """Show the pipeline's progress in the bar."""
             bar.progress(min(1.0, done / max(total, 1)), text=f"{stage} · {done}/{total}")
 
         opts = PredictOptions(
-            assembly=assembly, default_gene=gene or None,
+            assembly=assembly,
+            default_gene=gene or None,
             genes=[g for g in genes_txt.replace(";", ",").split(",") if g.strip()] or None,
-            sample=sample, pass_only=pass_only, include_noncoding=noncoding, predictors=predictors,
-            protein_context=context, clinvar=clinvar_on, workers=workers,
+            sample=sample,
+            pass_only=pass_only,
+            include_noncoding=noncoding,
+            predictors=predictors,
+            protein_context=context,
+            clinvar=clinvar_on,
+            workers=workers,
         )
         try:
             st.session_state["res"] = predict(text=text or "", files=files, options=opts, progress=cb)
@@ -163,8 +196,10 @@ if run:
 
 # --------------------------------------------------------------------------- helpers for results
 
+
 @st.cache_data(show_spinner=False, max_entries=64, ttl=86400)
 def fetch_text(url: str) -> str | None:
+    """Download a text file (an AlphaFold PDB file; cached for a day), or None if it cannot be fetched."""
     try:
         r = httpx.get(url, timeout=60, follow_redirects=True)
         return r.text if r.status_code == 200 else None
@@ -172,12 +207,20 @@ def fetch_text(url: str) -> str | None:
         return None
 
 
-def _js(value) -> str:
+def _js(value: Any) -> str:
     """JSON for inline <script>: '</' must not appear, or the text could close the script tag."""
     return json.dumps(value).replace("</", "<\\/")
 
 
 def structure_html(pdb: str, pos: int, label: str, height: int) -> str:
+    """Return the HTML of a 3Dmol.js viewer of the structure, coloured by pLDDT, with residue ``pos`` highlighted.
+
+    Args:
+        pdb: Structure in PDB format.
+        pos: Residue number to highlight.
+        label: Text shown at the residue.
+        height: Viewer height in pixels.
+    """
     return f"""
 <div id="mol" style="width:100%;height:{height}px;position:relative;border-radius:8px;overflow:hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/3dmol@2.4.2/build/3Dmol-min.js"></script>
@@ -195,8 +238,18 @@ def structure_html(pdb: str, pos: int, label: str, height: int) -> str:
 </script>"""
 
 
-def lollipop(gdf: pd.DataFrame, length: int | None, domains: list[dict], selected: int | None):
-    """Variants along the protein: x = residue, y = effect score, colour + shape = prediction."""
+def lollipop(
+    gdf: pd.DataFrame, length: int | None, domains: list[dict[str, Any]], selected: int | None
+) -> alt.LayerChart:
+    """Variants along the protein: x = residue, y = effect score, colour + shape = prediction.
+
+    Args:
+        gdf: The gene's rows of the results table.
+        length: Protein length (the x axis); None to fit the variants.
+        domains: Protein domains drawn under the axis: ``name``, ``start``, ``end``, ``mid`` and ``short``
+            (the label shown, '' when the domain is too narrow).
+        selected: Index of the row to label; None for none.
+    """
     d = gdf.copy()
     d["status"] = d["prediction"].map(status_of)
     d["score"] = d["effect_score"].where(d["effect_score"].notna(), 0.5)
@@ -204,50 +257,75 @@ def lollipop(gdf: pd.DataFrame, length: int | None, domains: list[dict], selecte
     d["label"] = d["protein_change"].fillna("")
     d["sel"] = d.index == selected
     names = list(STATUS)
-    color = alt.Color("status:N", title=None,
-                      scale=alt.Scale(domain=names, range=[STATUS[k][0] for k in names]),
-                      legend=alt.Legend(orient="top", symbolSize=90))
+    color = alt.Color(
+        "status:N",
+        title=None,
+        scale=alt.Scale(domain=names, range=[STATUS[k][0] for k in names]),
+        legend=alt.Legend(orient="top", symbolSize=90),
+    )
     shape = alt.Shape("status:N", scale=alt.Scale(domain=names, range=[STATUS[k][1] for k in names]), legend=None)
     xmax = length or int(d["protein_position"].max() * 1.05) + 1
     xs = alt.Scale(domain=[0, xmax], nice=False)
     ys = alt.Scale(domain=[-0.18, 1.15], nice=False)
     x = alt.X("protein_position:Q", title="Residue", scale=xs)
     y = alt.Y("score:Q", title="Effect score", scale=ys, axis=alt.Axis(values=[0, 0.5, 1], grid=True))
-    tooltip = [alt.Tooltip("label:N", title="Change"), alt.Tooltip("prediction:N", title="Prediction"),
-               alt.Tooltip("effect_score:Q", title="Effect score", format=".2f"),
-               alt.Tooltip("alphamissense:Q", title="AlphaMissense", format=".2f"),
-               alt.Tooltip("clinvar:N", title="ClinVar"), alt.Tooltip("input:N", title="Input")]
+    tooltip = [
+        alt.Tooltip("label:N", title="Change"),
+        alt.Tooltip("prediction:N", title="Prediction"),
+        alt.Tooltip("effect_score:Q", title="Effect score", format=".2f"),
+        alt.Tooltip("alphamissense:Q", title="AlphaMissense", format=".2f"),
+        alt.Tooltip("clinvar:N", title="ClinVar"),
+        alt.Tooltip("input:N", title="Input"),
+    ]
     base = alt.Chart(d)
-    stems = base.mark_rule(strokeWidth=2, opacity=0.6).encode(x=x, y=alt.Y("zero:Q", scale=ys), y2="score:Q", color=color)
+    stems = base.mark_rule(strokeWidth=2, opacity=0.6).encode(
+        x=x, y=alt.Y("zero:Q", scale=ys), y2="score:Q", color=color
+    )
     dark = getattr(getattr(st.context, "theme", None), "type", None) == "dark"
     surface, ink = ("#0e1117", "#fafafa") if dark else ("#ffffff", "#262730")
     pts = base.mark_point(filled=True, size=110, stroke=surface, strokeWidth=2, opacity=1).encode(
-        x=x, y=y, color=color, shape=shape, tooltip=tooltip)
-    labels = base.transform_filter(alt.datum.sel).mark_text(dy=-14, fontSize=12, fontWeight="bold", color=ink).encode(
-        x=x, y=y, text="label:N")
+        x=x, y=y, color=color, shape=shape, tooltip=tooltip
+    )
+    labels = (
+        base.transform_filter(alt.datum.sel)
+        .mark_text(dy=-14, fontSize=12, fontWeight="bold", color=ink)
+        .encode(x=x, y=y, text="label:N")
+    )
     layers = [stems, pts, labels]
     if domains:
         dd = pd.DataFrame(domains)
         dd["y0"], dd["y1"], dd["ym"] = -0.15, -0.05, -0.10
-        band = alt.Chart(dd).mark_rect(cornerRadius=4, opacity=0.3, color="#7f7f7a").encode(
-            x=alt.X("start:Q", scale=xs), x2="end:Q", y=alt.Y("y0:Q", scale=ys), y2="y1:Q",
-            tooltip=[alt.Tooltip("name:N", title="Domain"), alt.Tooltip("start:Q", title="From"),
-                     alt.Tooltip("end:Q", title="To")])
-        txt = alt.Chart(dd).mark_text(fontSize=10, color=ink).encode(
-            x=alt.X("mid:Q", scale=xs), y=alt.Y("ym:Q", scale=ys), text="short:N")
-        layers = [band, txt] + layers
+        band = (
+            alt.Chart(dd)
+            .mark_rect(cornerRadius=4, opacity=0.3, color="#7f7f7a")
+            .encode(
+                x=alt.X("start:Q", scale=xs),
+                x2="end:Q",
+                y=alt.Y("y0:Q", scale=ys),
+                y2="y1:Q",
+                tooltip=[
+                    alt.Tooltip("name:N", title="Domain"),
+                    alt.Tooltip("start:Q", title="From"),
+                    alt.Tooltip("end:Q", title="To"),
+                ],
+            )
+        )
+        txt = (
+            alt.Chart(dd)
+            .mark_text(fontSize=10, color=ink)
+            .encode(x=alt.X("mid:Q", scale=xs), y=alt.Y("ym:Q", scale=ys), text="short:N")
+        )
+        layers = [band, txt, *layers]
     return alt.layer(*layers).properties(height=230).configure_view(strokeWidth=0)
 
 
-def link(label, url):
+def link(label: str, url: str) -> str:
+    """Return a Markdown link."""
     return f"[{label}]({url})"
 
 
-# --------------------------------------------------------------------------- results
-
-res = st.session_state.get("res")
-if res is not None:
-    df = res.table
+def _summary(res: PredictionResult) -> None:
+    """Show the run's metrics, warnings, skipped variants and provenance."""
     s = res.stats
     st.divider()
     m = st.columns(6)
@@ -259,34 +337,47 @@ if res is not None:
     m[5].metric("Time", f"{s.get('seconds', 0)} s")
     for w in res.warnings:
         st.warning(w, icon="⚠️")
-    skipped = [f"{s[k]} {lbl}" for k, lbl in [("no_protein_effect", "without coding/splice consequence"),
-                                                 ("file_skipped_not_carried", "not carried by the sample(s)"),
-                                                 ("file_skipped_outside_genes", "outside the selected genes"),
-                                                 ("file_skipped_symbolic", "symbolic/structural alleles")] if s.get(k)]
+    skipped = [
+        f"{s[k]} {lbl}"
+        for k, lbl in [
+            ("no_protein_effect", "without coding/splice consequence"),
+            ("file_skipped_not_carried", "not carried by the sample(s)"),
+            ("file_skipped_outside_genes", "outside the selected genes"),
+            ("file_skipped_symbolic", "symbolic/structural alleles"),
+        ]
+        if s.get(k)
+    ]
     if skipped:
         st.caption("Skipped: " + " · ".join(skipped))
     run = getattr(res, "run", None) or {}
     with st.expander(f"Run information · {run.get('annotation', '')}"):
         st.dataframe(run_info(res), hide_index=True, width="stretch")
 
-    if df.empty:
-        st.info("No protein-level consequences found. Turn on *Include non-coding variants* in the sidebar to "
-                "see everything VEP reports.")
-    else:
-        df = df.copy()
-        df["status"] = df["prediction"].map(status_of)
-        fc1, fc2 = st.columns([2, 1])
-        present = [k for k in STATUS if k in set(df["status"])]
-        show = fc1.segmented_control("Show", present, selection_mode="multi", default=present,
-                                     format_func=lambda k: f"{STATUS[k][2]} {k}")
-        q = fc2.text_input("Search", placeholder="gene, change or input", label_visibility="collapsed")
-        view = df[df["status"].isin(show or present)]
-        if q:
-            ql = q.lower()
-            view = view[view[["gene", "protein_change", "input", "hgvsp"]].astype(str)
-                        .apply(lambda c: c.str.lower().str.contains(ql, regex=False)).any(axis=1)]
 
-        disp = pd.DataFrame({
+def _filtered(df: pd.DataFrame) -> pd.DataFrame:
+    """Show the status filter and the search box; return the rows they keep."""
+    fc1, fc2 = st.columns([2, 1])
+    present = [k for k in STATUS if k in set(df["status"])]
+    show = fc1.segmented_control(
+        "Show", present, selection_mode="multi", default=present, format_func=lambda k: f"{STATUS[k][2]} {k}"
+    )
+    q = fc2.text_input("Search", placeholder="gene, change or input", label_visibility="collapsed")
+    view = df[df["status"].isin(show or present)]
+    if q:
+        ql = q.lower()
+        view = view[
+            view[["gene", "protein_change", "input", "hgvsp"]]
+            .astype(str)
+            .apply(lambda c: c.str.lower().str.contains(ql, regex=False))
+            .any(axis=1)
+        ]
+    return view
+
+
+def _results_table(view: pd.DataFrame) -> Any:
+    """Show the results table (one selectable row); return its selection state."""
+    disp = pd.DataFrame(
+        {
             "Input": view["input"],
             "Gene": view["gene"],
             "Change": view["protein_change"],
@@ -299,198 +390,355 @@ if res is not None:
             "REVEL": view["revel"],
             "CADD": view["cadd_phred"],
             "pLDDT": view["plddt"],
-            "ClinVar": view["clinvar"].fillna("") + view["clinvar_stars"].map(
-                lambda x: " " + "★" * int(x) if _isnum(x) and x > 0 else ""),
+            "ClinVar": view["clinvar"].fillna("")
+            + view["clinvar_stars"].map(lambda x: " " + "★" * int(x) if _isnum(x) and x > 0 else ""),
             "gnomAD AF": view["gnomad_af"],
             "Zygosity": view["zygosity"] if view["zygosity"].notna().any() else view["carriers"],
-        })
-        disp = disp.loc[:, [c for c in disp.columns if disp[c].notna().any() and (disp[c].astype(str) != "").any()]]
-        sel = st.dataframe(
-            disp, hide_index=True, on_select="rerun", selection_mode="single-row", key="grid",
-            column_config={
-                "Effect": st.column_config.ProgressColumn("Effect", min_value=0, max_value=1, format="%.2f",
-                                                          help="Model score for missense variants (1 = loss of function)"),
-                "With frequency": st.column_config.ProgressColumn(
-                    "With frequency", min_value=0, max_value=1, format="%.2f",
-                    help="Model score combined with the gnomAD frequency, for ranking a sample's variants. Not ACMG "
-                         "evidence: frequency already counts in BA1, BS1 and PM2."),
-                "AlphaMissense": st.column_config.ProgressColumn("AlphaMissense", min_value=0, max_value=1, format="%.2f"),
-                "REVEL": st.column_config.ProgressColumn("REVEL", min_value=0, max_value=1, format="%.2f"),
-                "CADD": st.column_config.NumberColumn("CADD", format="%.1f"),
-                "pLDDT": st.column_config.NumberColumn("pLDDT", format="%.0f", help="AlphaFold confidence at the residue"),
-                "gnomAD AF": st.column_config.NumberColumn("gnomAD AF", format="%.2e"),
-            },
-        )
-        st.caption("Select a row to see the protein-level details.")
+        }
+    )
+    disp = disp.loc[:, [c for c in disp.columns if disp[c].notna().any() and (disp[c].astype(str) != "").any()]]
+    return st.dataframe(
+        disp,
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="grid",
+        column_config={
+            "Effect": st.column_config.ProgressColumn(
+                "Effect",
+                min_value=0,
+                max_value=1,
+                format="%.2f",
+                help="Model score for missense variants (1 = loss of function)",
+            ),
+            "With frequency": st.column_config.ProgressColumn(
+                "With frequency",
+                min_value=0,
+                max_value=1,
+                format="%.2f",
+                help="Model score combined with the gnomAD frequency, for ranking a sample's variants. Not ACMG "
+                "evidence: frequency already counts in BA1, BS1 and PM2.",
+            ),
+            "AlphaMissense": st.column_config.ProgressColumn("AlphaMissense", min_value=0, max_value=1, format="%.2f"),
+            "REVEL": st.column_config.ProgressColumn("REVEL", min_value=0, max_value=1, format="%.2f"),
+            "CADD": st.column_config.NumberColumn("CADD", format="%.1f"),
+            "pLDDT": st.column_config.NumberColumn("pLDDT", format="%.0f", help="AlphaFold confidence at the residue"),
+            "gnomAD AF": st.column_config.NumberColumn("gnomAD AF", format="%.2e"),
+        },
+    )
 
-        d1, d2, d3, d4, _ = st.columns([1, 1, 1, 1.3, 2])
-        d1.download_button("CSV", to_bytes(res, "csv"), "missensexplorer.csv", "text/csv", icon="⬇️", on_click="ignore")
-        d2.download_button("Excel", to_bytes(res, "xlsx"), "missensexplorer.xlsx",
-                           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", icon="⬇️", on_click="ignore")
-        d3.download_button("JSON", to_bytes(res, "json"), "missensexplorer.json", "application/json", icon="⬇️", on_click="ignore")
-        if res.sequences:
-            d4.download_button("Protein FASTA", to_fasta(res), "missensexplorer_proteins.fasta", "text/plain",
-                               icon="🧬", on_click="ignore", help="Wild-type and mutant protein sequences")
+
+def _downloads(res: PredictionResult) -> None:
+    """Show the download buttons (CSV, Excel, JSON and, when there are sequences, protein FASTA)."""
+    d1, d2, d3, d4, _ = st.columns([1, 1, 1, 1.3, 2])
+    d1.download_button("CSV", to_bytes(res, "csv"), "missensexplorer.csv", "text/csv", icon="⬇️", on_click="ignore")
+    d2.download_button(
+        "Excel",
+        to_bytes(res, "xlsx"),
+        "missensexplorer.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        icon="⬇️",
+        on_click="ignore",
+    )
+    d3.download_button(
+        "JSON", to_bytes(res, "json"), "missensexplorer.json", "application/json", icon="⬇️", on_click="ignore"
+    )
+    if res.sequences:
+        d4.download_button(
+            "Protein FASTA",
+            to_fasta(res),
+            "missensexplorer_proteins.fasta",
+            "text/plain",
+            icon="🧬",
+            on_click="ignore",
+            help="Wild-type and mutant protein sequences",
+        )
+
+
+def _why_and_acmg(r: pd.Series) -> None:
+    """Show the basis of the prediction and the ACMG evidence."""
+    if _val(r["prediction_basis"]):
+        st.markdown(f"**Why:** {r['prediction_basis']}")
+    acmg_bits = [
+        f"**{k}:** {_val(r[c])}"
+        for k, c in (
+            ("ACMG criteria", "acmg_codes"),
+            ("PP3/BP4", "acmg_pp3_bp4"),
+            ("PS1/PM5", "acmg_ps1_pm5"),
+            ("PM2", "acmg_pm2"),
+            ("Population frequency", "population_frequency"),
+        )
+        if _val(r[c])
+    ]
+    if acmg_bits:
+        how = (
+            "model score, thresholds calibrated by the ClinGen method (this project's calibration)"
+            if "(model " in str(_val(r["acmg_pp3_bp4"], ""))
+            else "ClinGen-calibrated thresholds"
+        )
+        st.markdown(
+            " · ".join(acmg_bits) + f"  \n:gray[{how}; one part of an "
+            "ACMG classification, not a replacement for expert review.]"
+        )
+
+
+def _predictors(r: pd.Series) -> None:
+    """Show the predictor scores and calls, with their scales."""
+    preds = []
+    for name, val, extra, rng in [
+        ("AlphaMissense", r["alphamissense"], r["alphamissense_class"], "0–1 · >0.56 likely pathogenic"),
+        ("REVEL", r["revel"], None, "0–1 · ≥0.644 supports pathogenic"),
+        ("CADD (phred)", r["cadd_phred"], None, "≥25.3 supports pathogenic"),
+        ("EVE", r["eve"], r["eve_class"], "0–1 · evolutionary model"),
+        ("popEVE", r["popeve"], None, "more negative = more deleterious"),
+        ("SIFT", r["sift_score"], r["sift"], "≤0.05 deleterious"),
+        ("PolyPhen-2", r["polyphen_score"], r["polyphen"], "≥0.85 probably damaging"),
+        ("SpliceAI (max Δ)", r["spliceai_max"], r["spliceai_effect"], "≥0.2 possible · ≥0.5 likely"),
+    ]:
+        if _isnum(val) or _val(extra):
+            preds.append(
+                {
+                    "Predictor": name,
+                    "Score": val if _isnum(val) else None,
+                    "Call": str(_val(extra, "")).replace("_", " "),
+                    "Scale": rng,
+                }
+            )
+    if preds:
+        st.dataframe(
+            pd.DataFrame(preds),
+            hide_index=True,
+            column_config={"Score": st.column_config.NumberColumn(format="%.3f")},
+        )
+
+
+def _amino_acid_change(r: pd.Series) -> None:
+    """Show the physico-chemical change, the sequence around the residue and the NMD note."""
+    ra, aa = _val(r["ref_aa"]), _val(r["alt_aa"])
+    if _isnum(r["grantham"]) and ra and aa:
+        st.markdown(
+            f"**{AA_NAMES.get(ra, ra)} → {AA_NAMES.get(aa, aa)}** ({r['aa_class_change']}) · "
+            f"Grantham {int(r['grantham'])} ({r['grantham_class']}) · BLOSUM62 {int(r['blosum62'])} · "
+            f"Δhydropathy {r['hydropathy_change']:+.1f} · Δvolume {r['volume_change']:+.0f} Å³"
+        )
+        if _val(r["physchem_notes"]):
+            st.caption(r["physchem_notes"])
+    if _val(r["protein_window"]):
+        w = html.escape(r["protein_window"])
+        w = w.replace("[", "<span style='background:#d6008f;color:white;border-radius:4px;padding:0 4px'>").replace(
+            "]", "</span>"
+        )
+        st.markdown(
+            f"<div style='font-family:monospace;font-size:1.05rem;letter-spacing:.06em'>{w}</div>",
+            unsafe_allow_html=True,
+        )
+        note = _val(r["mutant_protein"])
+        if note and note != "ok":
+            st.caption(note)
+    if _val(r["nmd"]):
+        st.caption(r["nmd"])
+
+
+def _protein_context(r: pd.Series) -> None:
+    """Show the UniProt and AlphaFold context of the residue."""
+    st.markdown("##### Protein context")
+    facts = []
+    if _val(r["protein_name"]):
+        facts.append(
+            f"**{r['protein_name']}** · residue {int(r['protein_position'])}"
+            + (f" of {int(r['protein_length'])}" if _isnum(r["protein_length"]) else "")
+        )
+    if _val(r["key_site"]):
+        facts.append(f"🎯 **Functional site:** {r['key_site']}")
+    if _val(r["protein_features"]):
+        facts.append(f"**Region:** {r['protein_features']}")
+    if _isnum(r["plddt"]):
+        facts.append(f"**AlphaFold pLDDT:** {r['plddt']:.0f} ({r['plddt_class']})")
+    st.markdown("\n\n".join(facts) or "_No UniProt context for this transcript._")
+    if _val(r["uniprot_variants_here"]):
+        with st.expander("Known UniProt variants at this residue"):
+            for item in str(r["uniprot_variants_here"]).split(" | "):
+                st.markdown(f"- {item}")
+    if _val(r["uniprot_mutagenesis_here"]):
+        with st.expander("Experimental mutagenesis at this residue"):
+            for item in str(r["uniprot_mutagenesis_here"]).split(" | "):
+                st.markdown(f"- {item}")
+    if _val(r["protein_function"]):
+        with st.expander("Protein function (UniProt)"):
+            st.write(r["protein_function"])
+
+
+def _clinical(r: pd.Series) -> None:
+    """Show ClinVar, gnomAD and the sample's genotype."""
+    st.markdown("##### Clinical & population")
+    cl = []
+    if _val(r["clinvar"]):
+        stars = "★" * int(r["clinvar_stars"]) if _isnum(r["clinvar_stars"]) else ""
+        txt = f"**ClinVar:** {r['clinvar']} {stars}"
+        if _val(r["clinvar_review"]):
+            txt += f" — _{r['clinvar_review']}_"
+        cl.append(txt)
+    if _val(r["clinvar_oncogenicity"]):
+        cl.append(f"**Somatic / oncogenicity:** {r['clinvar_oncogenicity']}")
+    if _val(r["clinvar_conditions"]):
+        cl.append(f"**Conditions:** {r['clinvar_conditions']}")
+    if _isnum(r["gnomad_af"]):
+        cl.append(
+            f"**gnomAD allele frequency:** {r['gnomad_af']:.2e}"
+            + (f" (highest population {r['gnomad_popmax_af']:.2e})" if _isnum(r["gnomad_popmax_af"]) else "")
+        )
+    else:
+        cl.append("**gnomAD:** not observed")
+    if _val(r["zygosity"]):
+        cl.append(f"**Zygosity:** {r['zygosity']} ({r['genotype']}, {r['sample']})")
+    elif _val(r["carriers"]):
+        cl.append(f"**Carriers:** {r['carriers']}")
+    st.markdown("\n\n".join(cl))
+
+
+def _links(res: PredictionResult, r: pd.Series) -> None:
+    """Show links to the variant in UniProt, AlphaFold, ClinVar, dbSNP, gnomAD, Ensembl and PubMed."""
+    links = []
+    if _val(r["uniprot"]):
+        links += [
+            link("UniProt", f"https://www.uniprot.org/uniprotkb/{r['uniprot']}/entry"),
+            link("AlphaFold", f"https://alphafold.ebi.ac.uk/entry/{r['uniprot']}"),
+        ]
+    if _val(r["clinvar_ids"]):
+        links.append(
+            link(
+                "ClinVar",
+                f"https://www.ncbi.nlm.nih.gov/clinvar/variation/{int(str(r['clinvar_ids'])[3:])}/",
+            )
+        )
+    if _val(r["rsid"]):
+        rs = str(r["rsid"]).split(",")[0].strip()
+        links.append(link("dbSNP", f"https://www.ncbi.nlm.nih.gov/snp/{rs}"))
+    ref, altn = _val(r["ref"]), _val(r["alt"])
+    if ref and altn and "-" not in (ref + altn) and res.assembly == "GRCh38":
+        links.append(
+            link(
+                "gnomAD",
+                f"https://gnomad.broadinstitute.org/variant/{r['chrom']}-{int(r['pos'])}-{ref}-{altn}?dataset=gnomad_r4",
+            )
+        )
+    if _val(r["transcript"]):
+        links.append(link("Ensembl", f"https://www.ensembl.org/Homo_sapiens/Transcript/Summary?t={r['transcript']}"))
+    if _val(r["pubmed_ids"]):
+        ids = str(r["pubmed_ids"]).replace(" ", "").split(",")
+        links.append(
+            link(
+                f"PubMed ({int(r['pubmed_count'])})",
+                "https://pubmed.ncbi.nlm.nih.gov/?term=" + quote(" OR ".join(ids[:25])),
+            )
+        )
+    if links:
+        st.markdown(" · ".join(links))
+
+
+def _structure(res: PredictionResult, r: pd.Series) -> None:
+    """Show the AlphaFold structure with the mutated residue highlighted (downloads the PDB file)."""
+    af = res.alphafold.get(_val(r["uniprot"], "")) if _val(r["uniprot"]) else None
+    pos = int(r["protein_position"]) if _isnum(r["protein_position"]) else None
+    if af and af.get("available") and pos and _isnum(r["plddt"]):
+        with st.spinner("Loading AlphaFold structure…"):
+            pdb = fetch_text(af["pdb_url"])
+        if pdb:
+            st.iframe(structure_html(pdb, pos, str(_val(r["protein_change"], pos)), 430), height=440)
+            st.caption(
+                f"AlphaFold model {af.get('entry_id')} (wild type), coloured by confidence: "
+                "🟦 very high · 🩵 confident · 🟨 low · 🟧 very low. Magenta = mutated residue."
+            )
+    else:
+        st.info("No AlphaFold structure mapped to this residue.")
+
+
+def _domains(r: pd.Series, entry: dict[str, Any], length: int | None) -> list[dict[str, Any]]:
+    """Return the UniProt domains to draw under the lollipop chart (none if the protein context was skipped)."""
+    doms = []
+    if not _val(r["notes"]) or "skipped" not in str(r["notes"]):
+        for f in entry.get("features", []):
+            if f["type"] in ("Domain", "Zinc finger", "DNA binding", "Transmembrane"):
+                name = f["description"] or f["type"]
+                doms.append(
+                    {
+                        "name": name,
+                        "start": f["start"],
+                        "end": f["end"],
+                        "mid": (f["start"] + f["end"]) / 2,
+                        "short": name if (f["end"] - f["start"]) > (length or 1000) * 0.12 else "",
+                    }
+                )
+    return doms
+
+
+def _gene_chart(res: PredictionResult, df: pd.DataFrame, r: pd.Series, idx: int) -> None:
+    """Show the lollipop chart of the variants in the selected row's gene."""
+    gene_rows = df[(df["gene"] == r["gene"]) & df["protein_position"].notna()]
+    if len(gene_rows):
+        entry = res.uniprot.get(_val(r["uniprot"], "")) or {}
+        length = int(r["protein_length"]) if _isnum(r["protein_length"]) else entry.get("length")
+        doms = _domains(r, entry, length)
+        st.markdown(f"##### Variants along {r['gene']}")
+        st.altair_chart(lollipop(gene_rows, length, doms, idx), width="stretch")
+
+
+def _variant(res: PredictionResult, df: pd.DataFrame, idx: int) -> None:
+    """Show the details of one row: evidence and context on the left, structure and gene chart on the right."""
+    r = cast("pd.Series[Any]", df.loc[idx])  # one row: the table index is unique
+    st.divider()
+    stt = status_of(r["prediction"])
+    title = f"{_val(r['gene'], '')} {_val(r['hgvsp'], '') or ''}"
+    st.subheader(f"{title}  ({_val(r['protein_change'], '—')})")
+    st.markdown(
+        f"{STATUS[stt][2]} **{r['prediction']}** · {str(_val(r['consequence'], '')).replace('_', ' ')} · `{r['input']}`"
+    )
+    left, right = st.columns([1.15, 1])
+
+    with left:
+        _why_and_acmg(r)
+        _predictors(r)
+        _amino_acid_change(r)
+        _protein_context(r)
+        _clinical(r)
+        _links(res, r)
+
+    with right:
+        _structure(res, r)
+        _gene_chart(res, df, r, idx)
+
+
+def _show_results(res: PredictionResult) -> None:
+    """Show the result of the last run: metrics, table, downloads, selected variant and inputs not analysed."""
+    df = res.table
+    _summary(res)
+
+    if df.empty:
+        st.info(
+            "No protein-level consequences found. Turn on *Include non-coding variants* in the sidebar to "
+            "see everything VEP reports."
+        )
+    else:
+        df = df.copy()
+        df["status"] = df["prediction"].map(status_of)
+        view = _filtered(df)
+        sel = _results_table(view)
+        st.caption("Select a row to see the protein-level details.")
+        _downloads(res)
 
         rows = sel.selection.rows if sel and sel.selection else []
         idx = view.index[rows[0]] if rows and rows[0] < len(view) else (view.index[0] if len(view) else None)
 
         if idx is not None:
-            r = df.loc[idx]
-            st.divider()
-            stt = status_of(r["prediction"])
-            title = f"{_val(r['gene'], '')} {_val(r['hgvsp'], '') or ''}"
-            st.subheader(f"{title}  ({_val(r['protein_change'], '—')})")
-            st.markdown(f"{STATUS[stt][2]} **{r['prediction']}** · "
-                        f"{str(_val(r['consequence'], '')).replace('_', ' ')} · `{r['input']}`")
-            left, right = st.columns([1.15, 1])
-
-            with left:
-                if _val(r["prediction_basis"]):
-                    st.markdown(f"**Why:** {r['prediction_basis']}")
-                acmg_bits = [f"**{k}:** {_val(r[c])}" for k, c in (("ACMG criteria", "acmg_codes"),
-                                                                 ("PP3/BP4", "acmg_pp3_bp4"),
-                                                                 ("PS1/PM5", "acmg_ps1_pm5"), ("PM2", "acmg_pm2"),
-                                                                 ("Population frequency", "population_frequency"))
-                             if _val(r[c])]
-                if acmg_bits:
-                    how = ("model score, thresholds calibrated by the ClinGen method (this project's calibration)"
-                           if "(model " in str(_val(r["acmg_pp3_bp4"], "")) else "ClinGen-calibrated thresholds")
-                    st.markdown(" · ".join(acmg_bits) + f"  \n:gray[{how}; one part of an "
-                                "ACMG classification, not a replacement for expert review.]")
-                preds = []
-                for name, val, extra, rng in [
-                    ("AlphaMissense", r["alphamissense"], r["alphamissense_class"], "0–1 · >0.56 likely pathogenic"),
-                    ("REVEL", r["revel"], None, "0–1 · ≥0.644 supports pathogenic"),
-                    ("CADD (phred)", r["cadd_phred"], None, "≥25.3 supports pathogenic"),
-                    ("EVE", r["eve"], r["eve_class"], "0–1 · evolutionary model"),
-                    ("popEVE", r["popeve"], None, "more negative = more deleterious"),
-                    ("SIFT", r["sift_score"], r["sift"], "≤0.05 deleterious"),
-                    ("PolyPhen-2", r["polyphen_score"], r["polyphen"], "≥0.85 probably damaging"),
-                    ("SpliceAI (max Δ)", r["spliceai_max"], r["spliceai_effect"], "≥0.2 possible · ≥0.5 likely"),
-                ]:
-                    if _isnum(val) or _val(extra):
-                        preds.append({"Predictor": name, "Score": val if _isnum(val) else None,
-                                      "Call": str(_val(extra, "")).replace("_", " "), "Scale": rng})
-                if preds:
-                    st.dataframe(pd.DataFrame(preds), hide_index=True,
-                                 column_config={"Score": st.column_config.NumberColumn(format="%.3f")})
-
-                ra, aa = _val(r["ref_aa"]), _val(r["alt_aa"])
-                if _isnum(r["grantham"]) and ra and aa:
-                    st.markdown(
-                        f"**{AA_NAMES.get(ra, ra)} → {AA_NAMES.get(aa, aa)}** ({r['aa_class_change']}) · "
-                        f"Grantham {int(r['grantham'])} ({r['grantham_class']}) · BLOSUM62 {int(r['blosum62'])} · "
-                        f"Δhydropathy {r['hydropathy_change']:+.1f} · Δvolume {r['volume_change']:+.0f} Å³")
-                    if _val(r["physchem_notes"]):
-                        st.caption(r["physchem_notes"])
-                if _val(r["protein_window"]):
-                    w = html.escape(r["protein_window"])
-                    w = w.replace("[", "<span style='background:#d6008f;color:white;border-radius:4px;padding:0 4px'>").replace("]", "</span>")
-                    st.markdown(f"<div style='font-family:monospace;font-size:1.05rem;letter-spacing:.06em'>{w}</div>",
-                                unsafe_allow_html=True)
-                    note = _val(r["mutant_protein"])
-                    if note and note != "ok":
-                        st.caption(note)
-                if _val(r["nmd"]):
-                    st.caption(r["nmd"])
-
-                st.markdown("##### Protein context")
-                facts = []
-                if _val(r["protein_name"]):
-                    facts.append(f"**{r['protein_name']}** · residue {int(r['protein_position'])}"
-                                 + (f" of {int(r['protein_length'])}" if _isnum(r["protein_length"]) else ""))
-                if _val(r["key_site"]):
-                    facts.append(f"🎯 **Functional site:** {r['key_site']}")
-                if _val(r["protein_features"]):
-                    facts.append(f"**Region:** {r['protein_features']}")
-                if _isnum(r["plddt"]):
-                    facts.append(f"**AlphaFold pLDDT:** {r['plddt']:.0f} ({r['plddt_class']})")
-                st.markdown("\n\n".join(facts) or "_No UniProt context for this transcript._")
-                if _val(r["uniprot_variants_here"]):
-                    with st.expander("Known UniProt variants at this residue"):
-                        for item in str(r["uniprot_variants_here"]).split(" | "):
-                            st.markdown(f"- {item}")
-                if _val(r["uniprot_mutagenesis_here"]):
-                    with st.expander("Experimental mutagenesis at this residue"):
-                        for item in str(r["uniprot_mutagenesis_here"]).split(" | "):
-                            st.markdown(f"- {item}")
-                if _val(r["protein_function"]):
-                    with st.expander("Protein function (UniProt)"):
-                        st.write(r["protein_function"])
-
-                st.markdown("##### Clinical & population")
-                cl = []
-                if _val(r["clinvar"]):
-                    stars = "★" * int(r["clinvar_stars"]) if _isnum(r["clinvar_stars"]) else ""
-                    txt = f"**ClinVar:** {r['clinvar']} {stars}"
-                    if _val(r["clinvar_review"]):
-                        txt += f" — _{r['clinvar_review']}_"
-                    cl.append(txt)
-                if _val(r["clinvar_oncogenicity"]):
-                    cl.append(f"**Somatic / oncogenicity:** {r['clinvar_oncogenicity']}")
-                if _val(r["clinvar_conditions"]):
-                    cl.append(f"**Conditions:** {r['clinvar_conditions']}")
-                if _isnum(r["gnomad_af"]):
-                    cl.append(f"**gnomAD allele frequency:** {r['gnomad_af']:.2e}"
-                              + (f" (highest population {r['gnomad_popmax_af']:.2e})" if _isnum(r["gnomad_popmax_af"]) else ""))
-                else:
-                    cl.append("**gnomAD:** not observed")
-                if _val(r["zygosity"]):
-                    cl.append(f"**Zygosity:** {r['zygosity']} ({r['genotype']}, {r['sample']})")
-                elif _val(r["carriers"]):
-                    cl.append(f"**Carriers:** {r['carriers']}")
-                st.markdown("\n\n".join(cl))
-
-                links = []
-                if _val(r["uniprot"]):
-                    links += [link("UniProt", f"https://www.uniprot.org/uniprotkb/{r['uniprot']}/entry"),
-                              link("AlphaFold", f"https://alphafold.ebi.ac.uk/entry/{r['uniprot']}")]
-                if _val(r["clinvar_ids"]):
-                    links.append(link("ClinVar", f"https://www.ncbi.nlm.nih.gov/clinvar/variation/{int(str(r['clinvar_ids'])[3:])}/"))
-                if _val(r["rsid"]):
-                    rs = str(r["rsid"]).split(",")[0].strip()
-                    links.append(link("dbSNP", f"https://www.ncbi.nlm.nih.gov/snp/{rs}"))
-                ref, altn = _val(r["ref"]), _val(r["alt"])
-                if ref and altn and "-" not in (ref + altn) and res.assembly == "GRCh38":
-                    links.append(link("gnomAD", f"https://gnomad.broadinstitute.org/variant/{r['chrom']}-{int(r['pos'])}-{ref}-{altn}?dataset=gnomad_r4"))
-                if _val(r["transcript"]):
-                    links.append(link("Ensembl", f"https://www.ensembl.org/Homo_sapiens/Transcript/Summary?t={r['transcript']}"))
-                if _val(r["pubmed_ids"]):
-                    ids = str(r["pubmed_ids"]).replace(" ", "").split(",")
-                    links.append(link(f"PubMed ({int(r['pubmed_count'])})",
-                                      "https://pubmed.ncbi.nlm.nih.gov/?term=" + quote(" OR ".join(ids[:25]))))
-                if links:
-                    st.markdown(" · ".join(links))
-
-            with right:
-                af = res.alphafold.get(_val(r["uniprot"], "")) if _val(r["uniprot"]) else None
-                pos = int(r["protein_position"]) if _isnum(r["protein_position"]) else None
-                if af and af.get("available") and pos and _isnum(r["plddt"]):
-                    with st.spinner("Loading AlphaFold structure…"):
-                        pdb = fetch_text(af["pdb_url"])
-                    if pdb:
-                        st.iframe(structure_html(pdb, pos, str(_val(r["protein_change"], pos)), 430), height=440)
-                        st.caption(f"AlphaFold model {af.get('entry_id')} (wild type), coloured by confidence: "
-                                   "🟦 very high · 🩵 confident · 🟨 low · 🟧 very low. Magenta = mutated residue.")
-                else:
-                    st.info("No AlphaFold structure mapped to this residue.")
-
-                gene_rows = df[(df["gene"] == r["gene"]) & df["protein_position"].notna()]
-                if len(gene_rows):
-                    entry = res.uniprot.get(_val(r["uniprot"], "")) or {}
-                    length = int(r["protein_length"]) if _isnum(r["protein_length"]) else entry.get("length")
-                    doms = []
-                    if not _val(r["notes"]) or "skipped" not in str(r["notes"]):
-                        for f in entry.get("features", []):
-                            if f["type"] in ("Domain", "Zinc finger", "DNA binding", "Transmembrane"):
-                                name = f["description"] or f["type"]
-                                doms.append({"name": name, "start": f["start"], "end": f["end"],
-                                             "mid": (f["start"] + f["end"]) / 2,
-                                             "short": name if (f["end"] - f["start"]) > (length or 1000) * 0.12 else ""})
-                    st.markdown(f"##### Variants along {r['gene']}")
-                    st.altair_chart(lollipop(gene_rows, length, doms, idx), width="stretch")
+            _variant(res, df, idx)
 
     if len(res.errors):
         with st.expander(f"⚠️ {len(res.errors)} input(s) could not be analysed"):
             st.dataframe(res.errors, hide_index=True)
+
+
+# --------------------------------------------------------------------------- results
+
+res = st.session_state.get("res")
+if res is not None:
+    _show_results(res)

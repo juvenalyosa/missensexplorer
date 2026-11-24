@@ -4,22 +4,70 @@ from __future__ import annotations
 
 import html
 import json
+from collections.abc import Iterable
 from pathlib import Path
+from typing import TYPE_CHECKING, TypedDict
 
-from PySide6.QtCore import (QEasingCurve, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, Qt, QUrl,
-                            Property, Signal)
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
-from PySide6.QtWidgets import (QAbstractButton, QFileDialog, QFrame, QHBoxLayout, QLabel, QLayout, QSizePolicy,
-                               QToolButton, QToolTip, QVBoxLayout, QWidget)
+from PySide6.QtCore import (
+    Property,
+    QEasingCurve,
+    QEvent,
+    QPoint,
+    QPointF,
+    QPropertyAnimation,
+    QRect,
+    QRectF,
+    QSize,
+    Qt,
+    QUrl,
+    Signal,
+)
+from PySide6.QtGui import (
+    QColor,
+    QDragEnterEvent,
+    QDragLeaveEvent,
+    QDropEvent,
+    QFont,
+    QFontMetrics,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+)
+from PySide6.QtWidgets import (
+    QAbstractButton,
+    QFileDialog,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLayout,
+    QLayoutItem,
+    QSizePolicy,
+    QToolButton,
+    QToolTip,
+    QVBoxLayout,
+    QWidget,
+)
 
 from . import theme as th
 from .i18n import t, tr_call, tr_prediction
 from .models import isnum, paint_status_mark
 
+if TYPE_CHECKING:
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+
 INPUT_SUFFIXES = (".vcf", ".vcf.gz", ".gz", ".bgz", ".csv", ".tsv", ".tab", ".txt", ".xlsx", ".xls")
 
 
 def label(text: str = "", obj: str | None = None, wrap: bool = False, selectable: bool = False) -> QLabel:
+    """Return a QLabel styled by object name ``obj`` (see ``theme.stylesheet``).
+
+    Args:
+        text: Plain or rich text.
+        obj: Object name, e.g. ``"Muted"`` or ``"H3"``; None for the default style.
+        wrap: Wrap long text onto several lines.
+        selectable: Let the user select (and copy) the text with the mouse.
+    """
     w = QLabel(text)
     if obj:
         w.setObjectName(obj)
@@ -30,7 +78,14 @@ def label(text: str = "", obj: str | None = None, wrap: bool = False, selectable
 
 
 class Card(QFrame):
-    def __init__(self, parent=None, margins=(18, 16, 18, 16), spacing=10):
+    """White rounded panel; add its content to the vertical layout ``lay``."""
+
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        margins: tuple[int, int, int, int] = (18, 16, 18, 16),
+        spacing: int = 10,
+    ) -> None:
         super().__init__(parent)
         self.setObjectName("Card")
         self.lay = QVBoxLayout(self)
@@ -39,7 +94,9 @@ class Card(QFrame):
 
 
 class Kpi(QFrame):
-    def __init__(self, caption: str, status: str | None = None):
+    """Key figure tile: a large number over a caption, with the mark of ``status`` in the corner if given."""
+
+    def __init__(self, caption: str, status: str | None = None) -> None:
         super().__init__()
         self.setObjectName("Kpi")
         self.status = status
@@ -52,10 +109,12 @@ class Kpi(QFrame):
         lay.addWidget(self.caption)
         self.setMinimumWidth(150)
 
-    def set(self, v) -> None:
+    def set(self, v: object) -> None:
+        """Show ``v`` (integers with a space as thousands separator)."""
         self.value.setText(f"{v:,}".replace(",", " ") if isinstance(v, int) else str(v))
 
-    def paintEvent(self, e):
+    def paintEvent(self, e: QPaintEvent) -> None:
+        """Paint the frame, then the status mark in the top-right corner."""
         super().paintEvent(e)
         if self.status:
             p = QPainter(self)
@@ -67,7 +126,7 @@ class Kpi(QFrame):
 class Toggle(QAbstractButton):
     """iOS-like switch with a label, painted to match the sidebar."""
 
-    def __init__(self, text: str, checked: bool = True, tooltip: str | None = None, dark: bool = True):
+    def __init__(self, text: str, checked: bool = True, tooltip: str | None = None, dark: bool = True) -> None:
         super().__init__()
         self.setCheckable(True)
         self.setChecked(checked)
@@ -83,34 +142,42 @@ class Toggle(QAbstractButton):
         self.toggled.connect(self._animate)
         self.setFont(th.font(12.5))
 
-    def _animate(self, on):
+    def _animate(self, on: bool) -> None:
+        """Slide the knob to the new state."""
         self._anim.stop()
         self._anim.setStartValue(self._pos)
         self._anim.setEndValue(1.0 if on else 0.0)
         self._anim.start()
 
-    def get_knob(self):
+    def get_knob(self) -> float:
+        """Return the knob position: 0.0 (off) to 1.0 (on)."""
         return self._pos
 
-    def set_knob(self, v):
+    def set_knob(self, v: float) -> None:
+        """Move the knob to ``v`` (0.0 off to 1.0 on) and repaint; animated through the ``knob`` property."""
         self._pos = v
         self.update()
 
     knob = Property(float, get_knob, set_knob)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
+        """Return the size of the switch plus its label."""
         fm = QFontMetrics(self.font())
         return QSize(44 + fm.horizontalAdvance(self.text()) + 4, 26)
 
-    def paintEvent(self, e):
+    def paintEvent(self, e: QPaintEvent) -> None:
+        """Paint the track (colour blended between off and on), the knob and the label."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         h = 18
         track = QRectF(1, (self.height() - h) / 2, 32, h)
         on = QColor(th.MINERAL_300 if self.dark else th.PETROL_700)
         off = QColor(th.PETROL_700 if self.dark else th.BORDER_STRONG)
-        c = QColor(off.red() + (on.red() - off.red()) * self._pos, off.green() + (on.green() - off.green()) * self._pos,
-                   off.blue() + (on.blue() - off.blue()) * self._pos)
+        c = QColor(  # int() truncates, as Qt's own conversion of the float did
+            int(off.red() + (on.red() - off.red()) * self._pos),
+            int(off.green() + (on.green() - off.green()) * self._pos),
+            int(off.blue() + (on.blue() - off.blue()) * self._pos),
+        )
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(c)
         p.drawRoundedRect(track, h / 2, h / 2)
@@ -120,15 +187,20 @@ class Toggle(QAbstractButton):
         p.drawEllipse(QPointF(cx, track.center().y()), r, r)
         p.setPen(QColor(th.MINERAL_100 if self.dark else th.INK))
         p.setFont(self.font())
-        p.drawText(QRectF(44, 0, self.width() - 44, self.height()),
-                   Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self.text())
+        p.drawText(
+            QRectF(44, 0, self.width() - 44, self.height()),
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+            self.text(),
+        )
         p.end()
 
 
 class FileChip(QFrame):
+    """One input file in the sidebar: icon, name, size and a remove button (emits ``removed(path)``)."""
+
     removed = Signal(str)
 
-    def __init__(self, path: str):
+    def __init__(self, path: str) -> None:
         super().__init__()
         self.setObjectName("FileChip")
         self.path = path
@@ -154,7 +226,8 @@ class FileChip(QFrame):
         lay.addWidget(x)
 
 
-def _human(n: int) -> str:
+def _human(n: float) -> str:
+    """Return a file size in bytes as text (``512 B``, ``1.5 MB``)."""
     for unit in ("B", "KB", "MB", "GB"):
         if n < 1024 or unit == "GB":
             return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
@@ -163,9 +236,15 @@ def _human(n: int) -> str:
 
 
 class DropZone(QFrame):
+    """Area to drop variant files on, or to click for a file dialog; emits ``files_dropped(list of paths)``.
+
+    Attributes:
+        start_dir: Folder the file dialogs open in.
+    """
+
     files_dropped = Signal(list)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setObjectName("DropZone")
         self.setAcceptDrops(True)
@@ -180,31 +259,40 @@ class DropZone(QFrame):
         lay.addWidget(self.text, 1)
         self.start_dir = str(Path.home())
 
-    def _set_hover(self, on: bool):
+    def _set_hover(self, on: bool) -> None:
+        """Highlight the zone while files are dragged over it (re-polish so the style sheet applies)."""
         self.setProperty("hover", "true" if on else "false")
         self.style().unpolish(self)
         self.style().polish(self)
 
-    def mouseReleaseEvent(self, e):
+    def mouseReleaseEvent(self, e: QMouseEvent) -> None:
+        """Open the file dialog on click."""
         self.browse()
 
-    def browse(self):
+    def browse(self) -> None:
+        """Ask for variant files with a file dialog and emit ``files_dropped`` with the chosen ones."""
         files, _ = QFileDialog.getOpenFileNames(
-            self, t("m_open"), self.start_dir,
-            "Variant files (*.vcf *.vcf.gz *.gz *.bgz *.csv *.tsv *.tab *.txt *.xlsx);;All files (*)")
+            self,
+            t("m_open"),
+            self.start_dir,
+            "Variant files (*.vcf *.vcf.gz *.gz *.bgz *.csv *.tsv *.tab *.txt *.xlsx);;All files (*)",
+        )
         if files:
             self.start_dir = str(Path(files[0]).parent)
             self.files_dropped.emit(files)
 
-    def dragEnterEvent(self, e):
+    def dragEnterEvent(self, e: QDragEnterEvent) -> None:
+        """Accept drags that carry files or links."""
         if e.mimeData().hasUrls():
             e.acceptProposedAction()
             self._set_hover(True)
 
-    def dragLeaveEvent(self, e):
+    def dragLeaveEvent(self, e: QDragLeaveEvent) -> None:
+        """Remove the drag highlight."""
         self._set_hover(False)
 
-    def dropEvent(self, e):
+    def dropEvent(self, e: QDropEvent) -> None:
+        """Emit ``files_dropped`` with the dropped local files."""
         self._set_hover(False)
         files = [u.toLocalFile() for u in e.mimeData().urls() if u.isLocalFile()]
         if files:
@@ -215,44 +303,54 @@ class DropZone(QFrame):
 class FlowLayout(QLayout):
     """Wraps child widgets onto new lines (for chips)."""
 
-    def __init__(self, parent=None, spacing=8):
+    def __init__(self, parent: QWidget | None = None, spacing: int = 8) -> None:
         super().__init__(parent)
-        self.items = []
+        self.items: list[QLayoutItem] = []
         self._sp = spacing
         self.setContentsMargins(0, 0, 0, 0)
 
-    def addItem(self, item):
+    def addItem(self, item: QLayoutItem) -> None:
+        """Append ``item`` (Qt calls this from ``addWidget``)."""
         self.items.append(item)
 
-    def count(self):
+    def count(self) -> int:
+        """Return the number of items."""
         return len(self.items)
 
-    def itemAt(self, i):
+    def itemAt(self, i: int) -> QLayoutItem | None:
+        """Return item ``i``, or None past the end."""
         return self.items[i] if 0 <= i < len(self.items) else None
 
-    def takeAt(self, i):
+    def takeAt(self, i: int) -> QLayoutItem | None:
+        """Remove and return item ``i``, or None past the end."""
         return self.items.pop(i) if 0 <= i < len(self.items) else None
 
-    def hasHeightForWidth(self):
+    def hasHeightForWidth(self) -> bool:
+        """Return True: the height depends on how many lines the items wrap onto."""
         return True
 
-    def heightForWidth(self, w):
+    def heightForWidth(self, w: int) -> int:
+        """Return the height needed to lay the items out in width ``w``."""
         return self._layout(QRect(0, 0, w, 0), True)
 
-    def setGeometry(self, rect):
+    def setGeometry(self, rect: QRect) -> None:
+        """Lay the items out in ``rect``."""
         super().setGeometry(rect)
         self._layout(rect, False)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
+        """Return the minimum size (the layout grows in height as needed)."""
         return self.minimumSize()
 
-    def minimumSize(self):
+    def minimumSize(self) -> QSize:
+        """Return the size of the largest item."""
         s = QSize()
         for it in self.items:
             s = s.expandedTo(it.minimumSize())
         return s
 
-    def _layout(self, rect, test):
+    def _layout(self, rect: QRect, test: bool) -> int:
+        """Place the items in rows within ``rect`` (only measure if ``test``); return the height used."""
         x, y, line = rect.x(), rect.y(), 0
         for it in self.items:
             hint = it.sizeHint()
@@ -269,7 +367,7 @@ class FlowLayout(QLayout):
 # --------------------------------------------------------------------------- predictor bars
 
 # name, column, call column, (min, max), thresholds [(value, label)], higher_is_damaging
-PREDICTORS = [
+PREDICTORS: list[tuple[str, str, str | None, tuple[float, float], list[tuple[float, str]], bool]] = [
     ("AlphaMissense", "alphamissense", "alphamissense_class", (0, 1), [(0.34, ""), (0.564, "")], True),
     ("REVEL", "revel", None, (0, 1), [(0.290, ""), (0.644, "")], True),
     ("CADD", "cadd_phred", None, (0, 50), [(22.7, ""), (25.3, "")], True),
@@ -280,7 +378,7 @@ PREDICTORS = [
 ]
 
 
-def predictor_call(name: str, v, call) -> str | None:
+def predictor_call(name: str, v: object, call: object) -> str | None:
     """'Damaging' | 'Benign / silent' | 'Uncertain' for the bar colour (same rules as predict._votes)."""
     c = (call or "").lower() if isinstance(call, str) else ""
     if name == "AlphaMissense":
@@ -301,7 +399,26 @@ def predictor_call(name: str, v, call) -> str | None:
 
 
 class PredictorRow(QWidget):
-    def __init__(self, name, v, call, rng, thresholds, higher_bad):
+    """One predictor in the detail pane: name, score bar with its thresholds, value and call.
+
+    Args:
+        name: Predictor name, as in :data:`PREDICTORS`.
+        v: Score, or None when only the call is known.
+        call: The predictor's own call (e.g. ``likely_pathogenic``), or None.
+        rng: (min, max) of the score scale.
+        thresholds: (score, label) of the tick marks drawn on the bar.
+        higher_bad: Whether higher scores mean more damaging.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        v: float | None,
+        call: str | None,
+        rng: tuple[float, float],
+        thresholds: list[tuple[float, str]],
+        higher_bad: bool,
+    ) -> None:
         super().__init__()
         self.name, self.v, self.call, self.rng = name, v, call, rng
         self.thresholds = thresholds
@@ -314,10 +431,12 @@ class PredictorRow(QWidget):
             tip += f" · {tr_call(call)}"
         self.setToolTip(tip)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
+        """Return the preferred size of one row."""
         return QSize(380, 30)
 
-    def paintEvent(self, e):
+    def paintEvent(self, e: QPaintEvent) -> None:
+        """Paint the name, the bar coloured by the call, the thresholds, the value and the call."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         h = self.height()
@@ -329,7 +448,9 @@ class PredictorRow(QWidget):
         if isinstance(self.call, str) and self.call:
             call_txt = tr_call(self.call)
         elif self.status:
-            call_txt = t({"Damaging": "call_damaging", "Benign / silent": "call_benign"}.get(self.status, "call_neutral"))
+            call_txt = t(
+                {"Damaging": "call_damaging", "Benign / silent": "call_benign"}.get(self.status, "call_neutral")
+            )
         p.setFont(th.font(11.5))
         call_w = 168
         bar = QRectF(name_w, h / 2 - 3, max(40, self.width() - name_w - val_w - call_w - 16), 6)
@@ -349,7 +470,9 @@ class PredictorRow(QWidget):
         p.setPen(QColor(th.INK))
         p.setFont(th.font(12.5, mono=False))
         vt = (f"{self.v:.1f}" if self.name == "CADD" else f"{self.v:.2f}") if isnum(self.v) else "—"
-        p.drawText(QRectF(bar.right() + 8, 0, val_w, h), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight, vt)
+        p.drawText(
+            QRectF(bar.right() + 8, 0, val_w, h), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight, vt
+        )
         if call_txt:
             x0 = bar.right() + 8 + val_w + 8
             if self.status:
@@ -357,8 +480,11 @@ class PredictorRow(QWidget):
             p.setPen(QColor(th.INK_2))
             p.setFont(th.font(11.5))
             tr = QRectF(x0 + 16, 0, self.width() - x0 - 16, h)
-            p.drawText(tr, Qt.AlignmentFlag.AlignVCenter,
-                       QFontMetrics(p.font()).elidedText(call_txt, Qt.TextElideMode.ElideRight, int(tr.width())))
+            p.drawText(
+                tr,
+                Qt.AlignmentFlag.AlignVCenter,
+                QFontMetrics(p.font()).elidedText(call_txt, Qt.TextElideMode.ElideRight, int(tr.width())),
+            )
         p.end()
 
 
@@ -367,7 +493,7 @@ class ContributionChart(QWidget):
 
     ROW, TOP = 22, 20
 
-    def __init__(self, contributions, damaging_txt, benign_txt):
+    def __init__(self, contributions: Iterable[tuple[str, float]], damaging_txt: str, benign_txt: str) -> None:
         super().__init__()
         self.items = list(contributions)
         self.damaging_txt, self.benign_txt = damaging_txt, benign_txt
@@ -376,25 +502,34 @@ class ContributionChart(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMouseTracking(True)
 
-    def sizeHint(self):
+    def sizeHint(self) -> QSize:
+        """Return the preferred size: one row per predictor."""
         return QSize(380, self.minimumHeight())
 
-    def _geom(self):
+    def _geom(self) -> tuple[int, int, float]:
+        """Return the left edge, width and centre (zero) of the bar area, in pixels."""
         name_w, val_w = 104, 46
         left = name_w
         width = max(60, self.width() - name_w - val_w - 8)
         return left, width, left + width / 2
 
-    def paintEvent(self, e):
+    def paintEvent(self, e: QPaintEvent) -> None:
+        """Paint the direction captions, the zero line and one signed bar per predictor."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         left, width, mid = self._geom()
         p.setFont(th.font(11))
         p.setPen(QColor(th.MUTED))
-        p.drawText(QRectF(left, 0, width / 2 - 6, self.TOP - 4), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-                   "← " + self.benign_txt)
-        p.drawText(QRectF(mid + 6, 0, width / 2 - 6, self.TOP - 4), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
-                   self.damaging_txt + " →")
+        p.drawText(
+            QRectF(left, 0, width / 2 - 6, self.TOP - 4),
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+            "← " + self.benign_txt,
+        )
+        p.drawText(
+            QRectF(mid + 6, 0, width / 2 - 6, self.TOP - 4),
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+            self.damaging_txt + " →",
+        )
         bottom = self.TOP + self.ROW * len(self.items)
         p.setPen(QPen(QColor(th.BORDER), 1))
         p.drawLine(QPointF(mid, self.TOP - 2), QPointF(mid, bottom))
@@ -411,54 +546,106 @@ class ContributionChart(QWidget):
             p.drawRoundedRect(bar, 4, 4)
             p.setPen(QColor(th.INK_2))
             p.setFont(th.font(11.5))
-            p.drawText(QRectF(left + width + 8, y, 46, self.ROW), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
-                       f"{v:+.1f}")
+            p.drawText(
+                QRectF(left + width + 8, y, 46, self.ROW),
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
+                f"{v:+.1f}",
+            )
         p.end()
 
-    def mouseMoveEvent(self, e):
+    def mouseMoveEvent(self, e: QMouseEvent) -> None:
+        """Show the exact log-odds of the predictor under the mouse."""
         i = int((e.position().y() - self.TOP) // self.ROW)
         if 0 <= i < len(self.items):
             name, v = self.items[i]
-            QToolTip.showText(e.globalPosition().toPoint(),
-                              f"{name}: {v:+.2f} log-odds → {self.damaging_txt if v > 0 else self.benign_txt}", self)
+            QToolTip.showText(
+                e.globalPosition().toPoint(),
+                f"{name}: {v:+.2f} log-odds → {self.damaging_txt if v > 0 else self.benign_txt}",
+                self,
+            )
         else:
             QToolTip.hideText()
 
 
 # --------------------------------------------------------------------------- lollipop chart
 
+
+class LollipopPoint(TypedDict):
+    """One variant in the lollipop chart.
+
+    Attributes:
+        idx: Index label of the variant's row in the results table (emitted by ``picked``).
+        pos: Residue number.
+        score: Effect score 0–1, or None (drawn halfway up).
+        status: Prediction status (``theme.STATUS_ORDER``): colour and shape of the mark.
+        label: Protein change, shown above the mark when selected or hovered.
+        prediction: Prediction label, for the tooltip.
+        input: The user's input, for the tooltip.
+    """
+
+    idx: int
+    pos: int
+    score: float | None
+    status: str
+    label: str
+    prediction: str
+    input: str
+
+
+class Domain(TypedDict):
+    """A protein domain drawn on the lollipop chart's backbone (residues ``start``–``end``)."""
+
+    name: str
+    start: int
+    end: int
+
+
 class LollipopChart(QWidget):
     """Variants along the protein: x = residue, y = effect score; colour + shape = prediction status."""
 
     picked = Signal(object)  # dataframe index label
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setMouseTracking(True)
-        self.points = []       # dicts: idx, pos, score, status, label, prediction
-        self.domains = []      # dicts: name, start, end
+        self.points: list[LollipopPoint] = []  # dicts: idx, pos, score, status, label, prediction
+        self.domains: list[Domain] = []  # dicts: name, start, end
         self.length = 0
-        self.selected = None
-        self.hover = None
+        self.selected: int | None = None
+        self.hover: int | None = None
         self.title = ""
         self.setMinimumHeight(260)
 
-    def set_data(self, points, domains, length, selected, title=""):
+    def set_data(
+        self, points: list[LollipopPoint], domains: list[Domain], length: int, selected: int | None, title: str = ""
+    ) -> None:
+        """Show ``points`` on a protein of ``length`` residues with its ``domains``; highlight ``selected``.
+
+        Args:
+            points: The variants of one gene.
+            domains: Protein domains drawn on the backbone.
+            length: Protein length in residues (the x axis).
+            selected: Index label of the selected variant, or None.
+            title: Shown after the x-axis caption (gene and protein name).
+        """
         self.points, self.domains, self.length, self.selected, self.title = points, domains, length, selected, title
         self.hover = None
         self.update()
 
-    def _geom(self):
+    def _geom(self) -> QRectF:
+        """Return the plot area (inside the legend, axes and protein backbone)."""
         left, right, top, bottom = 54, 18, 44, 64
         return QRectF(left, top, max(50, self.width() - left - right), max(50, self.height() - top - bottom))
 
-    def _xy(self, plot, pos, score):
+    def _xy(self, plot: QRectF, pos: int, score: float | None) -> QPointF:
+        """Return the point of residue ``pos`` and ``score`` in ``plot`` (no score: halfway up)."""
         L = max(self.length or 1, 1)
         x = plot.left() + plot.width() * min(pos, L) / L
         y = plot.bottom() - plot.height() * (0.5 if score is None else score)
         return QPointF(x, y)
 
-    def paintEvent(self, e):
+    def paintEvent(self, e: QPaintEvent) -> None:
+        """Paint the legend, axes, protein backbone with domains, and the variants (selected one on top)."""
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         p.fillRect(self.rect(), QColor(th.WHITE))
@@ -480,8 +667,11 @@ class LollipopChart(QWidget):
             p.setPen(QPen(QColor("#EDF2F0"), 1))
             p.drawLine(QPointF(plot.left(), y), QPointF(plot.right(), y))
             p.setPen(QColor(th.MUTED))
-            p.drawText(QRectF(0, y - 8, plot.left() - 8, 16), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
-                       f"{yv:g}")
+            p.drawText(
+                QRectF(0, y - 8, plot.left() - 8, 16),
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+                f"{yv:g}",
+            )
         p.save()
         p.translate(14, plot.center().y())
         p.rotate(-90)
@@ -497,15 +687,15 @@ class LollipopChart(QWidget):
         for d in self.domains:
             x0 = band.left() + band.width() * d["start"] / L
             x1 = band.left() + band.width() * d["end"] / L
-            r = QRectF(x0, band.top(), max(3, x1 - x0 - 2), band.height())
+            box = QRectF(x0, band.top(), max(3, x1 - x0 - 2), band.height())
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(QColor(th.MINERAL_300))
-            p.drawRoundedRect(r, 4, 4)
+            p.drawRoundedRect(box, 4, 4)
             name = d["name"]
             fm = QFontMetrics(p.font())
-            if fm.horizontalAdvance(name) + 8 < r.width():
+            if fm.horizontalAdvance(name) + 8 < box.width():
                 p.setPen(QColor(th.PETROL_900))
-                p.drawText(r, Qt.AlignmentFlag.AlignCenter, name)
+                p.drawText(box, Qt.AlignmentFlag.AlignCenter, name)
         # x ticks
         p.setPen(QColor(th.MUTED))
         p.setFont(th.font(10.5))
@@ -515,8 +705,11 @@ class LollipopChart(QWidget):
             xx = band.left() + band.width() * tick / L
             p.drawText(QRectF(xx - 30, band.bottom() + 4, 60, 14), Qt.AlignmentFlag.AlignCenter, f"{tick}")
             tick += step
-        p.drawText(QRectF(plot.left(), band.bottom() + 18, plot.width(), 14), Qt.AlignmentFlag.AlignCenter,
-                   t("residue_axis") + (f" · {self.title}" if self.title else ""))
+        p.drawText(
+            QRectF(plot.left(), band.bottom() + 18, plot.width(), 14),
+            Qt.AlignmentFlag.AlignCenter,
+            t("residue_axis") + (f" · {self.title}" if self.title else ""),
+        )
         # stems then heads (selected last)
         pts = sorted(self.points, key=lambda pt: pt["idx"] == self.selected)
         for pt in pts:
@@ -543,7 +736,8 @@ class LollipopChart(QWidget):
                 p.drawText(QPointF(lx, c.y() - r - 9), pt["label"])
         p.end()
 
-    def _nearest(self, pos):
+    def _nearest(self, pos: QPointF) -> LollipopPoint | None:
+        """Return the variant within 14 px of ``pos`` closest to it, or None."""
         plot = self._geom()
         best, bd = None, 14.0
         for pt in self.points:
@@ -553,7 +747,8 @@ class LollipopChart(QWidget):
                 best, bd = pt, d
         return best
 
-    def mouseMoveEvent(self, e):
+    def mouseMoveEvent(self, e: QMouseEvent) -> None:
+        """Highlight the variant under the mouse and show its details in a tooltip."""
         pt = self._nearest(e.position())
         idx = pt["idx"] if pt else None
         if idx != self.hover:
@@ -562,24 +757,30 @@ class LollipopChart(QWidget):
         if pt:
             self.setCursor(Qt.CursorShape.PointingHandCursor)
             score = f"{pt['score']:.2f}" if pt["score"] is not None else "—"
-            QToolTip.showText(e.globalPosition().toPoint(),
-                              f"<b>{html.escape(pt['label'])}</b><br>{html.escape(tr_prediction(pt['prediction']))}"
-                              f"<br>{t('col_effect')}: {score}<br>{html.escape(pt['input'])}", self)
+            QToolTip.showText(
+                e.globalPosition().toPoint(),
+                f"<b>{html.escape(pt['label'])}</b><br>{html.escape(tr_prediction(pt['prediction']))}"
+                f"<br>{t('col_effect')}: {score}<br>{html.escape(pt['input'])}",
+                self,
+            )
         else:
             self.unsetCursor()
             QToolTip.hideText()
 
-    def leaveEvent(self, e):
+    def leaveEvent(self, e: QEvent) -> None:
+        """Remove the hover highlight."""
         self.hover = None
         self.update()
 
-    def mouseReleaseEvent(self, e):
+    def mouseReleaseEvent(self, e: QMouseEvent) -> None:
+        """Emit ``picked`` with the index label of the clicked variant."""
         pt = self._nearest(e.position())
         if pt:
             self.picked.emit(pt["idx"])
 
 
 def _nice_step(L: int) -> int:
+    """Return a round tick step that gives at most 8 ticks along ``L`` residues."""
     for s in (10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000):
         if L / s <= 8:
             return s
@@ -588,6 +789,7 @@ def _nice_step(L: int) -> int:
 
 # --------------------------------------------------------------------------- sequence
 
+
 def sequence_html(wt: str, mut: str, pos: int, n_ref: int, n_alt: int, per_line: int = 50) -> str:
     """Wild type and mutant protein around the change (up to 4 lines of 50), change highlighted."""
     mono = th.mono_family()
@@ -595,11 +797,11 @@ def sequence_html(wt: str, mut: str, pos: int, n_ref: int, n_alt: int, per_line:
     lo = max(0, (s0 // per_line - 1) * per_line)
 
     def block(seq: str, hl_len: int, color: str) -> str:
-        part = seq[lo: lo + per_line * 4]
+        part = seq[lo : lo + per_line * 4]
         lines = []
         for i in range(0, len(part), per_line):
             cells = []
-            for j, aa in enumerate(part[i: i + per_line]):
+            for j, aa in enumerate(part[i : i + per_line]):
                 k = lo + i + j
                 ch = html.escape(aa)
                 if s0 <= k < s0 + hl_len:
@@ -611,11 +813,15 @@ def sequence_html(wt: str, mut: str, pos: int, n_ref: int, n_alt: int, per_line:
         return "<br>".join(lines)
 
     def head(txt: str) -> str:
-        return (f"<div style='font-size:11px;letter-spacing:1px;color:{th.MUTED};margin:8px 0 4px'>{txt}</div>")
+        return f"<div style='font-size:11px;letter-spacing:1px;color:{th.MUTED};margin:8px 0 4px'>{txt}</div>"
 
     css = f"font-family:{mono};font-size:12px;line-height:170%;color:{th.INK};white-space:pre"
-    return (head(f"{t('wild_type').upper()} · {len(wt)} aa") + f"<div style='{css}'>{block(wt, n_ref, th.PETROL_600)}</div>"
-            + head(f"{t('mutant').upper()} · {len(mut)} aa") + f"<div style='{css}'>{block(mut, max(n_alt, 1), th.ACCENT)}</div>")
+    return (
+        head(f"{t('wild_type').upper()} · {len(wt)} aa")
+        + f"<div style='{css}'>{block(wt, n_ref, th.PETROL_600)}</div>"
+        + head(f"{t('mutant').upper()} · {len(mut)} aa")
+        + f"<div style='{css}'>{block(mut, max(n_alt, 1), th.ACCENT)}</div>"
+    )
 
 
 # --------------------------------------------------------------------------- 3D structure
@@ -642,12 +848,16 @@ def ensure_3dmol(tmp_dir: Path) -> bool:
     return True
 
 
-def _js(value) -> str:
+def _js(value: object) -> str:
     """JSON for inline <script>: '</' must not appear, or the text could close the script tag."""
     return json.dumps(value).replace("</", "<\\/")
 
 
 def structure_page(pdb: str, pos: int, label_text: str) -> str:
+    """Return the HTML page that shows ``pdb`` with 3Dmol.js, coloured by pLDDT, residue ``pos`` labelled.
+
+    The page loads ``3Dmol-2.4.2-min.js`` from its own folder (see :func:`ensure_3dmol`).
+    """
     return f"""<!doctype html><html><head><meta charset="utf-8">
 <style>html,body{{margin:0;height:100%;background:#fff;overflow:hidden;font-family:Helvetica Neue,Helvetica,Arial}}
 #mol{{position:absolute;inset:0}}
@@ -657,7 +867,7 @@ padding:6px 9px;border-radius:8px;border:1px solid {th.BORDER}}}
 #legend i:first-child{{margin-left:0}}</style>
 <script src="{THREEDMOL_FILE}"></script></head>
 <body><div id="mol"></div>
-<div id="legend">pLDDT {''.join(f'<i style="background:{c}"></i>{lbl}' for _, c, lbl in th.PLDDT_COLORS)}
+<div id="legend">pLDDT {"".join(f'<i style="background:{c}"></i>{lbl}' for _, c, lbl in th.PLDDT_COLORS)}
 <i style="background:{th.ACCENT};border-radius:50%"></i>{html.escape(label_text)}</div>
 <script>
   const v = $3Dmol.createViewer(document.getElementById("mol"), {{backgroundColor: "white"}});
@@ -675,7 +885,7 @@ padding:6px 9px;border-radius:8px;border:1px solid {th.BORDER}}}
 </script></body></html>"""
 
 
-def make_web_view():
+def make_web_view() -> QWebEngineView | None:
     """QWebEngineView for local pages (3Dmol.js and the PDB are fetched by Python), or None."""
     import os
 
@@ -697,9 +907,9 @@ def make_web_view():
     return view
 
 
-def load_page(view, page: str, tmp_dir: Path) -> None:
+def load_page(view: QWebEngineView, page: str, tmp_dir: Path) -> None:
+    """Write ``page`` to ``tmp_dir/structure.html`` and show it in ``view`` (next to the cached 3Dmol.js)."""
     tmp_dir.mkdir(parents=True, exist_ok=True)
     f = tmp_dir / "structure.html"
     f.write_text(page, encoding="utf-8")
     view.setUrl(QUrl.fromLocalFile(str(f)))
-

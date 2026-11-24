@@ -1,0 +1,27 @@
+# pre-commit install   — then ruff and mypy run on every commit (same checks as CI)
+# Generated outputs (benchmark results, test fixtures) and the 1.x scripts are left as written.
+exclude: ^(legacy/|benchmarks/results/|tests/data/)
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.6
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=2000]
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system      # uses the project's environment (pip install -e ".[dev,gui]")
+        types: [python]
+        pass_filenames: false

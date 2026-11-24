@@ -3,25 +3,39 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
+from typing import TypeAlias
+
+_Replacement: TypeAlias = str | Callable[[re.Match[str]], str]
+"""What a matched phrase becomes: a ``re.sub`` template, or a function of the match."""
 
 LANG = "es"
 
-S = {
+S: dict[str, tuple[str, str]] = {
     # sidebar
     "brand_sub": ("Del cambio en el ADN al efecto en la proteína", "From DNA change to protein effect"),
     "variants": ("VARIANTES", "VARIANTS"),
-    "variants_hint": ("Una o varias por línea · BRAF V600E · TP53: R175H, R248Q · rs113488022 · chr7:140753336 A>T",
-                      "One or more per line · BRAF V600E · TP53: R175H, R248Q · rs113488022 · chr7:140753336 A>T"),
+    "variants_hint": (
+        "Una o varias por línea · BRAF V600E · TP53: R175H, R248Q · rs113488022 · chr7:140753336 A>T",
+        "One or more per line · BRAF V600E · TP53: R175H, R248Q · rs113488022 · chr7:140753336 A>T",
+    ),
     "default_gene": ("Gen por defecto", "Default gene"),
-    "default_gene_tip": ("Permite escribir cambios sin gen, como «R175H» o «c.524G>A».",
-                         "Lets you type bare changes such as 'R175H' or 'c.524G>A'."),
+    "default_gene_tip": (
+        "Permite escribir cambios sin gen, como «R175H» o «c.524G>A».",
+        "Lets you type bare changes such as 'R175H' or 'c.524G>A'.",
+    ),
     "example": ("Ejemplo", "Example"),
     "formats": ("Formatos", "Formats"),
     "files": ("ARCHIVOS", "FILES"),
-    "drop": ("Arrastra un VCF, CSV, Excel o TXT\no haz clic para elegir", "Drop a VCF, CSV, Excel or TXT file\nor click to browse"),
+    "drop": (
+        "Arrastra un VCF, CSV, Excel o TXT\no haz clic para elegir",
+        "Drop a VCF, CSV, Excel or TXT file\nor click to browse",
+    ),
     "only_genes": ("Solo estos genes (TP53, BRCA1…)", "Only these genes (TP53, BRCA1…)"),
-    "only_genes_tip": ("Filtra el VCF localmente antes de consultar: mucho más rápido para exomas.",
-                       "Filters the VCF locally before any request: much faster for exomes."),
+    "only_genes_tip": (
+        "Filtra el VCF localmente antes de consultar: mucho más rápido para exomas.",
+        "Filters the VCF locally before any request: much faster for exomes.",
+    ),
     "sample": ("Muestra", "Sample"),
     "all_carriers": ("Todos los portadores", "All carriers"),
     "pass_only": ("Solo FILTER = PASS", "FILTER = PASS only"),
@@ -30,8 +44,10 @@ S = {
     "build": ("Genoma", "Genome build"),
     "build_auto": ("Automático", "Automatic"),
     "opt_predictors": ("Predictores de patogenicidad", "Pathogenicity predictors"),
-    "opt_predictors_tip": ("AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT y PolyPhen-2.",
-                           "AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT and PolyPhen-2."),
+    "opt_predictors_tip": (
+        "AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT y PolyPhen-2.",
+        "AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT and PolyPhen-2.",
+    ),
     "opt_context": ("Contexto proteico (UniProt, AlphaFold)", "Protein context (UniProt, AlphaFold)"),
     "opt_clinvar": ("Clasificación ClinVar", "ClinVar classification"),
     "opt_noncoding": ("Incluir variantes no codificantes", "Include non-coding variants"),
@@ -40,69 +56,92 @@ S = {
     "freq_ba1": ("≥ 5 % en gnomAD → benigna (BA1)", "≥ 5% in gnomAD → benign (BA1)"),
     "freq_bs1": ("≥ 1 % en gnomAD → benigna (BS1)", "≥ 1% in gnomAD → benign (BS1)"),
     "freq_off": ("No usar la frecuencia", "Do not use frequency"),
-    "freq_tip": ("Una variante común en gnomAD (grupo de ancestría con mayor frecuencia) se marca como benigna aunque "
-                 "los predictores digan otra cosa. 5 % es el criterio BA1 de ACMG; 1 % es más estricto, pero confunde "
-                 "variantes patogénicas de enfermedades recesivas o de efecto fundador.",
-                 "A variant that is common in gnomAD (highest genetic ancestry group) is called benign whatever the "
-                 "predictors say. 5% is the ACMG BA1 criterion; 1% is stricter but mislabels pathogenic variants of "
-                 "recessive or founder conditions."),
+    "freq_tip": (
+        "Una variante común en gnomAD (grupo de ancestría con mayor frecuencia) se marca como benigna aunque "
+        "los predictores digan otra cosa. 5 % es el criterio BA1 de ACMG; 1 % es más estricto, pero confunde "
+        "variantes patogénicas de enfermedades recesivas o de efecto fundador.",
+        "A variant that is common in gnomAD (highest genetic ancestry group) is called benign whatever the "
+        "predictors say. 5% is the ACMG BA1 criterion; 1% is stricter but mislabels pathogenic variants of "
+        "recessive or founder conditions.",
+    ),
     "acmg_src": ("PP3/BP4", "PP3/BP4"),
+    "popeve_note": ("más negativo = más deletéreo", "more negative = more deleterious"),
     "acmg_src_model": ("Puntaje del modelo (calibración propia)", "Model score (own calibration)"),
     "acmg_src_revel": ("REVEL (umbrales de ClinGen)", "REVEL (ClinGen thresholds)"),
-    "acmg_src_tip": ("Puntaje usado para la evidencia computacional ACMG PP3/BP4. El del modelo se calibró con el método "
-                     "de ClinGen (Pejaver et al. 2022) sobre los mismos datos de ClinVar que REVEL; la calibración es "
-                     "de este proyecto, no publicada por ClinGen. REVEL usa los umbrales que publicó ClinGen "
-                     "(AlphaMissense si falta REVEL).",
-                     "Score used for the ACMG computational evidence PP3/BP4. The model's was calibrated with the "
-                     "ClinGen method (Pejaver et al. 2022) on the same ClinVar data as REVEL's; the calibration is this "
-                     "project's, not one published by ClinGen. REVEL uses the thresholds ClinGen published "
-                     "(AlphaMissense when REVEL is missing)."),
+    "acmg_src_tip": (
+        "Puntaje usado para la evidencia computacional ACMG PP3/BP4. El del modelo se calibró con el método "
+        "de ClinGen (Pejaver et al. 2022) sobre los mismos datos de ClinVar que REVEL; la calibración es "
+        "de este proyecto, no publicada por ClinGen. REVEL usa los umbrales que publicó ClinGen "
+        "(AlphaMissense si falta REVEL).",
+        "Score used for the ACMG computational evidence PP3/BP4. The model's was calibrated with the "
+        "ClinGen method (Pejaver et al. 2022) on the same ClinVar data as REVEL's; the calibration is this "
+        "project's, not one published by ClinGen. REVEL uses the thresholds ClinGen published "
+        "(AlphaMissense when REVEL is missing).",
+    ),
     "engine": ("Anotación", "Annotation"),
     "engine_rest": ("Ensembl en línea", "Ensembl online"),
     "engine_local": ("VEP local", "Local VEP"),
-    "engine_tip": ("En línea usa la API pública de Ensembl. VEP local usa una instalación de VEP en este equipo "
-                   "(nativa o Docker): sin límites de uso y los datos no salen del equipo.",
-                   "Online uses the public Ensembl API. Local VEP uses a VEP install on this computer (native or "
-                   "Docker): no usage limits and the data never leave the computer."),
+    "engine_tip": (
+        "En línea usa la API pública de Ensembl. VEP local usa una instalación de VEP en este equipo "
+        "(nativa o Docker): sin límites de uso y los datos no salen del equipo.",
+        "Online uses the public Ensembl API. Local VEP uses a VEP install on this computer (native or "
+        "Docker): no usage limits and the data never leave the computer.",
+    ),
     "vep_cmd": ("Comando de VEP (p. ej. vep --cache --offline)", "VEP command (e.g. vep --cache --offline)"),
     "vep_args": ("Argumentos extra (plugins…)", "Extra arguments (plugins…)"),
     "offline": ("Sin conexión (modo privado)", "Offline (private mode)"),
-    "offline_tip": ("No usa internet: solo VEP local. Omite ClinVar, UniProt y AlphaFold.",
-                    "Never uses the internet: local VEP only. Skips ClinVar, UniProt and AlphaFold."),
+    "offline_tip": (
+        "No usa internet: solo VEP local. Omite ClinVar, UniProt y AlphaFold.",
+        "Never uses the internet: local VEP only. Skips ClinVar, UniProt and AlphaFold.",
+    ),
     "retry": ("Reintentar", "Retry"),
     "m_run_info": ("Información del análisis", "Run information"),
     "m_open_log": ("Abrir registro de errores", "Open error log"),
     "run_info_title": ("Información del análisis", "Run information"),
     "unexpected": ("Error inesperado", "Unexpected error"),
-    "unexpected_body": ("Ocurrió un error inesperado. Quedó guardado en el registro:\n{path}",
-                        "An unexpected error occurred. It was saved to the log:\n{path}"),
+    "unexpected_body": (
+        "Ocurrió un error inesperado. Quedó guardado en el registro:\n{path}",
+        "An unexpected error occurred. It was saved to the log:\n{path}",
+    ),
     "local_label": ("VEP local", "local VEP"),
     "predict": ("Predecir efecto en la proteína", "Predict protein effect"),
     "cancel": ("Cancelar", "Cancel"),
     "cancelling": ("Cancelando…", "Cancelling…"),
-    "research_only": ("Solo para investigación. Las predicciones computacionales no son un diagnóstico clínico.",
-                      "Research use only. Computational predictions are not a clinical diagnosis."),
+    "research_only": (
+        "Solo para investigación. Las predicciones computacionales no son un diagnóstico clínico.",
+        "Research use only. Computational predictions are not a clinical diagnosis.",
+    ),
     "need_input": ("Escribe al menos una variante o añade un archivo.", "Type at least one variant or add a file."),
     # welcome
     "welcome_title": ("¿Cómo cambia tu variante la proteína?", "How does your variant change the protein?"),
-    "welcome_lead": ("Escribe mutaciones o arrastra un VCF. MissensExplorer localiza el transcrito, calcula el cambio "
-                     "de aminoácido y reúne predictores, estructura y datos clínicos en una sola vista.",
-                     "Type mutations or drop a VCF. MissensExplorer finds the transcript, works out the amino-acid "
-                     "change and brings predictors, structure and clinical data into one view."),
+    "welcome_lead": (
+        "Escribe mutaciones o arrastra un VCF. MissensExplorer localiza el transcrito, calcula el cambio "
+        "de aminoácido y reúne predictores, estructura y datos clínicos en una sola vista.",
+        "Type mutations or drop a VCF. MissensExplorer finds the transcript, works out the amino-acid "
+        "change and brings predictors, structure and clinical data into one view.",
+    ),
     "step1_t": ("1 · Entrada", "1 · Input"),
-    "step1_b": ("Texto libre, HGVS, rsIDs, coordenadas o archivos VCF, CSV y Excel. El genoma se detecta solo.",
-                "Free text, HGVS, rsIDs, coordinates or VCF, CSV and Excel files. The build is detected for you."),
+    "step1_b": (
+        "Texto libre, HGVS, rsIDs, coordenadas o archivos VCF, CSV y Excel. El genoma se detecta solo.",
+        "Free text, HGVS, rsIDs, coordinates or VCF, CSV and Excel files. The build is detected for you.",
+    ),
     "step2_t": ("2 · Predicción", "2 · Prediction"),
-    "step2_b": ("Votación ponderada de AlphaMissense, REVEL, CADD, EVE, SIFT y PolyPhen-2; SpliceAI para splicing.",
-                "Weighted vote of AlphaMissense, REVEL, CADD, EVE, SIFT and PolyPhen-2; SpliceAI for splicing."),
+    "step2_b": (
+        "Votación ponderada de AlphaMissense, REVEL, CADD, EVE, SIFT y PolyPhen-2; SpliceAI para splicing.",
+        "Weighted vote of AlphaMissense, REVEL, CADD, EVE, SIFT and PolyPhen-2; SpliceAI for splicing.",
+    ),
     "step3_t": ("3 · Contexto", "3 · Context"),
-    "step3_b": ("Dominio UniProt, estructura AlphaFold, ClinVar del alelo exacto, gnomAD y la proteína mutante.",
-                "UniProt domain, AlphaFold structure, exact-allele ClinVar, gnomAD and the mutant protein."),
+    "step3_b": (
+        "Dominio UniProt, estructura AlphaFold, ClinVar del alelo exacto, gnomAD y la proteína mutante.",
+        "UniProt domain, AlphaFold structure, exact-allele ClinVar, gnomAD and the mutant protein.",
+    ),
     "try": ("Prueba con:", "Try:"),
     # header / results
     "results": ("Resultados", "Results"),
-    "subtitle": ("{inputs} entradas · {rows} resultados · {build} · {engine} · {secs} s",
-                 "{inputs} inputs · {rows} results · {build} · {engine} · {secs} s"),
+    "subtitle": (
+        "{inputs} entradas · {rows} resultados · {build} · {engine} · {secs} s",
+        "{inputs} inputs · {rows} results · {build} · {engine} · {secs} s",
+    ),
     "export": ("Exportar", "Export"),
     "not_analysed": ("{n} sin analizar", "{n} not analysed"),
     "search": ("Buscar gen, cambio o entrada", "Search gene, change or input"),
@@ -115,51 +154,71 @@ S = {
     "skip_carried": ("{n} no portadas por la muestra", "{n} not carried by the sample(s)"),
     "skip_genes": ("{n} fuera de los genes elegidos", "{n} outside the selected genes"),
     "skip_symbolic": ("{n} alelos simbólicos/estructurales", "{n} symbolic/structural alleles"),
-    "no_rows": ("No se encontraron consecuencias a nivel de proteína. Activa «Incluir variantes no codificantes» "
-                "para ver todo lo que reporta VEP.",
-                "No protein-level consequences found. Turn on 'Include non-coding variants' to see everything VEP reports."),
+    "no_rows": (
+        "No se encontraron consecuencias a nivel de proteína. Activa «Incluir variantes no codificantes» "
+        "para ver todo lo que reporta VEP.",
+        "No protein-level consequences found. Turn on 'Include non-coding variants' to see everything VEP reports.",
+    ),
     "errors_title": ("Entradas sin analizar", "Inputs not analysed"),
-    "col_input": ("Entrada", "Input"), "col_gene": ("Gen", "Gene"), "col_change": ("Cambio", "Change"),
-    "col_consequence": ("Consecuencia", "Consequence"), "col_prediction": ("Predicción", "Prediction"),
-    "col_effect": ("Efecto", "Effect"), "col_with_freq": ("Con frecuencia", "With frequency"), "col_clinvar": ("ClinVar", "ClinVar"), "col_gnomad": ("gnomAD AF", "gnomAD AF"),
-    "col_zyg": ("Cigosidad", "Zygosity"), "col_source": ("Origen", "Source"), "col_error": ("Motivo", "Reason"),
+    "col_input": ("Entrada", "Input"),
+    "col_gene": ("Gen", "Gene"),
+    "col_change": ("Cambio", "Change"),
+    "col_consequence": ("Consecuencia", "Consequence"),
+    "col_prediction": ("Predicción", "Prediction"),
+    "col_effect": ("Efecto", "Effect"),
+    "col_with_freq": ("Con frecuencia", "With frequency"),
+    "col_clinvar": ("ClinVar", "ClinVar"),
+    "col_gnomad": ("gnomAD AF", "gnomAD AF"),
+    "col_zyg": ("Cigosidad", "Zygosity"),
+    "col_source": ("Origen", "Source"),
+    "col_error": ("Motivo", "Reason"),
     # detail
     "why": ("POR QUÉ", "WHY"),
     "contrib_damaging": ("dañina", "damaging"),
     "contrib_benign": ("benigna", "benign"),
-    "model_note": ("Aporte de cada predictor al puntaje del modelo (log-odds). El modelo es una regresión logística "
-                   "entrenada con variantes de ClinVar revisadas por expertos.",
-                   "Each predictor's contribution to the model score (log-odds). The model is a logistic regression "
-                   "trained on expert-reviewed ClinVar variants."),
+    "model_note": (
+        "Aporte de cada predictor al puntaje del modelo (log-odds). El modelo es una regresión logística "
+        "entrenada con variantes de ClinVar revisadas por expertos.",
+        "Each predictor's contribution to the model score (log-odds). The model is a logistic regression "
+        "trained on expert-reviewed ClinVar variants.",
+    ),
     "acmg": ("EVIDENCIA ACMG (ORIENTATIVA)", "ACMG EVIDENCE (INDICATIVE)"),
     "acmg_pp3": ("Computacional PP3/BP4", "Computational PP3/BP4"),
     "acmg_freq": ("Frecuencia poblacional", "Population frequency"),
     "acmg_codes": ("Criterios", "Criteria"),
-    "with_freq_tip": ("Puntaje del modelo combinado con la frecuencia en gnomAD, para ordenar las variantes de una muestra. "
-                      "Una variante ausente de gnomAD puntúa alto casi siempre. No es evidencia ACMG: la frecuencia ya "
-                      "cuenta en BA1, BS1 y PM2.",
-                      "Model score combined with the gnomAD frequency, for ranking a sample's variants. A variant absent "
-                      "from gnomAD almost always scores high. Not ACMG evidence: frequency already counts in BA1, BS1 "
-                      "and PM2."),
+    "with_freq_tip": (
+        "Puntaje del modelo combinado con la frecuencia en gnomAD, para ordenar las variantes de una muestra. "
+        "Una variante ausente de gnomAD puntúa alto casi siempre. No es evidencia ACMG: la frecuencia ya "
+        "cuenta en BA1, BS1 y PM2.",
+        "Model score combined with the gnomAD frequency, for ranking a sample's variants. A variant absent "
+        "from gnomAD almost always scores high. Not ACMG evidence: frequency already counts in BA1, BS1 "
+        "and PM2.",
+    ),
     "acmg_ps1pm5": ("Mismo residuo PS1/PM5", "Same residue PS1/PM5"),
     "acmg_pm2": ("Ausencia PM2", "Absence PM2"),
-    "acmg_note_residue": ("PS1/PM5: variantes missense patogénicas de ClinVar en el mismo residuo (no se comprueba si su "
-                          "clasificación es independiente de PS1/PM5). PM2: ausencia confirmada en gnomAD en una posición "
-                          "con lecturas suficientes; si la variante está presente, depende de la enfermedad.",
-                          "PS1/PM5: pathogenic ClinVar missense variants at the same residue (whether their "
-                          "classification is independent of PS1/PM5 is not checked). PM2: absence confirmed in gnomAD "
-                          "at a position with enough reads; if the variant is present, it depends on the disease."),
+    "acmg_note_residue": (
+        "PS1/PM5: variantes missense patogénicas de ClinVar en el mismo residuo (no se comprueba si su "
+        "clasificación es independiente de PS1/PM5). PM2: ausencia confirmada en gnomAD en una posición "
+        "con lecturas suficientes; si la variante está presente, depende de la enfermedad.",
+        "PS1/PM5: pathogenic ClinVar missense variants at the same residue (whether their "
+        "classification is independent of PS1/PM5 is not checked). PM2: absence confirmed in gnomAD "
+        "at a position with enough reads; if the variant is present, it depends on the disease.",
+    ),
     "points": ("{n} puntos", "{n} points"),
-    "acmg_note": ("Umbrales calibrados por ClinGen (REVEL; AlphaMissense si falta REVEL). Es solo una parte de la "
-                  "clasificación ACMG: no reemplaza la revisión de un especialista.",
-                  "ClinGen-calibrated thresholds (REVEL; AlphaMissense when REVEL is missing). This is only part of "
-                  "an ACMG classification: it does not replace review by a specialist."),
-    "acmg_note_model": ("Puntaje del modelo con umbrales calibrados por el método de ClinGen (Pejaver et al. 2022) "
-                        "sobre los mismos datos que REVEL; calibración propia, no publicada por ClinGen. Es solo una "
-                        "parte de la clasificación ACMG: no reemplaza la revisión de un especialista.",
-                        "Model score with thresholds calibrated by the ClinGen method (Pejaver et al. 2022) on the same "
-                        "data as REVEL's; this project's calibration, not one published by ClinGen. This is only part "
-                        "of an ACMG classification: it does not replace review by a specialist."),
+    "acmg_note": (
+        "Umbrales calibrados por ClinGen (REVEL; AlphaMissense si falta REVEL). Es solo una parte de la "
+        "clasificación ACMG: no reemplaza la revisión de un especialista.",
+        "ClinGen-calibrated thresholds (REVEL; AlphaMissense when REVEL is missing). This is only part of "
+        "an ACMG classification: it does not replace review by a specialist.",
+    ),
+    "acmg_note_model": (
+        "Puntaje del modelo con umbrales calibrados por el método de ClinGen (Pejaver et al. 2022) "
+        "sobre los mismos datos que REVEL; calibración propia, no publicada por ClinGen. Es solo una "
+        "parte de la clasificación ACMG: no reemplaza la revisión de un especialista.",
+        "Model score with thresholds calibrated by the ClinGen method (Pejaver et al. 2022) on the same "
+        "data as REVEL's; this project's calibration, not one published by ClinGen. This is only part "
+        "of an ACMG classification: it does not replace review by a specialist.",
+    ),
     "predictors": ("PREDICTORES", "PREDICTORS"),
     "physchem": ("CAMBIO FISICOQUÍMICO", "PHYSICO-CHEMISTRY"),
     "sequence": ("SECUENCIA", "SEQUENCE"),
@@ -183,49 +242,77 @@ S = {
     "popmax": ("máx. por población {v}", "highest population {v}"),
     "zygosity": ("Cigosidad", "Zygosity"),
     "carriers": ("Portadores", "Carriers"),
-    "grantham": ("Grantham", "Grantham"), "blosum": ("BLOSUM62", "BLOSUM62"),
-    "hydropathy": ("Δ hidropatía", "Δ hydropathy"), "volume": ("Δ volumen", "Δ volume"), "charge": ("Δ carga", "Δ charge"),
-    "select_row": ("Selecciona una fila para ver el detalle de la variante.", "Select a row to see the variant details."),
+    "grantham": ("Grantham", "Grantham"),
+    "blosum": ("BLOSUM62", "BLOSUM62"),
+    "hydropathy": ("Δ hidropatía", "Δ hydropathy"),
+    "volume": ("Δ volumen", "Δ volume"),
+    "charge": ("Δ carga", "Δ charge"),
+    "select_row": (
+        "Selecciona una fila para ver el detalle de la variante.",
+        "Select a row to see the variant details.",
+    ),
     "tab_structure": ("Estructura 3D", "3D structure"),
     "tab_lollipop": ("Variantes en la proteína", "Variants along the protein"),
     "tab_sequence": ("Proteína mutante", "Mutant protein"),
-    "no_structure": ("No hay un modelo de AlphaFold asociado a este residuo.", "No AlphaFold model mapped to this residue."),
+    "no_structure": (
+        "No hay un modelo de AlphaFold asociado a este residuo.",
+        "No AlphaFold model mapped to this residue.",
+    ),
     "loading_structure": ("Cargando estructura de AlphaFold…", "Loading AlphaFold structure…"),
-    "structure_caption": ("Modelo AlphaFold {id} (tipo silvestre), coloreado por confianza. Magenta: residuo mutado.",
-                          "AlphaFold model {id} (wild type), coloured by confidence. Magenta: mutated residue."),
-    "no_webengine": ("El visor 3D necesita QtWebEngine. Abre el modelo en el navegador:",
-                     "The 3D viewer needs QtWebEngine. Open the model in your browser:"),
+    "structure_caption": (
+        "Modelo AlphaFold {id} (tipo silvestre), coloreado por confianza. Magenta: residuo mutado.",
+        "AlphaFold model {id} (wild type), coloured by confidence. Magenta: mutated residue.",
+    ),
+    "no_webengine": (
+        "El visor 3D necesita QtWebEngine. Abre el modelo en el navegador:",
+        "The 3D viewer needs QtWebEngine. Open the model in your browser:",
+    ),
     "open_alphafold": ("Abrir en AlphaFold DB", "Open in AlphaFold DB"),
-    "residue_axis": ("Residuo", "Residue"), "score_axis": ("Puntuación de efecto", "Effect score"),
+    "residue_axis": ("Residuo", "Residue"),
+    "score_axis": ("Puntuación de efecto", "Effect score"),
     "no_sequence": ("No hay secuencia mutante para esta variante.", "No mutant sequence for this variant."),
     "copy_fasta": ("Copiar FASTA", "Copy FASTA"),
     "copied": ("Copiado al portapapeles", "Copied to the clipboard"),
-    "wild_type": ("Silvestre", "Wild type"), "mutant": ("Mutante", "Mutant"),
+    "wild_type": ("Silvestre", "Wild type"),
+    "mutant": ("Mutante", "Mutant"),
     # menus / dialogs
-    "m_file": ("Archivo", "File"), "m_open": ("Añadir archivos…", "Add files…"),
-    "m_export_csv": ("Exportar CSV…", "Export CSV…"), "m_export_xlsx": ("Exportar Excel…", "Export Excel…"),
-    "m_export_json": ("Exportar JSON…", "Export JSON…"), "m_export_fasta": ("Exportar FASTA de proteínas…", "Export protein FASTA…"),
-    "m_quit": ("Salir", "Quit"), "m_view": ("Ver", "View"), "m_language": ("Idioma", "Language"),
-    "m_help": ("Ayuda", "Help"), "m_formats": ("Formatos aceptados", "Accepted formats"),
-    "m_about": ("Acerca de MissensExplorer", "About MissensExplorer"), "m_clear_cache": ("Vaciar caché", "Clear cache"),
+    "m_file": ("Archivo", "File"),
+    "m_open": ("Añadir archivos…", "Add files…"),
+    "m_export_csv": ("Exportar CSV…", "Export CSV…"),
+    "m_export_xlsx": ("Exportar Excel…", "Export Excel…"),
+    "m_export_json": ("Exportar JSON…", "Export JSON…"),
+    "m_export_fasta": ("Exportar FASTA de proteínas…", "Export protein FASTA…"),
+    "m_quit": ("Salir", "Quit"),
+    "m_view": ("Ver", "View"),
+    "m_language": ("Idioma", "Language"),
+    "m_help": ("Ayuda", "Help"),
+    "m_formats": ("Formatos aceptados", "Accepted formats"),
+    "m_about": ("Acerca de MissensExplorer", "About MissensExplorer"),
+    "m_clear_cache": ("Vaciar caché", "Clear cache"),
     "cache_cleared": ("Caché vaciada", "Cache cleared"),
     "saved": ("Guardado: {path}", "Saved: {path}"),
-    "lang_restart": ("El idioma cambiará al reiniciar la aplicación.", "The language changes when you restart the app."),
+    "lang_restart": (
+        "El idioma cambiará al reiniciar la aplicación.",
+        "The language changes when you restart the app.",
+    ),
     "failed": ("El análisis falló", "Analysis failed"),
-    "about": ("<b>MissensExplorer {v}</b><br>Predice cómo las variantes de ADN cambian la proteína humana.<br><br>"
-              "Datos: Ensembl VEP, AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT, PolyPhen-2, UniProt, "
-              "AlphaFold DB, ClinVar y gnomAD.<br><br>Universidad Simón Bolívar · Escuela Nacional del Deporte<br><br>"
-              "<i>Solo para investigación.</i>",
-              "<b>MissensExplorer {v}</b><br>Predicts how DNA variants change the human protein.<br><br>"
-              "Data: Ensembl VEP, AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT, PolyPhen-2, UniProt, "
-              "AlphaFold DB, ClinVar and gnomAD.<br><br>Universidad Simón Bolívar · Escuela Nacional del Deporte<br><br>"
-              "<i>Research use only.</i>"),
+    "about": (
+        "<b>MissensExplorer {v}</b><br>Predice cómo las variantes de ADN cambian la proteína humana.<br><br>"
+        "Datos: Ensembl VEP, AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT, PolyPhen-2, UniProt, "
+        "AlphaFold DB, ClinVar y gnomAD.<br><br>Universidad Simón Bolívar · Escuela Nacional del Deporte<br><br>"
+        "<i>Solo para investigación.</i>",
+        "<b>MissensExplorer {v}</b><br>Predicts how DNA variants change the human protein.<br><br>"
+        "Data: Ensembl VEP, AlphaMissense, REVEL, CADD, EVE/popEVE, SpliceAI, SIFT, PolyPhen-2, UniProt, "
+        "AlphaFold DB, ClinVar and gnomAD.<br><br>Universidad Simón Bolívar · Escuela Nacional del Deporte<br><br>"
+        "<i>Research use only.</i>",
+    ),
     "formats_html": (
         "<table cellpadding='5'>"
         "<tr><td><code>BRAF V600E</code>, <code>BRAF:p.Val600Glu</code></td><td>cambio proteico en un gen</td></tr>"
         "<tr><td><code>TP53: R175H, R248Q</code></td><td>varios cambios en el mismo gen</td></tr>"
         "<tr><td><code>BRCA1:c.5096G&gt;A</code>, <code>NM_004333.6:c.1799T&gt;A</code></td><td>HGVS de cDNA</td></tr>"
-        "<tr><td><code>chr7:140753336 A&gt;T</code>, <code>7-140753336-A-T</code></td><td>posición genómica y alelos</td></tr>"
+        "<tr><td><code>chr7:140753336 A&gt;T</code>, <code>7-140753336-A-T</code></td>"
+        "<td>posición genómica y alelos</td></tr>"
         "<tr><td><code>NC_000007.14:g.140753336A&gt;T</code></td><td>HGVS genómico</td></tr>"
         "<tr><td><code>rs113488022</code></td><td>identificador dbSNP (todos los alelos)</td></tr>"
         "<tr><td><code>V600E</code></td><td>cambio suelto, con «Gen por defecto»</td></tr>"
@@ -234,21 +321,27 @@ S = {
         "<tr><td><code>BRAF V600E</code>, <code>BRAF:p.Val600Glu</code></td><td>protein change in a gene</td></tr>"
         "<tr><td><code>TP53: R175H, R248Q</code></td><td>several changes in one gene</td></tr>"
         "<tr><td><code>BRCA1:c.5096G&gt;A</code>, <code>NM_004333.6:c.1799T&gt;A</code></td><td>cDNA HGVS</td></tr>"
-        "<tr><td><code>chr7:140753336 A&gt;T</code>, <code>7-140753336-A-T</code></td><td>genomic position and alleles</td></tr>"
+        "<tr><td><code>chr7:140753336 A&gt;T</code>, <code>7-140753336-A-T</code></td>"
+        "<td>genomic position and alleles</td></tr>"
         "<tr><td><code>NC_000007.14:g.140753336A&gt;T</code></td><td>genomic HGVS</td></tr>"
         "<tr><td><code>rs113488022</code></td><td>dbSNP id (all alleles)</td></tr>"
         "<tr><td><code>V600E</code></td><td>bare change, with 'Default gene'</td></tr>"
-        "<tr><td>VCF / VCF.gz, CSV, TSV, Excel, TXT</td><td>files (drag and drop)</td></tr></table>"),
+        "<tr><td>VCF / VCF.gz, CSV, TSV, Excel, TXT</td><td>files (drag and drop)</td></tr></table>",
+    ),
     # status names
-    "Damaging": ("Dañina", "Damaging"), "Uncertain": ("Incierta", "Uncertain"),
-    "Benign / silent": ("Benigna / silenciosa", "Benign / silent"), "Not assessed": ("Sin evaluar", "Not assessed"),
+    "Damaging": ("Dañina", "Damaging"),
+    "Uncertain": ("Incierta", "Uncertain"),
+    "Benign / silent": ("Benigna / silenciosa", "Benign / silent"),
+    "Not assessed": ("Sin evaluar", "Not assessed"),
     "all": ("Todas", "All"),
     # predictor calls
-    "call_damaging": ("dañino", "damaging"), "call_benign": ("benigno", "benign"), "call_neutral": ("intermedio", "intermediate"),
+    "call_damaging": ("dañino", "damaging"),
+    "call_benign": ("benigno", "benign"),
+    "call_neutral": ("intermedio", "intermediate"),
 }
 
 # Prediction labels produced by predict.classify()
-PREDICTION_ES = {
+PREDICTION_ES: dict[str, str] = {
     "Likely damaging": "Probablemente dañina",
     "Likely damaging (single predictor)": "Probablemente dañina (un solo predictor)",
     "Likely benign": "Probablemente benigna",
@@ -256,8 +349,12 @@ PREDICTION_ES = {
     "Uncertain (conflicting predictors)": "Incierta (predictores en conflicto)",
     "Uncertain (intermediate scores)": "Incierta (puntuaciones intermedias)",
     "Likely benign (common in population)": "Probablemente benigna (frecuente en la población)",
-    "Likely damaging (limited evidence: SIFT/PolyPhen only)": "Probablemente dañina (evidencia limitada: solo SIFT/PolyPhen)",
-    "Likely benign (limited evidence: SIFT/PolyPhen only)": "Probablemente benigna (evidencia limitada: solo SIFT/PolyPhen)",
+    "Likely damaging (limited evidence: SIFT/PolyPhen only)": (
+        "Probablemente dañina (evidencia limitada: solo SIFT/PolyPhen)"
+    ),
+    "Likely benign (limited evidence: SIFT/PolyPhen only)": (
+        "Probablemente benigna (evidencia limitada: solo SIFT/PolyPhen)"
+    ),
     "Missense (no predictor scores)": "Missense (sin puntuaciones)",
     "Loss of function (truncating)": "Pérdida de función (truncante)",
     "Loss of function (canonical splice site)": "Pérdida de función (sitio de splicing canónico)",
@@ -271,46 +368,73 @@ PREDICTION_ES = {
     "Non-coding / no protein change": "No codificante / sin cambio proteico",
 }
 
-PHRASES_ES = [
+PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"NMD escape likely \(single-exon gene\)", "Probable escape del NMD (gen de un solo exón)"),
     (r"NMD escape likely \(last exon\)", "Probable escape del NMD (último exón)"),
-    (r"NMD uncertain \(penultimate exon; depends on distance to last junction\)",
-     "NMD incierto (penúltimo exón; depende de la distancia a la última unión)"),
+    (
+        r"NMD uncertain \(penultimate exon; depends on distance to last junction\)",
+        "NMD incierto (penúltimo exón; depende de la distancia a la última unión)",
+    ),
     (r"NMD likely \(premature stop upstream of last exon\)", "NMD probable (parada prematura antes del último exón)"),
-    (r"truncated at residue (\d+): (\d+) of (\d+) residues lost \((\d+)%\)",
-     r"truncada en el residuo \1: se pierden \2 de \3 residuos (\4 %)"),
-    (r"(\d+) damaging / (\d+) benign predictors \(weighted (\d+)% damaging\)",
-     r"\1 predictores dañinos / \2 benignos (ponderado: \3 % dañino)"),
+    (
+        r"truncated at residue (\d+): (\d+) of (\d+) residues lost \((\d+)%\)",
+        r"truncada en el residuo \1: se pierden \2 de \3 residuos (\4 %)",
+    ),
+    (
+        r"(\d+) damaging / (\d+) benign predictors \(weighted (\d+)% damaging\)",
+        r"\1 predictores dañinos / \2 benignos (ponderado: \3 % dañino)",
+    ),
     (r"(\d+) damaging / (\d+) benign predictors", r"\1 predictores dañinos / \2 benignos"),
     (r"\bmodel score (\d\.\d+)", r"puntaje del modelo \1"),
-    (r"common in gnomAD: grpmax (\S+) >= (\S+) \(protein-level call: (.+?)\); frequent variants can still cause "
-     r"recessive or founder disease",
-     lambda m: f"frecuente en gnomAD: grpmax {m.group(1)} ≥ {m.group(2)} (predicción a nivel de proteína: "
-               f"{PREDICTION_ES.get(m.group(3), m.group(3))}); una variante frecuente aún puede causar una enfermedad "
-               "recesiva o de efecto fundador"),
+    (
+        r"common in gnomAD: grpmax (\S+) >= (\S+) \(protein-level call: (.+?)\); frequent variants can still cause "
+        r"recessive or founder disease",
+        lambda m: (
+            f"frecuente en gnomAD: grpmax {m.group(1)} ≥ {m.group(2)} (predicción a nivel de proteína: "
+            f"{PREDICTION_ES.get(m.group(3), m.group(3))}); una variante frecuente aún puede causar una enfermedad "
+            "recesiva o de efecto fundador"
+        ),
+    ),
     (r"^common: BA1 \(grpmax (\S+)\)$", r"común: BA1 (grpmax \1)"),
-    (r"^frequent, but on the ClinGen BA1 exception list \(grpmax (\S+)\)$",
-     r"frecuente, pero está en la lista de excepciones a BA1 de ClinGen (grpmax \1)"),
+    (
+        r"^frequent, but on the ClinGen BA1 exception list \(grpmax (\S+)\)$",
+        r"frecuente, pero está en la lista de excepciones a BA1 de ClinGen (grpmax \1)",
+    ),
     (r"^frequent: BS1 candidate \(grpmax (\S+)\)$", r"frecuente: posible BS1 (grpmax \1)"),
     (r"^rare \(grpmax (\S+)\)$", r"rara (grpmax \1)"),
     (r"^not found in gnomAD$", "no encontrada en gnomAD"),
     (r"^absent from (gnomAD v[\d.]+)$", r"ausente de \1"),
-    (r"^no gnomAD frequency in Ensembl's data \(not checked in gnomAD\)$",
-     "sin frecuencia de gnomAD en los datos de Ensembl (no consultado en gnomAD)"),
+    (
+        r"^no gnomAD frequency in Ensembl's data \(not checked in gnomAD\)$",
+        "sin frecuencia de gnomAD en los datos de Ensembl (no consultado en gnomAD)",
+    ),
     (r"(\d+%) of exomes", r"\1 de los exomas"),
-    (r"^PM2_Supporting \(absent from (gnomAD v[\d.]+); >= 20 reads in (.+)\)$",
-     r"PM2_Supporting (ausente de \1; ≥ 20 lecturas en \2)"),
-    (r"^not applicable \(absent from (gnomAD v[\d.]+), but few reads there: >= 20 reads in (.+)\)$",
-     r"no aplicable (ausente de \1, pero con pocas lecturas: ≥ 20 lecturas en \2)"),
-    (r"^depends on the disease \(present in gnomAD(, failing gnomAD quality filters)?; compare with its maximum "
-     r"credible frequency\)$",
-     lambda m: "depende de la enfermedad (presente en gnomAD" + (", sin pasar sus filtros de calidad" if m.group(1)
-                                                                  else "") + "; compárese con su frecuencia máxima creíble)"),
+    (
+        r"^PM2_Supporting \(absent from (gnomAD v[\d.]+); >= 20 reads in (.+)\)$",
+        r"PM2_Supporting (ausente de \1; ≥ 20 lecturas en \2)",
+    ),
+    (
+        r"^not applicable \(absent from (gnomAD v[\d.]+), but few reads there: >= 20 reads in (.+)\)$",
+        r"no aplicable (ausente de \1, pero con pocas lecturas: ≥ 20 lecturas en \2)",
+    ),
+    (
+        r"^depends on the disease \(present in gnomAD(, failing gnomAD quality filters)?; compare with its maximum "
+        r"credible frequency\)$",
+        lambda m: (
+            "depende de la enfermedad (presente en gnomAD"
+            + (", sin pasar sus filtros de calidad" if m.group(1) else "")
+            + "; compárese con su frecuencia máxima creíble)"
+        ),
+    ),
     (r"^not met \(frequent in gnomAD\)$", "no se cumple (frecuente en gnomAD)"),
-    (r"^none \(no pathogenic missense variant at this residue in ClinVar\)$",
-     "ninguna (ClinVar no tiene variantes missense patogénicas en este residuo)"),
-    (r"^not applied \(SpliceAI (\S+): the variant may act on splicing\)$",
-     r"no aplicada (SpliceAI \1: la variante podría actuar sobre el splicing)"),
+    (
+        r"^none \(no pathogenic missense variant at this residue in ClinVar\)$",
+        "ninguna (ClinVar no tiene variantes missense patogénicas en este residuo)",
+    ),
+    (
+        r"^not applied \(SpliceAI (\S+): the variant may act on splicing\)$",
+        r"no aplicada (SpliceAI \1: la variante podría actuar sobre el splicing)",
+    ),
     (r"^not checked \(ClinVar turned off\)$", "no consultado (ClinVar desactivado)"),
     (r"^not checked \(offline\)$", "no consultado (sin conexión)"),
     (r"^not checked \(ClinVar did not respond\)$", "no consultado (ClinVar no respondió)"),
@@ -319,8 +443,10 @@ PHRASES_ES = [
     (r": Likely pathogenic, (\d)★", r": probablemente patogénica, \1★"),
     (r"; and (\d+) more\)$", r"; y \1 más)"),
     (r"^none \((.+), indeterminate\)$", r"ninguna (\1, indeterminado)"),
-    (r"frameshift: downstream sequence changes, not reconstructed",
-     "cambio del marco de lectura: la secuencia posterior cambia y no se reconstruye"),
+    (
+        r"frameshift: downstream sequence changes, not reconstructed",
+        "cambio del marco de lectura: la secuencia posterior cambia y no se reconstruye",
+    ),
     (r"HIGH impact consequence", "consecuencia de impacto ALTO"),
     (r"no scores available", "sin puntuaciones disponibles"),
     (r"\(may also affect splicing\)", "(también puede afectar el splicing)"),
@@ -332,7 +458,10 @@ PHRASES_ES = [
     (r"proline lost", "se pierde una prolina"),
     (r"glycine lost \(backbone flexibility\)", "se pierde una glicina (flexibilidad del esqueleto)"),
     (r"glycine introduced", "se introduce glicina"),
-    (r"cysteine lost \(possible disulfide/metal site\)", "se pierde una cisteína (posible puente disulfuro o sitio metálico)"),
+    (
+        r"cysteine lost \(possible disulfide/metal site\)",
+        "se pierde una cisteína (posible puente disulfuro o sitio metálico)",
+    ),
     (r"cysteine introduced \(unpaired thiol\)", "se introduce cisteína (tiol libre)"),
     (r"\bcharge ([+-]\d) -> ([+-]\d)", r"carga \1 → \2"),
     (r"\bmoderately conservative\b", "moderadamente conservador"),
@@ -346,69 +475,128 @@ PHRASES_ES = [
     (r"\bheterozygous\b", "heterocigota"),
     (r"\bhomozygous\b", "homocigota"),
     (r"\bhemizygous\b", "hemicigota"),
-    (r"UniProt canonical isoform differs from transcript; features mapped by local sequence match",
-     "La isoforma canónica de UniProt difiere del transcrito; las anotaciones se asignaron por coincidencia local"),
-    (r"UniProt canonical numbering differs from this transcript; UniProt/AlphaFold features skipped",
-     "La numeración de UniProt difiere de este transcrito; se omitieron UniProt/AlphaFold"),
+    (
+        r"UniProt canonical isoform differs from transcript; features mapped by local sequence match",
+        "La isoforma canónica de UniProt difiere del transcrito; las anotaciones se asignaron por coincidencia local",
+    ),
+    (
+        r"UniProt canonical numbering differs from this transcript; UniProt/AlphaFold features skipped",
+        "La numeración de UniProt difiere de este transcrito; se omitieron UniProt/AlphaFold",
+    ),
     (r"^Gene\(s\) not found in Ensembl: ", "Gen(es) no encontrados en Ensembl: "),
     (r"unknown gene or transcript symbol", "gen o transcrito desconocido"),
-    (r"^(.+?) did not respond for (\d+) item\(s\) \((.*)\)\. Affected rows are marked in 'notes'\. Run the analysis "
-     r"again to retry: everything already obtained is cached\.$",
-     r"\1 no respondió para \2 elemento(s) (\3). Las filas afectadas están marcadas en «notas». Vuelve a ejecutar "
-     r"el análisis para reintentar: lo ya obtenido está en caché."),
-    (r"^(.+?) did not respond \((.*)\)\. Affected rows are marked in 'notes'\. Run the analysis again to retry: "
-     r"everything already obtained is cached\.$",
-     r"\1 no respondió (\2). Las filas afectadas están marcadas en «notas». Vuelve a ejecutar el análisis para "
-     r"reintentar: lo ya obtenido está en caché."),
-    (r"predictors unavailable \(service error; run again to retry\)",
-     "predictores no disponibles (fallo del servicio; vuelve a ejecutar para reintentar)"),
+    (
+        r"^(.+?) did not respond for (\d+) item\(s\) \((.*)\)\. Affected rows are marked in 'notes'\. Run the analysis "
+        r"again to retry: everything already obtained is cached\.$",
+        r"\1 no respondió para \2 elemento(s) (\3). Las filas afectadas están marcadas en «notas». Vuelve a ejecutar "
+        r"el análisis para reintentar: lo ya obtenido está en caché.",
+    ),
+    (
+        r"^(.+?) did not respond \((.*)\)\. Affected rows are marked in 'notes'\. Run the analysis again to retry: "
+        r"everything already obtained is cached\.$",
+        r"\1 no respondió (\2). Las filas afectadas están marcadas en «notas». Vuelve a ejecutar el análisis para "
+        r"reintentar: lo ya obtenido está en caché.",
+    ),
+    (
+        r"predictors unavailable \(service error; run again to retry\)",
+        "predictores no disponibles (fallo del servicio; vuelve a ejecutar para reintentar)",
+    ),
     (r"ClinVar unavailable \(service error\)", "ClinVar no disponible (fallo del servicio)"),
     (r"UniProt unavailable \(service error\)", "UniProt no disponible (fallo del servicio)"),
     (r"AlphaFold unavailable \(service error\)", "AlphaFold no disponible (fallo del servicio)"),
     (r"protein sequence unavailable \(service error\)", "secuencia de proteína no disponible (fallo del servicio)"),
-    (r"Gene coordinates unavailable: the gene filter is applied after annotation \(slower for large files\)\.",
-     "Coordenadas de genes no disponibles: el filtro de genes se aplica después de anotar (más lento en archivos grandes)."),
+    (
+        r"Gene coordinates unavailable: the gene filter is applied after annotation \(slower for large files\)\.",
+        "Coordenadas de genes no disponibles: el filtro de genes se aplica después de anotar "
+        "(más lento en archivos grandes).",
+    ),
     (r"Genome build not verified \(offline\); assuming (\S+)\.", r"Genoma no verificado (sin conexión); se asume \1."),
-    (r"No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold are skipped\.",
-     "Sin conexión a internet: solo se usa VEP local; se omiten ClinVar, UniProt y AlphaFold."),
-    (r"Cannot reach the Ensembl REST API \(rest\.ensembl\.org\)\. Check the internet connection, or use the local "
-     r"VEP mode for VCF/genomic input\.",
-     "No hay conexión con la API de Ensembl (rest.ensembl.org). Revisa la conexión a internet o usa el modo VEP local "
-     "para VCF o coordenadas genómicas."),
-    (r"local VEP needs genomic coordinates \(VCF or chrom:pos ref>alt\); HGVS and rsIDs need the online mode",
-     "VEP local necesita coordenadas genómicas (VCF o chrom:pos ref>alt); HGVS y rsIDs requieren el modo en línea"),
+    (
+        r"No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold are skipped\.",
+        "Sin conexión a internet: solo se usa VEP local; se omiten ClinVar, UniProt y AlphaFold.",
+    ),
+    (
+        r"Cannot reach the Ensembl REST API \(rest\.ensembl\.org\)\. Check the internet connection, or use the local "
+        r"VEP mode for VCF/genomic input\.",
+        "No hay conexión con la API de Ensembl (rest.ensembl.org). Revisa la conexión a internet o usa el modo "
+        "VEP local para VCF o coordenadas genómicas.",
+    ),
+    (
+        r"local VEP needs genomic coordinates \(VCF or chrom:pos ref>alt\); HGVS and rsIDs need the online mode",
+        "VEP local necesita coordenadas genómicas (VCF o chrom:pos ref>alt); HGVS y rsIDs requieren el modo en línea",
+    ),
     (r"could not run local VEP", "no se pudo ejecutar VEP local"),
     (r"local VEP exited with code", "VEP local terminó con el código"),
-    (r"VEP could not map this variant \(check the assembly and the alleles\)",
-     "VEP no pudo ubicar esta variante (revisa el genoma y los alelos)"),
-    (r"VEP could not map this variant \(check notation/assembly\)",
-     "VEP no pudo ubicar esta variante (revisa la notación y el genoma)"),
-    (r"reference allele does not match the genome/transcript", "el alelo de referencia no coincide con el genoma/transcrito"),
-    (r"needs a gene, e\.g\. 'BRAF V600E' \(or set the default gene\)",
-     "falta el gen, p. ej. «BRAF V600E» (o define el gen por defecto)"),
+    (
+        r"VEP could not map this variant \(check the assembly and the alleles\)",
+        "VEP no pudo ubicar esta variante (revisa el genoma y los alelos)",
+    ),
+    (
+        r"VEP could not map this variant \(check notation/assembly\)",
+        "VEP no pudo ubicar esta variante (revisa la notación y el genoma)",
+    ),
+    (
+        r"reference allele does not match the genome/transcript",
+        "el alelo de referencia no coincide con el genoma/transcrito",
+    ),
+    (
+        r"needs a gene, e\.g\. 'BRAF V600E' \(or set the default gene\)",
+        "falta el gen, p. ej. «BRAF V600E» (o define el gen por defecto)",
+    ),
     (r"unrecognised variant format", "formato de variante no reconocido"),
-    (r"REF alleles match (\S+) \((\d+%)\) better than (\S+) \((\d+%)\); using (\S+)\.",
-     r"Los alelos REF coinciden mejor con \1 (\2) que con \3 (\4); se usa \5."),
-    (r"Only (\d+%) of checked REF alleles match (\S+)(.*?)\. Check the genome build and coordinates\.",
-     r"Solo el \1 de los alelos REF revisados coincide con \2\3. Revisa el genoma y las coordenadas."),
-    (r"Multi-sample VCF \((\d+) samples\): carriers listed per variant\. Choose one sample to get its zygosity\.",
-     r"VCF multimuestra (\1 muestras): se listan los portadores por variante. Elige una muestra para ver su cigosidad."),
+    (
+        r"REF alleles match (\S+) \((\d+%)\) better than (\S+) \((\d+%)\); using (\S+)\.",
+        r"Los alelos REF coinciden mejor con \1 (\2) que con \3 (\4); se usa \5.",
+    ),
+    (
+        r"Only (\d+%) of checked REF alleles match (\S+)(.*?)\. Check the genome build and coordinates\.",
+        r"Solo el \1 de los alelos REF revisados coincide con \2\3. Revisa el genoma y las coordenadas.",
+    ),
+    (
+        r"Multi-sample VCF \((\d+) samples\): carriers listed per variant\. Choose one sample to get its zygosity\.",
+        r"VCF multimuestra (\1 muestras): se listan los portadores por variante. "
+        r"Elige una muestra para ver su cigosidad.",
+    ),
     (r"could not parse", "no se pudo interpretar"),
 ]
 
-AA_CLASS_ES = {"hydrophobic": "hidrofóbico", "aromatic": "aromático", "polar": "polar", "positive": "positivo",
-               "negative": "negativo", "glycine": "glicina", "proline": "prolina"}
+AA_CLASS_ES: dict[str, str] = {
+    "hydrophobic": "hidrofóbico",
+    "aromatic": "aromático",
+    "polar": "polar",
+    "positive": "positivo",
+    "negative": "negativo",
+    "glycine": "glicina",
+    "proline": "prolina",
+}
 
-AA_NAMES_ES = {
-    "A": "Alanina", "R": "Arginina", "N": "Asparagina", "D": "Aspartato", "C": "Cisteína", "Q": "Glutamina",
-    "E": "Glutamato", "G": "Glicina", "H": "Histidina", "I": "Isoleucina", "L": "Leucina", "K": "Lisina",
-    "M": "Metionina", "F": "Fenilalanina", "P": "Prolina", "S": "Serina", "T": "Treonina", "W": "Triptófano",
-    "Y": "Tirosina", "V": "Valina", "*": "Stop",
+AA_NAMES_ES: dict[str, str] = {
+    "A": "Alanina",
+    "R": "Arginina",
+    "N": "Asparagina",
+    "D": "Aspartato",
+    "C": "Cisteína",
+    "Q": "Glutamina",
+    "E": "Glutamato",
+    "G": "Glicina",
+    "H": "Histidina",
+    "I": "Isoleucina",
+    "L": "Leucina",
+    "K": "Lisina",
+    "M": "Metionina",
+    "F": "Fenilalanina",
+    "P": "Prolina",
+    "S": "Serina",
+    "T": "Treonina",
+    "W": "Triptófano",
+    "Y": "Tirosina",
+    "V": "Valina",
+    "*": "Stop",
 }
 _PHRASES = [(re.compile(a), b) for a, b in PHRASES_ES]
 
 
-STAGES_ES = {
+STAGES_ES: dict[str, str] = {
     "Reading input": "Leyendo la entrada",
     "Checking genome build": "Comprobando el genoma",
     "Annotating variants (VEP)": "Anotando variantes (VEP)",
@@ -423,17 +611,27 @@ STAGES_ES = {
 }
 
 
-CALLS_ES = {
-    "likely_pathogenic": "probablemente patogénica", "likely_benign": "probablemente benigna", "ambiguous": "ambigua",
-    "pathogenic": "patogénica", "benign": "benigna", "uncertain": "incierta",
-    "deleterious": "deletérea", "deleterious_low_confidence": "deletérea (baja confianza)",
-    "tolerated": "tolerada", "tolerated_low_confidence": "tolerada (baja confianza)",
-    "probably_damaging": "probablemente dañina", "possibly_damaging": "posiblemente dañina", "unknown": "desconocida",
-    "likely splice-altering": "probable alteración del splicing", "possible": "posible",
+CALLS_ES: dict[str, str] = {
+    "likely_pathogenic": "probablemente patogénica",
+    "likely_benign": "probablemente benigna",
+    "ambiguous": "ambigua",
+    "pathogenic": "patogénica",
+    "benign": "benigna",
+    "uncertain": "incierta",
+    "deleterious": "deletérea",
+    "deleterious_low_confidence": "deletérea (baja confianza)",
+    "tolerated": "tolerada",
+    "tolerated_low_confidence": "tolerada (baja confianza)",
+    "probably_damaging": "probablemente dañina",
+    "possibly_damaging": "posiblemente dañina",
+    "unknown": "desconocida",
+    "likely splice-altering": "probable alteración del splicing",
+    "possible": "posible",
 }
 
 
 def tr_call(call: str | None) -> str:
+    """Translate a predictor's call (e.g. ``likely_pathogenic``, ``deleterious``); ``""`` when there is none."""
     if not call:
         return ""
     if LANG == "es":
@@ -442,15 +640,21 @@ def tr_call(call: str | None) -> str:
 
 
 def tr_stage(stage: str) -> str:
+    """Translate the name of a pipeline stage shown under the progress bar."""
     return STAGES_ES.get(stage, stage) if LANG == "es" else stage
 
 
 def set_language(lang: str) -> None:
+    """Switch the UI language: Spanish for any code starting with ``es`` (e.g. ``es_CO``), else English."""
     global LANG
     LANG = "es" if lang.lower().startswith("es") else "en"
 
 
-def t(key: str, **kw) -> str:
+def t(key: str, **kw: object) -> str:
+    """Return the UI string ``key`` in the current language, formatted with ``kw``.
+
+    Unknown keys are returned unchanged (formatted with ``kw`` when given).
+    """
     pair = S.get(key)
     if pair is None:
         return key.format(**kw) if kw else key
@@ -459,18 +663,21 @@ def t(key: str, **kw) -> str:
 
 
 def tr_prediction(label: str | None) -> str:
+    """Translate a prediction label from ``predict.classify()``; ``""`` when there is none."""
     if not label:
         return ""
     return PREDICTION_ES.get(label, label) if LANG == "es" else label
 
 
 def aa_name(code: str) -> str:
+    """Return the name, in the current language, of a one-letter amino-acid code (``*`` is the stop codon)."""
     from ..aa import AA_NAMES
 
     return (AA_NAMES_ES if LANG == "es" else AA_NAMES).get(code, code)
 
 
 def aa_class(name: str | None) -> str:
+    """Translate an amino-acid class (``hydrophobic``, ``polar``, ...); ``""`` when there is none."""
     if not name:
         return ""
     return AA_CLASS_ES.get(name, name) if LANG == "es" else name

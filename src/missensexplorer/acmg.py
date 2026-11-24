@@ -27,17 +27,51 @@ BA1 exception list are never called benign for being common.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Any, TypeAlias, TypedDict, cast
+
 from . import model
-from .calibration_params import CALIBRATION
+from ._types import Row
+from .calibration_params import CALIBRATION as _CALIBRATION
 from .model_params import MODEL
+
+Thresholds: TypeAlias = Sequence[tuple[float, int]]
+"""Score cut-offs with their points, strongest first: ``((cut-off, points), ...)``."""
+
+
+class Calibration(TypedDict):
+    """Shape of ``calibration_params.CALIBRATION``, written by benchmarks/calibrate_acmg.py.
+
+    Attributes:
+        model_version: Version of the model the thresholds were calibrated for.
+        model_trained: Training date of that model.
+        calibrated: Date of the calibration.
+        method: How the thresholds were derived.
+        pp3: Model-score cut-offs for PP3 (score >= cut-off), strongest first.
+        bp4: Model-score cut-offs for BP4 (score <= cut-off; negative points), strongest first.
+    """
+
+    model_version: str
+    model_trained: str
+    calibrated: str
+    method: str
+    pp3: Thresholds
+    bp4: Thresholds
+
+
+CALIBRATION = cast(Calibration, _CALIBRATION)
 
 SOURCES = ("model", "revel")
 # The thresholds belong to one trained model: after retraining they apply only once recalibrated.
 MODEL_CALIBRATED = bool(CALIBRATION["pp3"]) and (CALIBRATION["model_version"], CALIBRATION["model_trained"]) == (
-    MODEL["version"], MODEL["trained"])
+    MODEL["version"],
+    MODEL["trained"],
+)
 
+# REVEL: Pejaver et al. 2022, as reprinted in Bergquist et al. 2025, Table 1.
 REVEL_PP3 = ((0.932, 4), (0.879, 3), (0.773, 2), (0.644, 1))
 REVEL_BP4 = ((0.016, -4), (0.052, -3), (0.183, -2), (0.290, -1))
+# AlphaMissense: Bergquist et al., Genet Med 2025.
 AM_PP3 = ((0.990, 4), (0.972, 3), (0.906, 2), (0.792, 1))
 AM_BP4 = ((0.070, -3), (0.099, -2), (0.169, -1))
 STRENGTH = {1: "Supporting", 2: "Moderate", 3: "Moderate", 4: "Strong"}
@@ -61,8 +95,12 @@ BA1_EXCEPTIONS = {
     ("rs13078881", "C"): "BTD NM_000060.4:c.1330G>C (p.Asp444His)",
 }
 
+# Points of the PS1/PM5 (residue.py) and PM2 codes, which are stored without their points.
+CODE_POINTS = {"PS1": 4, "PS1_Moderate": 2, "PM5": 2, "PM5_Supporting": 1, "PM2_Supporting": 1}
 
-def _num(x) -> float | None:
+
+def _num(x: Any) -> float | None:
+    """Return ``x`` as a float, or None when it is missing, not a number or NaN."""
     try:
         v = float(x)
     except (TypeError, ValueError):
@@ -70,7 +108,8 @@ def _num(x) -> float | None:
     return None if v != v else v
 
 
-def _points(s: float, pp3, bp4) -> int:
+def _points(s: float, pp3: Thresholds, bp4: Thresholds) -> int:
+    """Return the ACMG/AMP points of score ``s``: positive for PP3, negative for BP4, 0 in between."""
     for lo, p in pp3:
         if s >= lo:
             return p
@@ -80,33 +119,59 @@ def _points(s: float, pp3, bp4) -> int:
     return 0
 
 
-def _evidence(s: float, pp3, bp4, shown: str) -> tuple[str, int]:
+def _evidence(s: float, pp3: Thresholds, bp4: Thresholds, shown: str) -> tuple[str, int]:
+    """Return the PP3/BP4 text and points of score ``s``; ``shown`` names the score in the text."""
     pts = _points(s, pp3, bp4)
     if pts == 0:
         return f"none ({shown}, indeterminate)", 0
     return f"{'PP3_' if pts > 0 else 'BP4_'}{STRENGTH[abs(pts)]} ({shown})", pts
 
 
-def computational(row: dict, source: str = "model") -> tuple[str | None, int | None]:
-    """('PP3_Strong (model 0.995)', 4), ('none (REVEL 0.500, indeterminate)', 0) or (None, None)."""
+def computational(row: Row, source: str = "model") -> tuple[str | None, int | None]:
+    """Return the PP3/BP4 evidence of a row and its points.
+
+    Examples: ('PP3_Strong (model 0.995)', 4), ('none (REVEL 0.500, indeterminate)', 0) or (None, None).
+
+    Args:
+        row: One results row; reads the predictor columns (``revel``, ``alphamissense``, ...).
+        source: ``"model"`` (the model score with its own calibration, when the shipped model is the
+            calibrated one; otherwise as ``"revel"``) or ``"revel"`` (ClinGen's REVEL intervals,
+            AlphaMissense when REVEL has no score).
+
+    Returns:
+        The evidence text and its points (negative for BP4, 0 when indeterminate), or (None, None)
+        when the row has no usable score.
+
+    Raises:
+        ValueError: If ``source`` is not one of :data:`SOURCES`.
+    """
     if source not in SOURCES:
         raise ValueError(f"unknown PP3/BP4 source {source!r}; use one of {SOURCES}")
     if source == "model" and MODEL_CALIBRATED:
         ms = model.score(row)
         if ms is None:
             return None, None
-        s = round(ms.p, 3)              # the value shown is the value compared (thresholds lie on a 0.001 grid)
+        s = round(ms.p, 3)  # the value shown is the value compared (thresholds lie on a 0.001 grid)
         return _evidence(s, CALIBRATION["pp3"], CALIBRATION["bp4"], f"model {s:.3f}")
-    for tool, col, pp3, bp4 in (("REVEL", "revel", REVEL_PP3, REVEL_BP4),
-                                ("AlphaMissense", "alphamissense", AM_PP3, AM_BP4)):
-        s = _num(row.get(col))
-        if s is not None:
-            return _evidence(s, pp3, bp4, f"{tool} {s:.3f}")
+    for tool, col, pp3, bp4 in (
+        ("REVEL", "revel", REVEL_PP3, REVEL_BP4),
+        ("AlphaMissense", "alphamissense", AM_PP3, AM_BP4),
+    ):
+        value = _num(row.get(col))
+        if value is not None:
+            return _evidence(value, pp3, bp4, f"{tool} {value:.3f}")
     return None, None
 
 
-def ba1_exception(row: dict) -> str | None:
-    """The ClinGen BA1 exception this variant matches, if any."""
+def ba1_exception(row: Row) -> str | None:
+    """Return the ClinGen BA1 exception this variant matches, if any.
+
+    Args:
+        row: One results row; reads ``rsid`` (comma-separated dbSNP ids) and ``alt`` (forward strand).
+
+    Returns:
+        The exception's description (gene, transcript change), or None.
+    """
     rsids = [x.strip() for x in str(row.get("rsid") or "").split(",") if x.strip()]
     alt = str(row.get("alt") or "").upper()
     for rs in rsids:
@@ -116,8 +181,18 @@ def ba1_exception(row: dict) -> str | None:
     return None
 
 
-def pm2(row: dict, info: dict | None) -> tuple[str | None, int | None]:
-    """PM2 from the direct gnomAD check (`info`, from gnomad.lookup) or Ensembl's frequency."""
+def pm2(row: Row, info: dict[str, Any] | None) -> tuple[str | None, int | None]:
+    """Return PM2 from the direct gnomAD check (`info`, from gnomad.lookup) or Ensembl's frequency.
+
+    Args:
+        row: One results row; reads ``gnomad_popmax_af`` and ``gnomad_af``.
+        info: The variant's entry from :func:`missensexplorer.gnomad.lookup`, or None when gnomAD was
+            not asked.
+
+    Returns:
+        The PM2 text and its points (1 for PM2_Supporting, otherwise 0), or (None, None) when no
+        frequency information is available.
+    """
     from .gnomad import covered
 
     af = _num(row.get("gnomad_popmax_af")) or _num(row.get("gnomad_af"))
@@ -135,8 +210,17 @@ def pm2(row: dict, info: dict | None) -> tuple[str | None, int | None]:
     return None, None
 
 
-def codes(row: dict) -> str | None:
-    """The criteria this row meets, with points: 'PP3_Strong +4, PM5 +2, PM2_Supporting +1'."""
+def codes(row: Row) -> str | None:
+    """Return the criteria this row meets, with points: 'PP3_Strong +4, PM5 +2, PM2_Supporting +1'.
+
+    Args:
+        row: One results row with the ``acmg_pp3_bp4``, ``acmg_points``, ``acmg_ps1_pm5``, ``acmg_pm2``
+            and ``population_frequency`` columns already filled.
+
+    Returns:
+        The comma-separated codes (BA1 is added as stand-alone benign evidence), or None when no
+        criterion is met.
+    """
     out = []
     for col, pts_col in (("acmg_pp3_bp4", "acmg_points"), ("acmg_ps1_pm5", None), ("acmg_pm2", None)):
         text = str(row.get(col) or "")
@@ -150,17 +234,23 @@ def codes(row: dict) -> str | None:
     return ", ".join(out) or None
 
 
-CODE_POINTS = {"PS1": 4, "PS1_Moderate": 2, "PM5": 2, "PM5_Supporting": 1, "PM2_Supporting": 1}
-
-
 def _pct(af: float) -> str:
     """6.2%, 0.0012%, 0.00009% (two significant digits, never in scientific notation)."""
     v = af * 100
     return f"{v:.2g}%" if v >= 1e-3 else f"{float(f'{v:.2g}'):.10f}".rstrip("0").rstrip(".") + "%"
 
 
-def frequency(row: dict) -> str | None:
-    """Population-frequency evidence from the gnomAD grpmax allele frequency."""
+def frequency(row: Row) -> str | None:
+    """Return the population-frequency evidence from the gnomAD grpmax allele frequency.
+
+    Args:
+        row: One results row; reads ``chrom``, ``gnomad_popmax_af``, ``gnomad_af``, ``rsid``, ``alt``
+            and ``_gnomad`` (the direct gnomAD check, if one was made).
+
+    Returns:
+        A text such as 'common: BA1 (grpmax 6.2%)' or 'rare (grpmax 0.002%)', or None for mitochondrial
+        variants and for variants with an overall but no grpmax frequency.
+    """
     if str(row.get("chrom") or "").upper() in ("MT", "M", "CHRM"):
         return None  # mitochondrial heteroplasmy is not in the gnomAD nuclear frequencies
     af = _num(row.get("gnomad_popmax_af"))

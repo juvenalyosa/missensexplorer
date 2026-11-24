@@ -227,8 +227,17 @@ res.sequences      # wild-type and mutant protein sequences per row
 All lookups are batched: up to 200 variants per Ensembl VEP request, run in parallel. For more
 than 200 variants, a fast first pass finds the coding and splice variants, and only those go
 through the slower predictor plugins. Every answer is cached in `~/.cache/missensexplorer`, so a
-repeated run is almost instant. As a reference, 1,000 VCF variants take about 40 s the first time
-and about 1 s from the cache.
+repeated run is almost instant.
+
+As a reference, 300 ClinVar missense variants (all coding, so all go through every step) took on
+the first run:
+- 5.7 min with `--no-gnomad-check`, and 11 min with everything on;
+- under a second from the cache, without protein context.
+
+Most of the time goes to the Ensembl annotation and predictors: 2.5 to 4.5 min, depending on how
+busy Ensembl is. The rest goes to the gnomAD check (about 2 min for 71 variants) and to UniProt and
+AlphaFold (2 to 4 min that day, while AlphaFold DB was rate-limiting requests). A typical VCF is faster per variant, because most of its variants are not coding and
+skip the predictors.
 
 The direct gnomAD check is slower: gnomAD's public API takes about 10 requests a minute (25
 variants each, or the coverage of 4 positions), and only variants without a frequency in Ensembl's
@@ -318,10 +327,15 @@ modern predictors, protein structure and a web interface. The rewrite also fixes
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the code style and the checks every change must pass,
+and [docs/architecture.md](docs/architecture.md) for how the modules fit together.
+
 ```bash
 pip install -e ".[dev,gui]"
+pre-commit install     # ruff and mypy on every commit
 pytest                 # fast offline tests (the desktop tests run headless)
 pytest -m network      # live end-to-end tests against the public APIs
+ruff check . && ruff format --check . && mypy   # lint, formatting, types (as in CI)
 
 pip install -e ".[benchmark]"
 python benchmarks/train_model.py        # retrain the missense model (benchmark genes held out)

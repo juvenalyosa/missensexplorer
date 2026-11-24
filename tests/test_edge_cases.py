@@ -29,12 +29,15 @@ def _row(text, results, gene, assembly="GRCh38"):
     return r, label, score
 
 
-@pytest.mark.parametrize("text,key,gene,change,label", [
-    ("BRCA1:c.68_69del", "BRCA1:c.68_69del", "BRCA1", "E23Vfs*17", "Loss of function (truncating)"),
-    ("TP53:c.1A>G", "TP53:c.1A>G", "TP53", "M1?", "Loss of function (start codon lost)"),
-    ("TP53:c.375+1G>A", "TP53:c.375+1G>A", "TP53", None, "Loss of function (canonical splice site)"),
-    ("TP53:c.375G>A", "TP53:c.375G>A", "TP53", "T125=", "Likely splice-altering"),
-])
+@pytest.mark.parametrize(
+    ("text", "key", "gene", "change", "label"),
+    [
+        ("BRCA1:c.68_69del", "BRCA1:c.68_69del", "BRCA1", "E23Vfs*17", "Loss of function (truncating)"),
+        ("TP53:c.1A>G", "TP53:c.1A>G", "TP53", "M1?", "Loss of function (start codon lost)"),
+        ("TP53:c.375+1G>A", "TP53:c.375+1G>A", "TP53", None, "Loss of function (canonical splice site)"),
+        ("TP53:c.375G>A", "TP53:c.375G>A", "TP53", "T125=", "Likely splice-altering"),
+    ],
+)
 def test_hgvs_edge_cases(text, key, gene, change, label):
     r, got, score = _row(text, [HGVS[key]], gene)
     assert r["protein_change"] == change
@@ -55,29 +58,37 @@ def test_synonymous_splice_score_is_used():
 
 def test_mitochondrial_missense():
     r, label, _ = _row("MT 3460 G A", [REGION["MT 3460 . G A . . ."]], "MT-ND1")
-    assert r["protein_change"] == "A52T" and r["uniprot"] == "P03886"
-    assert label.startswith("Likely damaging")       # SIFT + PolyPhen only
+    assert r["protein_change"] == "A52T"
+    assert r["uniprot"] == "P03886"
+    assert label.startswith("Likely damaging")  # SIFT + PolyPhen only
     assert r["grantham"] == 58
 
 
 def test_chromosome_x_hemizygous_from_vcf():
-    vcf = ["##fileformat=VCFv4.2", "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBOY",
-           "X\t31478302\t.\tG\tA\t.\tPASS\t.\tGT\t1"]
+    vcf = [
+        "##fileformat=VCFv4.2",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBOY",
+        "X\t31478302\t.\tG\tA\t.\tPASS\t.\tGT\t1",
+    ]
     v = read_vcf(vcf).variants[0]
     assert v.zygosity == "hemizygous"
-    rows = [r for r in _rows_for_variant(v, [REGION["X 31478302 . G A . . ."]], "GRCh38", None, False)
-            if r["gene"] == "DMD"]
-    assert rows[0]["protein_change"] == "E2914V" and rows[0]["zygosity"] == "hemizygous"
+    rows = [
+        r for r in _rows_for_variant(v, [REGION["X 31478302 . G A . . ."]], "GRCh38", None, False) if r["gene"] == "DMD"
+    ]
+    assert rows[0]["protein_change"] == "E2914V"
+    assert rows[0]["zygosity"] == "hemizygous"
 
 
 def test_multiallelic_record_gives_one_row_per_allele():
-    vcf = ["##fileformat=VCFv4.2", "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
-           "17\t7673802\t.\tC\tT,A\t.\tPASS\t.\tGT\t1/2"]
+    vcf = [
+        "##fileformat=VCFv4.2",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+        "17\t7673802\t.\tC\tT,A\t.\tPASS\t.\tGT\t1/2",
+    ]
     parsed = read_vcf(vcf)
     assert [v.alt for v in parsed.variants] == ["T", "A"]
     assert {v.zygosity for v in parsed.variants} == {"heterozygous"}
-    both = [REGION["17 7673802 . C T . . ."],
-            REGION["17 7673802 . C A . . ."]]
+    both = [REGION["17 7673802 . C T . . ."], REGION["17 7673802 . C A . . ."]]
     changes = []
     for v in parsed.variants:  # even if VEP returned both alleles, each row keeps its own
         rows = [r for r in _rows_for_variant(v, both, "GRCh38", None, False) if r["gene"] == "TP53"]
@@ -87,5 +98,7 @@ def test_multiallelic_record_gives_one_row_per_allele():
 
 def test_grch37_braf():
     r, label, _ = _row("7 140453136 A T", [GRCH37["7 140453136 . A T . . ."]], "BRAF", "GRCh37")
-    assert r["protein_change"] == "V600E" and label == "Likely damaging"
-    assert r["alphamissense"] > 0.9 and r["assembly"] == "GRCh37"
+    assert r["protein_change"] == "V600E"
+    assert label == "Likely damaging"
+    assert r["alphamissense"] > 0.9
+    assert r["assembly"] == "GRCh37"

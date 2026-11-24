@@ -24,7 +24,9 @@ KRAS:p.(Gly12Asp)
 """)
     assert got == [
         ("hgvs", "BRAF:p.Val600Glu"),
-        ("hgvs", "TP53:p.Arg175His"), ("hgvs", "TP53:p.Arg248Gln"), ("hgvs", "TP53:p.Arg213Ter"),
+        ("hgvs", "TP53:p.Arg175His"),
+        ("hgvs", "TP53:p.Arg248Gln"),
+        ("hgvs", "TP53:p.Arg213Ter"),
         ("region", "7 140753336 . A T . . ."),
         ("region", "7 140753336 . A T . . ."),
         ("region", "7 140753336 . A T . . ."),
@@ -40,7 +42,8 @@ KRAS:p.(Gly12Asp)
 def test_default_gene_and_errors():
     assert kinds("V600E\nc.1799T>A", gene="BRAF") == [("hgvs", "BRAF:p.Val600Glu"), ("hgvs", "BRAF:c.1799T>A")]
     out = kinds("V600E\nthis is not a variant")
-    assert out[0] == ("error", "V600E") and all(k == "error" for k, _ in out)
+    assert out[0] == ("error", "V600E")
+    assert all(k == "error" for k, _ in out)
 
 
 def test_region_query_indels():
@@ -64,9 +67,13 @@ def test_vcf_single_sample_zygosity_and_skips():
     p = read_vcf(io.StringIO(VCF), sample="S1")
     assert p.assembly_hint == "GRCh38"
     assert [(v.chrom, v.pos, v.alt, v.zygosity) for v in p.variants] == [
-        ("7", 140753336, "T", "heterozygous"), ("17", 7673802, "T", "heterozygous"),
-        ("17", 7673802, "A", "heterozygous"), ("X", 5000, "A", "hemizygous")]
-    assert p.stats["skipped_not_carried"] == 1 and p.stats["skipped_symbolic"] == 1
+        ("7", 140753336, "T", "heterozygous"),
+        ("17", 7673802, "T", "heterozygous"),
+        ("17", 7673802, "A", "heterozygous"),
+        ("X", 5000, "A", "hemizygous"),
+    ]
+    assert p.stats["skipped_not_carried"] == 1
+    assert p.stats["skipped_symbolic"] == 1
     assert p.variants[0].vcf_id == "rs113488022"
 
 
@@ -85,6 +92,7 @@ def test_vcf_gene_regions_filter():
 
 def test_read_file_dispatch_gz_and_table(tmp_path):
     import gzip
+
     f = tmp_path / "x.vcf.gz"
     f.write_bytes(gzip.compress(VCF.encode()))
     assert len(read_file(str(f), sample="S2").variants) == 1

@@ -5,7 +5,12 @@ Run with:  missensexplorer gui     (or)     missensexplorer-gui
 
 from __future__ import annotations
 
+import contextlib
 import sys
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from .window import MainWindow
 
 
 def prepare_web_engine() -> None:
@@ -15,13 +20,19 @@ def prepare_web_engine() -> None:
     QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
     import importlib
 
-    try:
+    with contextlib.suppress(ImportError):
         importlib.import_module("PySide6.QtWebEngineWidgets")
-    except ImportError:
-        pass
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the desktop app until its window is closed.
+
+    Args:
+        argv: Command-line arguments for Qt, without the program name; None uses ``sys.argv``.
+
+    Returns:
+        The exit code: Qt's, or 1 when PySide6 is not installed.
+    """
     try:
         from PySide6.QtCore import QLocale, Qt
         from PySide6.QtWidgets import QApplication
@@ -35,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv if argv is None else [sys.argv[0], *argv])
     prepare_web_engine()
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-    app = QApplication.instance() or QApplication(argv)
+    app = cast(QApplication, QApplication.instance() or QApplication(argv))
     app.setApplicationName("MissensExplorer")
     app.setOrganizationName("MissensExplorer")
     app.setApplicationDisplayName("MissensExplorer")
@@ -47,13 +58,15 @@ def main(argv: list[str] | None = None) -> int:
 
     from . import logs
 
-    def unexpected(exc):
+    def unexpected(exc: BaseException) -> None:
+        """Tell the user about an uncaught exception (already written to the log)."""
         from PySide6.QtWidgets import QMessageBox
 
-        QMessageBox.warning(holder.get("win"), i18n.t("unexpected"),
-                            i18n.t("unexpected_body", path=str(logs.log_file())) + f"\n\n{exc}")
+        QMessageBox.warning(
+            holder.get("win"), i18n.t("unexpected"), i18n.t("unexpected_body", path=str(logs.log_file())) + f"\n\n{exc}"
+        )
 
-    holder: dict = {}
+    holder: dict[str, MainWindow] = {}
     logs.setup(unexpected)
     from .settings import app_settings
 
@@ -62,7 +75,8 @@ def main(argv: list[str] | None = None) -> int:
 
     from .window import MainWindow
 
-    def build(old=None):
+    def build(old: MainWindow | None = None) -> MainWindow:
+        """Create and show a main window, carrying over the inputs and results of ``old``."""
         win = MainWindow()
         win.language_changed.connect(switch)
         if old is not None:
@@ -72,7 +86,8 @@ def main(argv: list[str] | None = None) -> int:
         holder["win"] = win
         return win
 
-    def switch(lang: str):
+    def switch(lang: str) -> None:
+        """Save ``lang`` as the preferred language and rebuild the window in it."""
         settings.setValue("language", lang)
         if lang == i18n.LANG:
             return

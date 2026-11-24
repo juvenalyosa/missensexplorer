@@ -1,10 +1,10 @@
 """Command line interface.
 
-    missensexplorer "BRAF V600E" "TP53: R175H, R248Q" rs28934578
-    missensexplorer -f sample.vcf.gz --genes TP53,BRCA1 -o results.xlsx
-    missensexplorer --gene TP53 R175H R248Q R273H --fasta mutants.fa
-    missensexplorer web       # browser interface
-    missensexplorer gui       # desktop app (Qt)
+missensexplorer "BRAF V600E" "TP53: R175H, R248Q" rs28934578
+missensexplorer -f sample.vcf.gz --genes TP53,BRCA1 -o results.xlsx
+missensexplorer --gene TP53 R175H R248Q R273H --fasta mutants.fa
+missensexplorer web       # browser interface
+missensexplorer gui       # desktop app (Qt)
 """
 
 from __future__ import annotations
@@ -13,51 +13,100 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from . import __version__
 
+if TYPE_CHECKING:
+    from rich.console import Console
+
+    from .predict import PredictionResult, PredictOptions
+
 
 def _predict_parser() -> argparse.ArgumentParser:
+    """Return the parser of the predict command (the default command)."""
     p = argparse.ArgumentParser(
         prog="missensexplorer",
         description="Predict how DNA variants change the encoded human protein "
-                    "(Ensembl VEP + AlphaMissense, REVEL, CADD, EVE, SpliceAI, UniProt, AlphaFold).",
+        "(Ensembl VEP + AlphaMissense, REVEL, CADD, EVE, SpliceAI, UniProt, AlphaFold).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
     p.add_argument("variants", nargs="*", help="variants as text (use '-' to read from stdin)")
-    p.add_argument("-f", "--file", action="append", default=[], metavar="FILE",
-                   help="VCF/VCF.gz/CSV/TSV/XLSX/TXT input (repeatable)")
+    p.add_argument(
+        "-f",
+        "--file",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="VCF/VCF.gz/CSV/TSV/XLSX/TXT input (repeatable)",
+    )
     p.add_argument("-g", "--gene", help="default gene for bare changes such as 'V600E' or 'c.1799T>A'")
     p.add_argument("--genes", help="comma-separated genes: only report variants in these genes")
     p.add_argument("--sample", help="VCF sample to report (default: all carriers)")
     p.add_argument("--pass-only", action="store_true", help="VCF: keep only FILTER=PASS records")
-    p.add_argument("-a", "--assembly", default="auto", choices=["auto", "GRCh38", "GRCh37"],
-                   help="genome build for coordinates (default: auto-detect)")
+    p.add_argument(
+        "-a",
+        "--assembly",
+        default="auto",
+        choices=["auto", "GRCh38", "GRCh37"],
+        help="genome build for coordinates (default: auto-detect)",
+    )
     p.add_argument("--all", action="store_true", help="also report non-coding consequences")
     p.add_argument("--no-predictors", action="store_true", help="skip AlphaMissense/REVEL/CADD/EVE/SpliceAI (faster)")
     p.add_argument("--no-protein-context", action="store_true", help="skip UniProt/AlphaFold annotation")
-    p.add_argument("--vep", choices=["rest", "local"], default="rest",
-                   help="annotation engine: the public Ensembl REST API (default) or VEP on this computer")
-    p.add_argument("--vep-cmd", metavar="CMD",
-                   help="local VEP command (default: $MISSENSEXPLORER_VEP or 'vep --cache --offline'), e.g. "
-                        "'docker run --rm -i -v $HOME/vep_data:/data ensemblorg/ensembl-vep vep --cache --offline "
-                        "--dir_cache /data'")
-    p.add_argument("--vep-args", metavar="ARGS",
-                   help="extra local VEP arguments, e.g. plugin data files (default: $MISSENSEXPLORER_VEP_ARGS)")
-    p.add_argument("--offline", action="store_true",
-                   help="never use the internet (needs --vep local; skips ClinVar, UniProt and AlphaFold)")
-    p.add_argument("--common-af", type=float, default=0.05, metavar="AF",
-                   help="gnomAD grpmax frequency at which damaging/uncertain calls become benign "
-                        "(default 0.05 = ACMG BA1; 0 turns the rule off)")
-    p.add_argument("--acmg-source", choices=["model", "revel"], default="model",
-                   help="score for ACMG PP3/BP4: the model, with its own calibration by the ClinGen method "
-                        "(default), or REVEL with the thresholds ClinGen published (AlphaMissense if no REVEL)")
-    p.add_argument("--no-gnomad-check", action="store_true",
-                   help="do not ask gnomAD directly about variants without a frequency in Ensembl's data "
-                        "(faster; rare variants then show no frequency and PM2 is not assessed)")
-    p.add_argument("-o", "--output", action="append", default=[], metavar="FILE",
-                   help="write results (.csv, .tsv, .xlsx, .json); repeatable")
+    p.add_argument(
+        "--vep",
+        choices=["rest", "local"],
+        default="rest",
+        help="annotation engine: the public Ensembl REST API (default) or VEP on this computer",
+    )
+    p.add_argument(
+        "--vep-cmd",
+        metavar="CMD",
+        help="local VEP command (default: $MISSENSEXPLORER_VEP or 'vep --cache --offline'), e.g. "
+        "'docker run --rm -i -v $HOME/vep_data:/data ensemblorg/ensembl-vep vep --cache --offline "
+        "--dir_cache /data'",
+    )
+    p.add_argument(
+        "--vep-args",
+        metavar="ARGS",
+        help="extra local VEP arguments, e.g. plugin data files (default: $MISSENSEXPLORER_VEP_ARGS)",
+    )
+    p.add_argument(
+        "--offline",
+        action="store_true",
+        help="never use the internet (needs --vep local; skips ClinVar, UniProt and AlphaFold)",
+    )
+    p.add_argument(
+        "--common-af",
+        type=float,
+        default=0.05,
+        metavar="AF",
+        help="gnomAD grpmax frequency at which damaging/uncertain calls become benign "
+        "(default 0.05 = ACMG BA1; 0 turns the rule off)",
+    )
+    p.add_argument(
+        "--acmg-source",
+        choices=["model", "revel"],
+        default="model",
+        help="score for ACMG PP3/BP4: the model, with its own calibration by the ClinGen method "
+        "(default), or REVEL with the thresholds ClinGen published (AlphaMissense if no REVEL)",
+    )
+    p.add_argument(
+        "--no-gnomad-check",
+        action="store_true",
+        help="do not ask gnomAD directly about variants without a frequency in Ensembl's data "
+        "(faster; rare variants then show no frequency and PM2 is not assessed)",
+    )
+    p.add_argument(
+        "-o",
+        "--output",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="write results (.csv, .tsv, .xlsx, .json); repeatable",
+    )
     p.add_argument("--fasta", metavar="FILE", help="write wild-type and mutant protein sequences")
     p.add_argument("--details", action="store_true", help="print a detail card for every variant")
     p.add_argument("-w", "--workers", type=int, default=4, help="parallel API requests (default 4)")
@@ -69,16 +118,20 @@ def _predict_parser() -> argparse.ArgumentParser:
 
 
 def run_predict(argv: list[str]) -> int:
+    """Run the predict command: annotate the variants, print the table and write the output files.
+
+    Args:
+        argv: Command-line arguments, without the program name.
+
+    Returns:
+        Exit status: 0 on success, 1 when there is no input (the help is printed), 2 on an error.
+    """
     args = _predict_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(levelname)s %(message)s")
     from rich.console import Console
-    from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
-
-    from .predict import PredictOptions, predict
-    from .report import print_result, to_fasta, write
 
     err = Console(stderr=True)
-    texts = []
+    texts: list[str] = []
     for v in args.variants:
         texts.append(sys.stdin.read() if v == "-" else v)
     for f in args.file:
@@ -89,23 +142,63 @@ def run_predict(argv: list[str]) -> int:
         _predict_parser().print_help()
         return 1
 
-    opts = PredictOptions(
-        assembly=args.assembly, default_gene=args.gene,
-        genes=[g for g in (args.genes or "").replace(";", ",").split(",") if g.strip()] or None,
-        sample=args.sample, pass_only=args.pass_only, include_noncoding=args.all,
-        predictors=not args.no_predictors, protein_context=not args.no_protein_context,
-        workers=args.workers, cache=not args.no_cache,
-        vep=args.vep, vep_command=args.vep_cmd, vep_args=args.vep_args, offline=args.offline,
-        common_af=args.common_af or None, acmg_source=args.acmg_source, gnomad_check=not args.no_gnomad_check,
-    )
+    opts = _options(args)
     if args.offline and args.vep != "local":
         err.print("[red]--offline needs --vep local[/]")
         return 2
-    with Progress(TextColumn("{task.description}"), BarColumn(), TextColumn("{task.completed}/{task.total}"),
-                  TimeElapsedColumn(), console=err, transient=True, disable=args.quiet) as prog:
-        tasks = {}
+    res = _predict_with_progress(texts, args, opts, err)
+    if res is None:
+        return 2
+    _report(res, args, err)
+    return 0
 
-        def cb(stage, done, total):
+
+def _options(args: argparse.Namespace) -> PredictOptions:
+    """Return the prediction options given by the command-line arguments."""
+    from .predict import PredictOptions
+
+    return PredictOptions(
+        assembly=args.assembly,
+        default_gene=args.gene,
+        genes=[g for g in (args.genes or "").replace(";", ",").split(",") if g.strip()] or None,
+        sample=args.sample,
+        pass_only=args.pass_only,
+        include_noncoding=args.all,
+        predictors=not args.no_predictors,
+        protein_context=not args.no_protein_context,
+        workers=args.workers,
+        cache=not args.no_cache,
+        vep=args.vep,
+        vep_command=args.vep_cmd,
+        vep_args=args.vep_args,
+        offline=args.offline,
+        common_af=args.common_af or None,
+        acmg_source=args.acmg_source,
+        gnomad_check=not args.no_gnomad_check,
+    )
+
+
+def _predict_with_progress(
+    texts: list[str], args: argparse.Namespace, opts: PredictOptions, err: Console
+) -> PredictionResult | None:
+    """Run the prediction with a progress bar on standard error; None (after printing why) if it failed."""
+    from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
+
+    from .predict import predict
+
+    with Progress(
+        TextColumn("{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=err,
+        transient=True,
+        disable=args.quiet,
+    ) as prog:
+        tasks: dict[str, TaskID] = {}
+
+        def cb(stage: str, done: int, total: int) -> None:
+            """Show the progress of one pipeline stage (one bar per stage)."""
             if stage not in tasks:
                 tasks[stage] = prog.add_task(stage, total=max(total, 1))
             prog.update(tasks[stage], completed=done, total=max(total, 1))
@@ -114,7 +207,15 @@ def run_predict(argv: list[str]) -> int:
             res = predict(text="\n".join(texts), files=args.file, options=opts, progress=cb)
         except (ValueError, ConnectionError) as e:
             err.print(f"[red]{e}[/]")
-            return 2
+            return None
+    return res
+
+
+def _report(res: PredictionResult, args: argparse.Namespace, err: Console) -> None:
+    """Print the result (unless --quiet) and the failed sources, and write the output files."""
+    from rich.console import Console
+
+    from .report import print_result, to_fasta, write
 
     if not args.quiet:
         print_result(res, Console(), details=True if args.details else None)
@@ -131,10 +232,14 @@ def run_predict(argv: list[str]) -> int:
     if args.fasta:
         Path(args.fasta).write_text(to_fasta(res))
         err.print(f"[green]Saved[/] {args.fasta} ({len(res.sequences)} mutant sequences)")
-    return 0
 
 
 def run_web(argv: list[str]) -> int:
+    """Start the Streamlit web interface (``missensexplorer web [--port N] [--host H]``).
+
+    Returns:
+        Streamlit's exit status, or 1 when Streamlit is not installed.
+    """
     ap = argparse.ArgumentParser(prog="missensexplorer web", description="Start the web interface")
     ap.add_argument("--port", type=int, default=8501)
     ap.add_argument("--host", default="localhost")
@@ -145,24 +250,43 @@ def run_web(argv: list[str]) -> int:
         print("The web interface needs Streamlit:  pip install 'missensexplorer[web]'", file=sys.stderr)
         return 1
     app = Path(__file__).with_name("webapp.py")
-    sys.argv = ["streamlit", "run", str(app), "--server.port", str(args.port), "--server.address", args.host,
-                "--browser.gatherUsageStats", "false"]
+    sys.argv = [
+        "streamlit",
+        "run",
+        str(app),
+        "--server.port",
+        str(args.port),
+        "--server.address",
+        args.host,
+        "--browser.gatherUsageStats",
+        "false",
+    ]
     return stcli.main()
 
 
 def run_cache(argv: list[str]) -> int:
+    """Print the path of the response cache, or clear it (``missensexplorer cache clear``).
+
+    Returns:
+        Exit status 0.
+    """
     from .cache import Cache
 
-    c = Cache()
-    if argv[:1] == ["clear"]:
-        c.clear()
-        print(f"Cache cleared ({c.path})")
-    else:
-        print(c.path)
+    with Cache() as c:
+        if argv[:1] == ["clear"]:
+            c.clear()
+            print(f"Cache cleared ({c.path})")
+        else:
+            print(c.path)
     return 0
 
 
 def run_gui(argv: list[str]) -> int:
+    """Start the desktop app.
+
+    Returns:
+        The app's exit status, or 1 when Qt for Python is not installed.
+    """
     try:
         from .gui import main as gui_main
     except ImportError:
@@ -172,6 +296,14 @@ def run_gui(argv: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the command named by the first argument: gui (or desktop), web, cache or predict (the default).
+
+    Args:
+        argv: Command-line arguments without the program name; None for ``sys.argv[1:]``.
+
+    Returns:
+        The command's exit status.
+    """
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv[:1] in (["gui"], ["desktop"]):
         return run_gui(argv[1:])

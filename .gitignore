@@ -8,3 +8,6 @@ build/
 *.missensexplorer.csv
 .DS_Store
 *.spec
+.coverage
+.mypy_cache/
+.ruff_cache/

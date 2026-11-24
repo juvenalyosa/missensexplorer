@@ -28,18 +28,26 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import clinvar_benchmark as B  # noqa: E402
-import compare_tools as C  # noqa: E402
-import train_model as T  # noqa: E402
-from missensexplorer import PredictOptions, predict  # noqa: E402
-from missensexplorer.cache import default_cache_dir  # noqa: E402
-from missensexplorer.predict import _num  # noqa: E402
+import clinvar_benchmark as B
+import compare_tools as C
+import train_model as T
 
-CONSTRAINT = ("https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/"
-              "gnomad.v4.1.constraint_metrics.tsv")
+from missensexplorer import PredictOptions, predict
+from missensexplorer.cache import default_cache_dir
+from missensexplorer.predict import _num
+
+CONSTRAINT = (
+    "https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv"
+)
 GENE = {"moeuf": "mis.oe_ci.upper", "mis_z": "mis.z_score", "loeuf": "lof.oe_ci.upper"}
-DBNSFP = {"esm1b": "ESM1b", "mutation_assessor": "MutationAssessor", "phylop": "phyloP (100 vertebrates)",
-          "provean": "PROVEAN", "sift4g": "SIFT4G", "primateai": "PrimateAI"}
+DBNSFP = {
+    "esm1b": "ESM1b",
+    "mutation_assessor": "MutationAssessor",
+    "phylop": "phyloP (100 vertebrates)",
+    "provean": "PROVEAN",
+    "sift4g": "SIFT4G",
+    "primateai": "PrimateAI",
+}
 
 
 def constraint() -> pd.DataFrame:
@@ -59,9 +67,11 @@ def table() -> pd.DataFrame:
     train = pd.read_csv(T.OUT / "model_training_set.csv.gz", dtype={"clinvar_id": str})
     cands = {c["id"]: c for c in B.load_candidates(B.download())}
     picked = [cands[i] for i in train["clinvar_id"] if i in cands]
-    res = predict(text="\n".join(p["input"] for p in picked),
-                  options=PredictOptions(clinvar=False, protein_context=True, sequences=False, workers=4),
-                  progress=lambda s, k, n: print(f"  {s}: {k}/{n}", end="\r", flush=True))
+    res = predict(
+        text="\n".join(p["input"] for p in picked),
+        options=PredictOptions(clinvar=False, protein_context=True, sequences=False, workers=4),
+        progress=lambda s, k, n: print(f"  {s}: {k}/{n}", end="\r", flush=True),
+    )
     print()
     by = defaultdict(list)
     for r in res.table.to_dict("records"):
@@ -78,11 +88,18 @@ def table() -> pd.DataFrame:
     for x in rows:
         r, g = x["row"], (con.loc[x["gene"]] if x["gene"] in con.index else None)
         ks = r.get("key_site")
-        recs.append({"gene": x["gene"], "label": x["label"], "grpmax": _num(r.get("gnomad_popmax_af")) or 0.0,
-                     **{f: _num(r.get(f)) for f in T.FEATURES}, "plddt": _num(r.get("plddt")),
-                     "key_site": 1.0 if isinstance(ks, str) and ks else 0.0,
-                     **{k: ext[x["id"]].get(v) for k, v in DBNSFP.items()},
-                     **{k: (None if g is None else _num(g[c])) for k, c in GENE.items()}})
+        recs.append(
+            {
+                "gene": x["gene"],
+                "label": x["label"],
+                "grpmax": _num(r.get("gnomad_popmax_af")) or 0.0,
+                **{f: _num(r.get(f)) for f in T.FEATURES},
+                "plddt": _num(r.get("plddt")),
+                "key_site": 1.0 if isinstance(ks, str) and ks else 0.0,
+                **{k: ext[x["id"]].get(v) for k, v in DBNSFP.items()},
+                **{k: (None if g is None else _num(g[c])) for k, c in GENE.items()},
+            }
+        )
     df = pd.DataFrame(recs)
     for c in df.columns.drop("gene"):
         df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -110,8 +127,8 @@ def main() -> int:
     seeds = (7, 11, 23)
     pb = {s: oof(base, s) for s in seeds}
     print(f"base: rare AUC {np.mean([roc_auc_score(y[rare], pb[s][rare]) for s in seeds]):.4f}")
-    for cand in list(GENE) + ["plddt", "key_site"] + list(DBNSFP):
-        feats = base + [cand]
+    for cand in [*list(GENE), "plddt", "key_site", *list(DBNSFP)]:
+        feats = [*base, cand]
         pc = {s: oof(feats, s) for s in seeds}
         gains = [roc_auc_score(y[rare], pc[s][rare]) - roc_auc_score(y[rare], pb[s][rare]) for s in seeds]
         a, b, yr = pc[seeds[0]][rare], pb[seeds[0]][rare], y[rare]
@@ -120,8 +137,11 @@ def main() -> int:
             i = rng.integers(0, len(yr), len(yr))
             bs.append(roc_auc_score(yr[i], a[i]) - roc_auc_score(yr[i], b[i]))
         coef = T.pipeline().fit(df[feats], y, logisticregression__sample_weight=w)[-1].coef_[0][-1]
-        print(f"+ {cand:18s} gain {np.mean(gains):+.4f} [{np.percentile(bs, 2.5):+.4f}, {np.percentile(bs, 97.5):+.4f}]"
-              f"  coefficient {coef:+.3f}", flush=True)
+        print(
+            f"+ {cand:18s} gain {np.mean(gains):+.4f} [{np.percentile(bs, 2.5):+.4f}, {np.percentile(bs, 97.5):+.4f}]"
+            f"  coefficient {coef:+.3f}",
+            flush=True,
+        )
     return 0
 
 

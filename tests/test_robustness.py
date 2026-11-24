@@ -10,7 +10,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from missensexplorer.api import Http, OfflineError, SourceStatus
+from missensexplorer.api import ApiError, Http, OfflineError, SourceStatus
 from missensexplorer.inputs import read_file
 from missensexplorer.report import run_info, to_bytes
 from missensexplorer.vep_local import LocalVep, to_default_format
@@ -21,6 +21,7 @@ BRAF = json.loads((DATA / "vep_braf_v600e_region.json").read_text())
 
 
 # --------------------------------------------------------------------------- HTTP
+
 
 def test_offline_host_fails_fast(monkeypatch):
     monkeypatch.setattr(Http, "_sleep", staticmethod(lambda attempt: None))
@@ -41,6 +42,36 @@ def test_offline_host_fails_fast(monkeypatch):
     assert len(calls) == n
 
 
+def test_host_that_keeps_failing_is_skipped(monkeypatch):
+    pauses = []
+    monkeypatch.setattr(Http, "_pause", staticmethod(pauses.append))
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.path)
+        if request.url.path == "/ok":
+            return httpx.Response(200, json={})
+        return httpx.Response(429 if "files" in request.url.path else 503)
+
+    http = Http()
+    http.client = httpx.Client(transport=httpx.MockTransport(handler))
+    for i in range(2):
+        with pytest.raises(ApiError, match="rate limited"):
+            http.request("GET", f"https://alphafold.ebi.ac.uk/files/{i}.json")
+    assert http.request("GET", "https://alphafold.ebi.ac.uk/ok").status_code == 200  # success resets the count
+    for i in range(3):
+        with pytest.raises(ApiError):
+            http.request("GET", f"https://alphafold.ebi.ac.uk/files/x{i}.json")
+    n = len(calls)
+    assert len(pauses) == 5 * (http.max_retries - 1)  # no pause after the last attempt
+    with pytest.raises(OfflineError, match="keeps failing: HTTP 429"):
+        http.request("GET", "https://alphafold.ebi.ac.uk/files/later.json")
+    assert len(calls) == n  # no new attempt once the host is marked down
+    with pytest.raises(ApiError, match="HTTP 503"):  # other hosts are unaffected
+        http.request("GET", "https://rest.uniprot.org/x")
+    assert n == 5 * http.max_retries + 1  # each failed request tried max_retries times
+
+
 def test_source_status_summary():
     st = SourceStatus()
     st.use("UniProt", 3)
@@ -51,10 +82,13 @@ def test_source_status_summary():
     assert s["UniProt"] == "ok"
     assert s["ClinVar"].startswith("failed (1 items)")
     assert s["AlphaFold DB"] == "skipped: offline"
-    assert st.failed("ClinVar", "VCV1") and not st.failed("ClinVar", "VCV2") and not st.failed("UniProt")
+    assert st.failed("ClinVar", "VCV1")
+    assert not st.failed("ClinVar", "VCV2")
+    assert not st.failed("UniProt")
 
 
 # --------------------------------------------------------------------------- pipeline with fake services
+
 
 class FakeVep:
     """Base annotation always works; the predictor plugins fail (as when a plugin times out)."""
@@ -93,7 +127,7 @@ def fake_services(monkeypatch):
         status.fail("ClinVar", "HTTP 503", [f"{assembly}:{c}:{a}-{b}" for c, a, b in windows])
         return {}
 
-    def gnomad_down(http, cache, variants, assembly, status=None):
+    def gnomad_down(http, cache, variants, assembly, status=None, progress=None):
         status.fail("gnomAD", "HTTP 503", [f"{c}-{p}-{r}-{a}" for c, p, r, a in variants])
         return {}
 
@@ -107,11 +141,13 @@ def fake_services(monkeypatch):
 
 def test_predictor_failure_keeps_annotation(fake_services):
     res = P.predict(text="7 140753336 A T", options=P.PredictOptions(cache=False))
-    assert len(res.table) == 1 and len(res.errors) == 0          # not lost to "not analysed"
+    assert len(res.table) == 1
+    assert len(res.errors) == 0
     r = res.table.iloc[0]
     assert r["protein_change"] == "V600E"
     assert "predictors unavailable" in r["notes"]
-    assert "ClinVar unavailable" in r["notes"] and "UniProt unavailable" in r["notes"]
+    assert "ClinVar unavailable" in r["notes"]
+    assert "UniProt unavailable" in r["notes"]
     assert res.sources["Ensembl VEP + predictors"].startswith("failed")
     assert res.sources["ClinVar"].startswith("failed")
     assert any("ClinVar did not respond" in w for w in res.warnings)
@@ -121,18 +157,23 @@ def test_two_pass_predictor_failure_keeps_annotation(fake_services):
     # > 200 unique variants -> fast pass + predictor pass; the predictor pass fails
     text = "\n".join(f"7 {140753336 + i} A T" for i in range(205))
     res = P.predict(text=text, options=P.PredictOptions(cache=False, clinvar=False, protein_context=False))
-    assert len(res.errors) == 0 and len(res.table) == 205
+    assert len(res.errors) == 0
+    assert len(res.table) == 205
     assert res.table["notes"].str.contains("predictors unavailable").all()
     assert res.sources["VEP predictor plugins"].startswith("failed")
 
 
 def test_run_record_and_exports(fake_services, tmp_path):
     vcf = tmp_path / "s.vcf"
-    vcf.write_text("##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n7\t140753336\t.\tA\tT\t.\tPASS\t.\n")
+    vcf.write_text(
+        "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n7\t140753336\t.\tA\tT\t.\tPASS\t.\n"
+    )
     res = P.predict(files=[str(vcf)], options=P.PredictOptions(cache=False))
     run = res.run
-    assert run["ensembl_release"] == 116 and "release 116" in run["annotation"]
-    assert run["inputs"]["files"][0]["name"] == "s.vcf" and len(run["inputs"]["files"][0]["sha256"]) == 64
+    assert run["ensembl_release"] == 116
+    assert "release 116" in run["annotation"]
+    assert run["inputs"]["files"][0]["name"] == "s.vcf"
+    assert len(run["inputs"]["files"][0]["sha256"]) == 64
     assert run["options"]["vep"] == "rest"
     info = run_info(res)
     assert "source: ClinVar" in set(info["item"])
@@ -141,11 +182,12 @@ def test_run_record_and_exports(fake_services, tmp_path):
 
 
 def test_offline_requires_local_vep():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="offline mode needs the local VEP"):
         P.predict(text="7 140753336 A T", options=P.PredictOptions(offline=True))
 
 
 # --------------------------------------------------------------------------- local VEP
+
 
 def test_to_default_format():
     assert to_default_format("7 140753336 . A T . . .", "x") == "7\t140753336\t140753336\tA/T\t+\tx"
@@ -167,7 +209,8 @@ def fake_vep_cmd(tmp_path):
         "    if len(f) < 6: continue\n"
         "    if f[0] == 'BAD': continue\n"
         "    item = dict(fixture); item['id'] = f[5]; item['input'] = line.strip()\n"
-        "    print(json.dumps(item))\n")
+        "    print(json.dumps(item))\n"
+    )
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
     return f"{sys.executable} {script}"
 
@@ -188,11 +231,13 @@ def test_local_vep_missing_command_is_reported():
     lv = LocalVep(P.NullCache(), command="/nonexistent/vep", status=st)
     out = lv.annotate({"region": ["7 140753336 . A T . . ."]})
     val = out[("region", "7 140753336 . A T . . .")]
-    assert val["service_error"] and "could not run local VEP" in val["error"]
+    assert val["service_error"]
+    assert "could not run local VEP" in val["error"]
     assert st.failed("Ensembl VEP (local)")
 
 
 # --------------------------------------------------------------------------- streaming input
+
 
 def test_vcf_gz_is_streamed(tmp_path, monkeypatch):
     p = tmp_path / "big.vcf.gz"
@@ -202,7 +247,8 @@ def test_vcf_gz_is_streamed(tmp_path, monkeypatch):
             fh.write(f"1\t{1000 + i}\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n")
     monkeypatch.setattr(Path, "read_bytes", lambda self: (_ for _ in ()).throw(AssertionError("loaded whole file")))
     parsed = read_file(str(p))
-    assert len(parsed.variants) == 2000 and parsed.variants[0].zygosity == "heterozygous"
+    assert len(parsed.variants) == 2000
+    assert parsed.variants[0].zygosity == "heterozygous"
 
 
 def test_vep_retries_truncated_response():
@@ -221,15 +267,24 @@ def test_vep_retries_truncated_response():
     vep = Vep(FakeHttp(), P.NullCache(), "GRCh38", workers=1)
     q = BRAF[0]["input"]
     out = vep.annotate({"region": [q]}, {"hgvs": 1})
-    assert "results" in out[("region", q)] and len(calls) == 2
+    assert "results" in out[("region", q)]
+    assert len(calls) == 2
 
 
 def test_votes_accept_table_rows_with_nan():
     nan = float("nan")
-    row = {"alphamissense": 0.99, "alphamissense_class": "likely_pathogenic", "revel": nan, "cadd_phred": nan,
-           "eve_class": nan, "sift": nan, "polyphen": None}
+    row = {
+        "alphamissense": 0.99,
+        "alphamissense_class": "likely_pathogenic",
+        "revel": nan,
+        "cadd_phred": nan,
+        "eve_class": nan,
+        "sift": nan,
+        "polyphen": None,
+    }
     dmg, ben, _ = P._votes(row)
-    assert dmg == ["AlphaMissense"] and ben == []
+    assert dmg == ["AlphaMissense"]
+    assert ben == []
 
 
 def test_one_unreadable_variant_does_not_sink_its_batch():
@@ -249,4 +304,5 @@ def test_one_unreadable_variant_does_not_sink_its_batch():
     vep = Vep(FakeHttp(), P.NullCache(), "GRCh38", workers=1, status=st)
     out = vep.annotate({"region": [good, bad]}, {"hgvs": 1})
     assert "results" in out[("region", good)]
-    assert out[("region", bad)]["service_error"] and st.failed("Ensembl VEP", bad)
+    assert out[("region", bad)]["service_error"]
+    assert st.failed("Ensembl VEP", bad)

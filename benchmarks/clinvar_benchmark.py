@@ -35,11 +35,10 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from missensexplorer import PredictOptions, predict  # noqa: E402
-from missensexplorer.cache import default_cache_dir  # noqa: E402
-from missensexplorer import acmg, model  # noqa: E402
-from missensexplorer.model_params import MODEL  # noqa: E402
-from missensexplorer.predict import WEIGHTS, _modern_present, _num, _votes, classify, prediction_status  # noqa: E402
+from missensexplorer import PredictOptions, acmg, model, predict
+from missensexplorer.cache import default_cache_dir
+from missensexplorer.model_params import MODEL
+from missensexplorer.predict import WEIGHTS, _modern_present, _num, _votes, classify, prediction_status
 
 URL = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz"
 GOOD_REVIEW = {"criteria provided, multiple submitters, no conflicts", "reviewed by expert panel", "practice guideline"}
@@ -88,9 +87,17 @@ def load_candidates(path: Path) -> list[dict]:
                 continue
             seen.add(vid)
             year = re.search(r"(\d{4})", f[ix["LastEvaluated"]] or "")
-            out.append({"id": vid, "gene": f[ix["GeneSymbol"]], "label": 1 if sig in PATHOGENIC else 0,
-                        "input": f"{chrom}:{pos} {ref}>{alt}", "review": rev,
-                        "year": int(year.group(1)) if year else None, "name": f[ix["Name"]]})
+            out.append(
+                {
+                    "id": vid,
+                    "gene": f[ix["GeneSymbol"]],
+                    "label": 1 if sig in PATHOGENIC else 0,
+                    "input": f"{chrom}:{pos} {ref}>{alt}",
+                    "review": rev,
+                    "year": int(year.group(1)) if year else None,
+                    "name": f[ix["Name"]],
+                }
+            )
     return out
 
 
@@ -109,6 +116,7 @@ def sample(cands: list[dict], per_class: int, per_gene: int, seed: int) -> list[
 
 
 # --------------------------------------------------------------------------- metrics
+
 
 def auc(scores: list[tuple[float, int]]) -> float | None:
     """Mann-Whitney AUC (ties count half)."""
@@ -136,7 +144,8 @@ def call_metrics(calls: list[tuple[str | None, int]]) -> dict:
     dec = [(c, y) for c, y in calls if c in ("damaging", "benign")]
     correct = sum((c == "damaging") == (y == 1) for c, y in dec)
     return {
-        "n_pathogenic": len(P), "n_benign": len(B),
+        "n_pathogenic": len(P),
+        "n_benign": len(B),
         "sensitivity": sum(c == "damaging" for c in P) / max(1, len(P)),
         "specificity": sum(c == "benign" for c in B) / max(1, len(B)),
         "pathogenic_called_benign": sum(c == "benign" for c in P) / max(1, len(P)),
@@ -151,8 +160,9 @@ def verdict_call(label: str | None) -> str | None:
     return {"Damaging": "damaging", "Benign / silent": "benign"}.get(st)
 
 
-def scheme_call(row: dict, weights: dict, hi: float, lo: float, min_weight: float = 0.0,
-                fallback: bool = False) -> str | None:
+def scheme_call(
+    row: dict, weights: dict, hi: float, lo: float, min_weight: float = 0.0, fallback: bool = False
+) -> str | None:
     dmg, ben, _ = _votes(row)
     if fallback and not _modern_present(row):  # weak predictors only when nothing better exists
         weights = {**weights, "SIFT": 0.5, "PolyPhen": 0.5}
@@ -168,10 +178,16 @@ def scheme_call(row: dict, weights: dict, hi: float, lo: float, min_weight: floa
 V21 = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen": 0, "SIFT": 0}
 
 # The v2.2 model (trained on a plain random ClinVar sample), kept to compare with the current one.
-V22 = {"features": ["alphamissense", "revel", "cadd_phred", "popeve"],
-       "median": [0.3227, 0.3915, 24.5, -3.469], "mean": [0.4726, 0.455065, 22.068322, -3.591189],
-       "scale": [0.385334, 0.341274, 9.409868, 0.764894], "coef": [1.150214, 1.752403, 0.837612, -0.827833],
-       "intercept": 0.010747, "damaging": 0.7, "benign": 0.3}
+V22 = {
+    "features": ["alphamissense", "revel", "cadd_phred", "popeve"],
+    "median": [0.3227, 0.3915, 24.5, -3.469],
+    "mean": [0.4726, 0.455065, 22.068322, -3.591189],
+    "scale": [0.385334, 0.341274, 9.409868, 0.764894],
+    "coef": [1.150214, 1.752403, 0.837612, -0.827833],
+    "intercept": 0.010747,
+    "damaging": 0.7,
+    "benign": 0.3,
+}
 
 
 def params_call(row: dict, params: dict) -> str | None:
@@ -212,12 +228,17 @@ def main(argv=None) -> int:
     t0 = time.time()
     cands = load_candidates(download())
     picked = sample(cands, args.per_class, args.per_gene, args.seed)
-    print(f"{len(cands)} eligible ClinVar missense variants; sampled {len(picked)} "
-          f"({sum(p['label'] for p in picked)} pathogenic) from {len({p['gene'] for p in picked})} genes", flush=True)
+    print(
+        f"{len(cands)} eligible ClinVar missense variants; sampled {len(picked)} "
+        f"({sum(p['label'] for p in picked)} pathogenic) from {len({p['gene'] for p in picked})} genes",
+        flush=True,
+    )
 
-    res = predict(text="\n".join(p["input"] for p in picked),
-                  options=PredictOptions(clinvar=False, protein_context=False, sequences=False, workers=6),
-                  progress=lambda s, d, n: print(f"  {s}: {d}/{n}", end="\r", flush=True))
+    res = predict(
+        text="\n".join(p["input"] for p in picked),
+        options=PredictOptions(clinvar=False, protein_context=False, sequences=False, workers=6),
+        progress=lambda s, d, n: print(f"  {s}: {d}/{n}", end="\r", flush=True),
+    )
     print()
     failed = {k: v for k, v in res.sources.items() if v.startswith("failed")}
     if failed:
@@ -240,13 +261,16 @@ def main(argv=None) -> int:
 
     for x in rows:
         r = x["row"]
-        x["model_label"] = classify(r, {"missense_variant"})[0]   # model without the frequency rule
+        x["model_label"] = classify(r, {"missense_variant"})[0]  # model without the frequency rule
         x["grpmax"] = _num(r.get("gnomad_popmax_af"))
         x["v21"] = scheme_call(r, V21, 0.7, 0.3, 0.0, True)
         x["v22"] = params_call(r, V22)
         pts = r.get("acmg_points")
-        x["clingen"] = None if not isinstance(pts, (int, float)) or pts != pts or pts == 0 else (
-            "damaging" if pts > 0 else "benign")
+        x["clingen"] = (
+            None
+            if not isinstance(pts, (int, float)) or pts != pts or pts == 0
+            else ("damaging" if pts > 0 else "benign")
+        )
 
     def with_freq(call, x, af):  # same rule as the pipeline, ClinGen BA1 exceptions included
         common = x["grpmax"] is not None and x["grpmax"] >= af and not acmg.ba1_exception(x["row"])
@@ -254,7 +278,9 @@ def main(argv=None) -> int:
 
     ver = f"v{MODEL['version']}"
     methods = {
-        f"{ver} default: model + frequency rule (BA1, gnomAD grpmax ≥ 5%)": lambda x: verdict_call(x["row"]["prediction"]),
+        f"{ver} default: model + frequency rule (BA1, gnomAD grpmax ≥ 5%)": lambda x: verdict_call(
+            x["row"]["prediction"]
+        ),
         f"{ver} model alone (no frequency rule)": lambda x: verdict_call(x["model_label"]),
         f"{ver} model + frequency ≥ 1%": lambda x: with_freq(verdict_call(x["model_label"]), x, 0.01),
         "v2.2 model + frequency rule (BA1, 5%)": lambda x: with_freq(x["v22"], x, 0.05),
@@ -262,27 +288,39 @@ def main(argv=None) -> int:
         "v2.1 vote + frequency rule (BA1, 5%)": lambda x: with_freq(x["v21"], x, 0.05),
         "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": lambda x: x["clingen"],
     }
-    report: dict = {"clinvar_file": URL, "seed": args.seed, "sampled": len(picked), "annotated": len(rows),
-                    "genes": len({x["gene"] for x in rows}), "run": res.run,
-                    "model": {k: MODEL[k] for k in ("version", "trained", "training", "damaging", "benign")}}
-    groups = {"all": rows,
-              "rare (gnomAD grpmax < 0.1% or absent)": subset(rows, lambda x: (x["grpmax"] or 0) < 0.001),
-              "evaluated since 2024": subset(rows, lambda x: (x["year"] or 0) >= 2024)}
+    report: dict = {
+        "clinvar_file": URL,
+        "seed": args.seed,
+        "sampled": len(picked),
+        "annotated": len(rows),
+        "genes": len({x["gene"] for x in rows}),
+        "run": res.run,
+        "model": {k: MODEL[k] for k in ("version", "trained", "training", "damaging", "benign")},
+    }
+    groups = {
+        "all": rows,
+        "rare (gnomAD grpmax < 0.1% or absent)": subset(rows, lambda x: (x["grpmax"] or 0) < 0.001),
+        "evaluated since 2024": subset(rows, lambda x: (x["year"] or 0) >= 2024),
+    }
     report["methods"], report["predictors"], report["auc"] = {}, {}, {}
     for gname, items in groups.items():
         report["methods"][gname] = {m: call_metrics([(f(x), x["label"]) for x in items]) for m, f in methods.items()}
-        report["predictors"][gname] = {name: call_metrics([(predictor_calls(x["row"])[name], x["label"]) for x in items])
-                                       for name in WEIGHTS}
+        report["predictors"][gname] = {
+            name: call_metrics([(predictor_calls(x["row"])[name], x["label"]) for x in items]) for name in WEIGHTS
+        }
         aucs = {}
-        for name, get in ((f"{ver} model score", lambda r: (model.score(r).p if model.score(r) else None)),
-                          ("v2.2 model score", lambda r: (model.score(r, V22).p if model.score(r, V22) else None)),
-                          ("v2.1 vote fraction", vote_fraction),
-                          ("AlphaMissense", lambda r: _num(r.get("alphamissense"))),
-                          ("REVEL", lambda r: _num(r.get("revel"))), ("CADD", lambda r: _num(r.get("cadd_phred"))),
-                          ("EVE", lambda r: _num(r.get("eve"))),
-                          ("popEVE", lambda r: None if _num(r.get("popeve")) is None else -_num(r.get("popeve"))),
-                          ("SIFT", lambda r: None if _num(r.get("sift_score")) is None else -_num(r.get("sift_score"))),
-                          ("PolyPhen-2", lambda r: _num(r.get("polyphen_score")))):
+        for name, get in (
+            (f"{ver} model score", lambda r: model.score(r).p if model.score(r) else None),
+            ("v2.2 model score", lambda r: model.score(r, V22).p if model.score(r, V22) else None),
+            ("v2.1 vote fraction", vote_fraction),
+            ("AlphaMissense", lambda r: _num(r.get("alphamissense"))),
+            ("REVEL", lambda r: _num(r.get("revel"))),
+            ("CADD", lambda r: _num(r.get("cadd_phred"))),
+            ("EVE", lambda r: _num(r.get("eve"))),
+            ("popEVE", lambda r: None if _num(r.get("popeve")) is None else -_num(r.get("popeve"))),
+            ("SIFT", lambda r: None if _num(r.get("sift_score")) is None else -_num(r.get("sift_score"))),
+            ("PolyPhen-2", lambda r: _num(r.get("polyphen_score"))),
+        ):
             sc = [(v, x["label"]) for x in items if (v := get(x["row"])) is not None]
             aucs[name] = {"auc": auc(sc), "coverage": len(sc) / max(1, len(items))}
         report["auc"][gname] = aucs
@@ -291,8 +329,11 @@ def main(argv=None) -> int:
     for hi, lo in sorted({(0.6, 0.4), (0.7, 0.3), (0.8, 0.2), (model.DAMAGING, model.BENIGN)}):
         name = f"{hi:.2f}/{lo:.2f}" + (" (default)" if (hi, lo) == (model.DAMAGING, model.BENIGN) else "")
         report["model_cut_offs"][name] = {
-            g: call_metrics([(params_call(x["row"], {**MODEL, "damaging": hi, "benign": lo}), x["label"])
-                             for x in items]) for g, items in (("all", rows), ("rare", rare_rows))}
+            g: call_metrics(
+                [(params_call(x["row"], {**MODEL, "damaging": hi, "benign": lo}), x["label"]) for x in items]
+            )
+            for g, items in (("all", rows), ("rare", rare_rows))
+        }
     report["seconds"] = round(time.time() - t0, 1)
 
     OUT.mkdir(exist_ok=True)
@@ -303,50 +344,77 @@ def main(argv=None) -> int:
 
 
 def _metric_row(name: str, m: dict) -> str:
-    return (f"| {name} | {fmt(m['sensitivity'])} | {fmt(m['specificity'])} | {fmt(m['pathogenic_called_benign'])} | "
-            f"{fmt(m['benign_called_damaging'])} | {fmt(m['coverage'])} | {fmt(m['accuracy_when_decisive'])} |")
+    return (
+        f"| {name} | {fmt(m['sensitivity'])} | {fmt(m['specificity'])} | {fmt(m['pathogenic_called_benign'])} | "
+        f"{fmt(m['benign_called_damaging'])} | {fmt(m['coverage'])} | {fmt(m['accuracy_when_decisive'])} |"
+    )
 
 
-HEAD = ["| Method | Sensitivity | Specificity | Pathogenic called benign | Benign called damaging | Coverage | "
-        "Accuracy when decisive |", "|---|---|---|---|---|---|---|"]
+HEAD = [
+    "| Method | Sensitivity | Specificity | Pathogenic called benign | Benign called damaging | Coverage | "
+    "Accuracy when decisive |",
+    "|---|---|---|---|---|---|---|",
+]
 
 
 def markdown(rep: dict) -> str:
     tr = rep["model"]["training"]
-    L = ["# ClinVar benchmark", "",
-         f"{rep['annotated']} expert-reviewed (≥ 2 stars) germline missense variants from {rep['genes']} genes, "
-         f"GRCh38, sampled with seed {rep['seed']} from ClinVar's variant_summary. ClinVar is not an input of the "
-         f"verdict. Run: {rep['run'].get('tool')}, {rep['run'].get('annotation')}, {rep['run'].get('started_utc')}.",
-         "",
-         f"The missense model (v{rep['model']['version']}, trained {rep['model']['trained']}) was fitted on "
-         f"{tr['n']} other ClinVar variants from {tr['genes']} genes; **no gene of this benchmark was used for "
-         "training**, so these are held-out results (benchmarks/train_model.py). Its cut-offs "
-         f"({rep['model']['damaging']}/{rep['model']['benign']}) were chosen by cross-validation on the training "
-         "genes, not on this benchmark.", "",
-         "Sensitivity = pathogenic variants called *damaging*; specificity = benign variants called *benign*; "
-         "coverage = share of variants that get a decisive call (not *uncertain*/*not assessed*).", ""]
+    L = [
+        "# ClinVar benchmark",
+        "",
+        f"{rep['annotated']} expert-reviewed (≥ 2 stars) germline missense variants from {rep['genes']} genes, "
+        f"GRCh38, sampled with seed {rep['seed']} from ClinVar's variant_summary. ClinVar is not an input of the "
+        f"verdict. Run: {rep['run'].get('tool')}, {rep['run'].get('annotation')}, {rep['run'].get('started_utc')}.",
+        "",
+        f"The missense model (v{rep['model']['version']}, trained {rep['model']['trained']}) was fitted on "
+        f"{tr['n']} other ClinVar variants from {tr['genes']} genes; **no gene of this benchmark was used for "
+        "training**, so these are held-out results (benchmarks/train_model.py). Its cut-offs "
+        f"({rep['model']['damaging']}/{rep['model']['benign']}) were chosen by cross-validation on the training "
+        "genes, not on this benchmark.",
+        "",
+        "Sensitivity = pathogenic variants called *damaging*; specificity = benign variants called *benign*; "
+        "coverage = share of variants that get a decisive call (not *uncertain*/*not assessed*).",
+        "",
+    ]
     for g, ms in rep["methods"].items():
         n = next(iter(ms.values()))
-        L += [f"## {g[0].upper() + g[1:]} (n = {n['n_pathogenic']} pathogenic, {n['n_benign']} benign)", ""] + HEAD
+        L += [f"## {g[0].upper() + g[1:]} (n = {n['n_pathogenic']} pathogenic, {n['n_benign']} benign)", "", *HEAD]
         L += [_metric_row(k, m) for k, m in ms.items()]
         a = rep["auc"][g]
-        L += ["", "AUC: " + "; ".join(f"{k} {v['auc']:.3f}" + (f" (coverage {fmt(v['coverage'])})" if v["coverage"] < 0.995 else "")
-                                     for k, v in a.items() if v["auc"] is not None) + ".", ""]
+        L += [
+            "",
+            "AUC: "
+            + "; ".join(
+                f"{k} {v['auc']:.3f}" + (f" (coverage {fmt(v['coverage'])})" if v["coverage"] < 0.995 else "")
+                for k, v in a.items()
+                if v["auc"] is not None
+            )
+            + ".",
+            "",
+        ]
         if g == "all":
-            L += ["| Predictor alone | Sensitivity | Specificity | Coverage | Accuracy when decisive |",
-                  "|---|---|---|---|---|"]
+            L += [
+                "| Predictor alone | Sensitivity | Specificity | Coverage | Accuracy when decisive |",
+                "|---|---|---|---|---|",
+            ]
             for name, pm in rep["predictors"][g].items():
-                L.append(f"| {name} | {fmt(pm['sensitivity'])} | {fmt(pm['specificity'])} | {fmt(pm['coverage'])} | "
-                         f"{fmt(pm['accuracy_when_decisive'])} |")
+                L.append(
+                    f"| {name} | {fmt(pm['sensitivity'])} | {fmt(pm['specificity'])} | {fmt(pm['coverage'])} | "
+                    f"{fmt(pm['accuracy_when_decisive'])} |"
+                )
             L.append("")
     for g in ("all", "rare"):
-        L += [f"## Model cut-offs ({'all' if g == 'all' else 'rare'} variants, no frequency rule)", ""] + HEAD
+        L += [f"## Model cut-offs ({'all' if g == 'all' else 'rare'} variants, no frequency rule)", "", *HEAD]
         L += [_metric_row(k, m[g]) for k, m in rep["model_cut_offs"].items()] + [""]
-    L += ["", "Caveats: REVEL was trained on disease-variant databases and AlphaMissense's thresholds were calibrated "
-          "on ClinVar, so absolute figures are optimistic; the comparison between methods is the robust part. "
-          "The frequency rule looks better here than it will in practice because ClinVar curators use the same "
-          "gnomAD frequencies to classify variants as benign; it also mislabels pathogenic variants of recessive or "
-          "founder conditions (that is why the default is 5% and not 1%).", ""]
+    L += [
+        "",
+        "Caveats: REVEL was trained on disease-variant databases and AlphaMissense's thresholds were calibrated "
+        "on ClinVar, so absolute figures are optimistic; the comparison between methods is the robust part. "
+        "The frequency rule looks better here than it will in practice because ClinVar curators use the same "
+        "gnomAD frequencies to classify variants as benign; it also mislabels pathogenic variants of recessive or "
+        "founder conditions (that is why the default is 5% and not 1%).",
+        "",
+    ]
     return "\n".join(L)
 
 

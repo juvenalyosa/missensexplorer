@@ -7,51 +7,119 @@ available, even when a remote predictor has no score for a variant.
 from __future__ import annotations
 
 import math
+from typing import Any
 
 AA1_TO_3 = {
-    "A": "Ala", "R": "Arg", "N": "Asn", "D": "Asp", "C": "Cys",
-    "Q": "Gln", "E": "Glu", "G": "Gly", "H": "His", "I": "Ile",
-    "L": "Leu", "K": "Lys", "M": "Met", "F": "Phe", "P": "Pro",
-    "S": "Ser", "T": "Thr", "W": "Trp", "Y": "Tyr", "V": "Val",
-    "U": "Sec", "O": "Pyl", "*": "Ter", "X": "Xaa",
+    "A": "Ala",
+    "R": "Arg",
+    "N": "Asn",
+    "D": "Asp",
+    "C": "Cys",
+    "Q": "Gln",
+    "E": "Glu",
+    "G": "Gly",
+    "H": "His",
+    "I": "Ile",
+    "L": "Leu",
+    "K": "Lys",
+    "M": "Met",
+    "F": "Phe",
+    "P": "Pro",
+    "S": "Ser",
+    "T": "Thr",
+    "W": "Trp",
+    "Y": "Tyr",
+    "V": "Val",
+    "U": "Sec",
+    "O": "Pyl",
+    "*": "Ter",
+    "X": "Xaa",
 }
 AA3_TO_1 = {v.upper(): k for k, v in AA1_TO_3.items()}
 AA3_TO_1["STOP"] = "*"
 
 AA_NAMES = {
-    "A": "Alanine", "R": "Arginine", "N": "Asparagine", "D": "Aspartate",
-    "C": "Cysteine", "Q": "Glutamine", "E": "Glutamate", "G": "Glycine",
-    "H": "Histidine", "I": "Isoleucine", "L": "Leucine", "K": "Lysine",
-    "M": "Methionine", "F": "Phenylalanine", "P": "Proline", "S": "Serine",
-    "T": "Threonine", "W": "Tryptophan", "Y": "Tyrosine", "V": "Valine",
+    "A": "Alanine",
+    "R": "Arginine",
+    "N": "Asparagine",
+    "D": "Aspartate",
+    "C": "Cysteine",
+    "Q": "Glutamine",
+    "E": "Glutamate",
+    "G": "Glycine",
+    "H": "Histidine",
+    "I": "Isoleucine",
+    "L": "Leucine",
+    "K": "Lysine",
+    "M": "Methionine",
+    "F": "Phenylalanine",
+    "P": "Proline",
+    "S": "Serine",
+    "T": "Threonine",
+    "W": "Tryptophan",
+    "Y": "Tyrosine",
+    "V": "Valine",
     "*": "Stop",
 }
 
 # Kyte & Doolittle (1982) hydropathy index.
 HYDROPATHY = {
-    "A": 1.8, "R": -4.5, "N": -3.5, "D": -3.5, "C": 2.5, "Q": -3.5, "E": -3.5,
-    "G": -0.4, "H": -3.2, "I": 4.5, "L": 3.8, "K": -3.9, "M": 1.9, "F": 2.8,
-    "P": -1.6, "S": -0.8, "T": -0.7, "W": -0.9, "Y": -1.3, "V": 4.2,
+    "A": 1.8,
+    "R": -4.5,
+    "N": -3.5,
+    "D": -3.5,
+    "C": 2.5,
+    "Q": -3.5,
+    "E": -3.5,
+    "G": -0.4,
+    "H": -3.2,
+    "I": 4.5,
+    "L": 3.8,
+    "K": -3.9,
+    "M": 1.9,
+    "F": 2.8,
+    "P": -1.6,
+    "S": -0.8,
+    "T": -0.7,
+    "W": -0.9,
+    "Y": -1.3,
+    "V": 4.2,
 }
 
 # Residue volumes in cubic angstroms (Zamyatnin 1972).
 VOLUME = {
-    "A": 88.6, "R": 173.4, "N": 114.1, "D": 111.1, "C": 108.5, "Q": 143.8,
-    "E": 138.4, "G": 60.1, "H": 153.2, "I": 166.7, "L": 166.7, "K": 168.6,
-    "M": 162.9, "F": 189.9, "P": 112.7, "S": 89.0, "T": 116.1, "W": 227.8,
-    "Y": 193.6, "V": 140.0,
+    "A": 88.6,
+    "R": 173.4,
+    "N": 114.1,
+    "D": 111.1,
+    "C": 108.5,
+    "Q": 143.8,
+    "E": 138.4,
+    "G": 60.1,
+    "H": 153.2,
+    "I": 166.7,
+    "L": 166.7,
+    "K": 168.6,
+    "M": 162.9,
+    "F": 189.9,
+    "P": 112.7,
+    "S": 89.0,
+    "T": 116.1,
+    "W": 227.8,
+    "Y": 193.6,
+    "V": 140.0,
 }
 
 # Side-chain charge at physiological pH (His treated as neutral).
-CHARGE = {aa: 0 for aa in HYDROPATHY}
+CHARGE = dict.fromkeys(HYDROPATHY, 0)
 CHARGE.update({"D": -1, "E": -1, "K": 1, "R": 1})
 
 AA_CLASS = {
-    **{aa: "hydrophobic" for aa in "AVLIM"},
-    **{aa: "aromatic" for aa in "FWY"},
-    **{aa: "polar" for aa in "STNQC"},
-    **{aa: "positive" for aa in "KRH"},
-    **{aa: "negative" for aa in "DE"},
+    **dict.fromkeys("AVLIM", "hydrophobic"),
+    **dict.fromkeys("FWY", "aromatic"),
+    **dict.fromkeys("STNQC", "polar"),
+    **dict.fromkeys("KRH", "positive"),
+    **dict.fromkeys("DE", "negative"),
     "G": "glycine",
     "P": "proline",
 }
@@ -60,13 +128,26 @@ AA_CLASS = {
 # derived from these with Grantham's weights, which reproduces the published
 # table to within rounding.
 _GRANTHAM_CPV = {
-    "S": (1.42, 9.2, 32.0), "R": (0.65, 10.5, 124.0), "L": (0.0, 4.9, 111.0),
-    "P": (0.39, 8.0, 32.5), "T": (0.71, 8.6, 61.0), "A": (0.0, 8.1, 31.0),
-    "V": (0.0, 5.9, 84.0), "G": (0.74, 9.0, 3.0), "I": (0.0, 5.2, 111.0),
-    "F": (0.0, 5.2, 132.0), "Y": (0.20, 6.2, 136.0), "C": (2.75, 5.5, 55.0),
-    "H": (0.58, 10.4, 96.0), "Q": (0.89, 10.5, 85.0), "N": (1.33, 11.6, 56.0),
-    "K": (0.33, 11.3, 119.0), "D": (1.38, 13.0, 54.0), "E": (0.92, 12.3, 83.0),
-    "M": (0.0, 5.7, 105.0), "W": (0.13, 5.4, 170.0),
+    "S": (1.42, 9.2, 32.0),
+    "R": (0.65, 10.5, 124.0),
+    "L": (0.0, 4.9, 111.0),
+    "P": (0.39, 8.0, 32.5),
+    "T": (0.71, 8.6, 61.0),
+    "A": (0.0, 8.1, 31.0),
+    "V": (0.0, 5.9, 84.0),
+    "G": (0.74, 9.0, 3.0),
+    "I": (0.0, 5.2, 111.0),
+    "F": (0.0, 5.2, 132.0),
+    "Y": (0.20, 6.2, 136.0),
+    "C": (2.75, 5.5, 55.0),
+    "H": (0.58, 10.4, 96.0),
+    "Q": (0.89, 10.5, 85.0),
+    "N": (1.33, 11.6, 56.0),
+    "K": (0.33, 11.3, 119.0),
+    "D": (1.38, 13.0, 54.0),
+    "E": (0.92, 12.3, 83.0),
+    "M": (0.0, 5.7, 105.0),
+    "W": (0.13, 5.4, 170.0),
 }
 _G_ALPHA, _G_BETA, _G_GAMMA, _G_RHO = 1.833, 0.1018, 0.000399, 50.723
 
@@ -94,8 +175,8 @@ _BLOSUM62_ROWS = """
  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4
 """
 BLOSUM62: dict[tuple[str, str], int] = {}
-for _a, _row in zip(_BLOSUM62_ORDER, _BLOSUM62_ROWS.strip().splitlines()):
-    for _b, _v in zip(_BLOSUM62_ORDER, _row.split()):
+for _a, _row in zip(_BLOSUM62_ORDER, _BLOSUM62_ROWS.strip().splitlines(), strict=True):
+    for _b, _v in zip(_BLOSUM62_ORDER, _row.split(), strict=True):
         BLOSUM62[(_a, _b)] = int(_v)
 
 
@@ -109,24 +190,36 @@ def to_one_letter(code: str) -> str | None:
 
 
 def to_three_letter(code: str) -> str | None:
+    """'V' / 'Val' / '*' -> three-letter code ('Val', 'Ter'), or None if unknown."""
     one = to_one_letter(code)
     return AA1_TO_3.get(one) if one else None
 
 
 def grantham(a: str, b: str) -> int | None:
-    """Grantham distance between two residues (0 = identical, 215 = max)."""
+    """Return the Grantham distance between two residues (0 = identical, 215 = max).
+
+    Args:
+        a: One-letter code of the first residue.
+        b: One-letter code of the second residue.
+
+    Returns:
+        The distance, or None when a residue is not one of the 20 standard amino acids.
+    """
     if a not in _GRANTHAM_CPV or b not in _GRANTHAM_CPV:
         return None
     ca, pa, va = _GRANTHAM_CPV[a]
     cb, pb, vb = _GRANTHAM_CPV[b]
-    d = math.sqrt(
-        _G_ALPHA * (ca - cb) ** 2 + _G_BETA * (pa - pb) ** 2 + _G_GAMMA * (va - vb) ** 2
-    )
+    d = math.sqrt(_G_ALPHA * (ca - cb) ** 2 + _G_BETA * (pa - pb) ** 2 + _G_GAMMA * (va - vb) ** 2)
     return round(_G_RHO * d)
 
 
 def grantham_class(distance: int | None) -> str | None:
-    """Li et al. (1984) categories."""
+    """Return the Li et al. (1984) category of a Grantham distance.
+
+    Returns:
+        "conservative" (0-50), "moderately conservative" (51-100), "moderately radical"
+        (101-150) or "radical" (>150); None for None.
+    """
     if distance is None:
         return None
     if distance <= 50:
@@ -138,12 +231,29 @@ def grantham_class(distance: int | None) -> str | None:
     return "radical"
 
 
-def substitution_profile(ref: str, alt: str) -> dict:
-    """Physicochemical description of a single amino-acid substitution."""
-    out: dict = {
-        "grantham": None, "grantham_class": None, "blosum62": None,
-        "hydropathy_change": None, "volume_change": None, "charge_change": None,
-        "aa_class_change": None, "physchem_notes": None,
+def substitution_profile(ref: str, alt: str) -> dict[str, Any]:
+    """Return the physicochemical description of a single amino-acid substitution.
+
+    Args:
+        ref: One-letter code of the reference residue.
+        alt: One-letter code of the alternate residue.
+
+    Returns:
+        Results-table columns: "grantham" and "grantham_class" (see `grantham_class`),
+        "blosum62", "hydropathy_change" (Kyte-Doolittle units), "volume_change" (cubic
+        angstroms), "charge_change", "aa_class_change" (e.g. "hydrophobic -> polar") and
+        "physchem_notes" (notable effects, "; "-separated). All are None unless both residues
+        are standard amino acids and differ.
+    """
+    out: dict[str, Any] = {
+        "grantham": None,
+        "grantham_class": None,
+        "blosum62": None,
+        "hydropathy_change": None,
+        "volume_change": None,
+        "charge_change": None,
+        "aa_class_change": None,
+        "physchem_notes": None,
     }
     if ref not in HYDROPATHY or alt not in HYDROPATHY or ref == alt:
         return out
@@ -160,7 +270,9 @@ def substitution_profile(ref: str, alt: str) -> dict:
     if CHARGE[ref] != CHARGE[alt]:
         notes.append(f"charge {CHARGE[ref]:+d} -> {CHARGE[alt]:+d}")
     if abs(out["hydropathy_change"]) >= 3:
-        notes.append("large hydropathy shift" + (" (more hydrophobic)" if out["hydropathy_change"] > 0 else " (more polar)"))
+        notes.append(
+            "large hydropathy shift" + (" (more hydrophobic)" if out["hydropathy_change"] > 0 else " (more polar)")
+        )
     if abs(out["volume_change"]) >= 50:
         notes.append("large size change" + (" (bulkier)" if out["volume_change"] > 0 else " (smaller)"))
     if alt == "P":

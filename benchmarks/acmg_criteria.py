@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import clinvar_benchmark as B  # noqa: E402
 import compare_tools as C  # noqa: E402
 import train_model as T  # noqa: E402
+
 from missensexplorer import PredictOptions, predict, residue  # noqa: E402
 from missensexplorer.cache import default_cache_dir  # noqa: E402
 from missensexplorer.predict import _num  # noqa: E402
@@ -45,8 +46,10 @@ NEEDED = {1: 2.41, 2: 5.79, 4: 33.53}
 
 
 def pathogenic_index(path: Path) -> dict[tuple[str, int], dict[str, dict]]:
-    """{(chrom, position): {VCV: record}} of the reviewed pathogenic/likely pathogenic missense
-    variants (GRCh38) of a variant_summary file, as residue.references reads them."""
+    """Index the reviewed pathogenic/likely pathogenic missense variants of a variant_summary file.
+
+    Returns {(chrom, position): {VCV: record}} on GRCh38, the shape residue.references reads.
+    """
     idx: dict[tuple[str, int], dict[str, dict]] = defaultdict(dict)
     with gzip.open(path, "rt", encoding="utf-8", errors="replace") as fh:
         ix = {k: i for i, k in enumerate(fh.readline().lstrip("#").rstrip("\n").split("\t"))}
@@ -59,8 +62,12 @@ def pathogenic_index(path: Path) -> dict[tuple[str, int], dict[str, dict]]:
             chrom, start, stop = f[ix["Chromosome"]], f[ix["Start"]], f[ix["Stop"]]
             if not (start.isdigit() and stop.isdigit()):
                 continue
-            rec = {"title": f[ix["Name"]], "classification": f[ix["ClinicalSignificance"]],
-                   "review_status": f[ix["ReviewStatus"]], "loc": {"GRCh38": [chrom, int(start), int(stop)]}}
+            rec = {
+                "title": f[ix["Name"]],
+                "classification": f[ix["ClinicalSignificance"]],
+                "review_status": f[ix["ReviewStatus"]],
+                "loc": {"GRCh38": [chrom, int(start), int(stop)]},
+            }
             acc = f"VCV{int(f[ix['VariationID']]):09d}"
             for p in range(int(start), int(stop) + 1):
                 idx[(chrom, p)][acc] = rec
@@ -82,20 +89,24 @@ def lr(has: np.ndarray, y: np.ndarray, rng: np.random.Generator, n_boot: int = 2
     def ratio(h, yy):
         a, b = h[yy == 1].mean(), h[yy == 0].mean()
         return np.inf if b == 0 else a / b
+
     idx = [rng.integers(0, len(y), len(y)) for _ in range(n_boot)]
     bs = np.array([ratio(has[i], y[i]) for i in idx])
     r = lambda v: "∞" if np.isinf(v) else round(float(v), 1)  # noqa: E731
-    return {"pathogenic": int((has & (y == 1)).sum()), "benign": int((has & (y == 0)).sum()),
-            "pathogenic_share": round(float(has[y == 1].mean()), 4), "benign_share": round(float(has[y == 0].mean()), 4),
-            "lr": r(ratio(has, y)), "ci": [r(np.percentile(bs, 2.5, method="nearest")),
-                                            r(np.percentile(bs, 97.5, method="nearest"))]}
+    return {
+        "pathogenic": int((has & (y == 1)).sum()),
+        "benign": int((has & (y == 0)).sum()),
+        "pathogenic_share": round(float(has[y == 1].mean()), 4),
+        "benign_share": round(float(has[y == 0].mean()), 4),
+        "lr": r(ratio(has, y)),
+        "ci": [r(np.percentile(bs, 2.5, method="nearest")), r(np.percentile(bs, 97.5, method="nearest"))],
+    }
 
 
 def main() -> int:
     cands = B.load_candidates(B.download())
     picked = B.sample(cands, 1000, 8, 42)
-    res = predict(text="\n".join(p["input"] for p in picked), options=PredictOptions(**T.OPTIONS),
-                  progress=T._progress)
+    res = predict(text="\n".join(p["input"] for p in picked), options=PredictOptions(**T.OPTIONS), progress=T._progress)
     print()
     T.check_sources(res)
     old = C.labelled_in_2023()
@@ -104,17 +115,31 @@ def main() -> int:
     then = pathogenic_index(default_cache_dir() / "benchmark" / "variant_summary_2023-01.txt.gz")
     rows = []
     for p, r in T._missense_rows(res, picked):
-        rows.append({"id": p["id"], "label": p["label"], "new": p["id"] not in old,
-                     "rare": (_num(r.get("gnomad_popmax_af")) or 0) < T.RARE,
-                     "residue_now": residue_code(r, now), "residue_2023": residue_code(r, then),
-                     "pm2": str(r.get("acmg_pm2") or "").split(" ")[0]})
+        rows.append(
+            {
+                "id": p["id"],
+                "label": p["label"],
+                "new": p["id"] not in old,
+                "rare": (_num(r.get("gnomad_popmax_af")) or 0) < T.RARE,
+                "residue_now": residue_code(r, now),
+                "residue_2023": residue_code(r, then),
+                "pm2": str(r.get("acmg_pm2") or "").split(" ")[0],
+            }
+        )
     df = pd.DataFrame(rows)
     rng = np.random.default_rng(0)
-    out = {"variants": len(df), "pathogenic": int(df["label"].sum()), "benign": int((df["label"] == 0).sum()),
-           "new_since_2023": int(df["new"].sum()), "results": {}}
-    sets = {"all variants, current ClinVar": (df, "residue_now"),
-            "rare variants, current ClinVar": (df[df["rare"]], "residue_now"),
-            "labelled since 2023, ClinVar of January 2023": (df[df["new"]], "residue_2023")}
+    out = {
+        "variants": len(df),
+        "pathogenic": int(df["label"].sum()),
+        "benign": int((df["label"] == 0).sum()),
+        "new_since_2023": int(df["new"].sum()),
+        "results": {},
+    }
+    sets = {
+        "all variants, current ClinVar": (df, "residue_now"),
+        "rare variants, current ClinVar": (df[df["rare"]], "residue_now"),
+        "labelled since 2023, ClinVar of January 2023": (df[df["new"]], "residue_2023"),
+    }
     for name, (d, col) in sets.items():
         y = d["label"].to_numpy()
         res_ = {"variants": len(d), "pathogenic": int(y.sum()), "benign": int((y == 0).sum())}
@@ -123,8 +148,11 @@ def main() -> int:
         res_["any PS1/PM5"] = lr(d[col].isin(["PS1", "PS1_Moderate", "PM5", "PM5_Supporting"]).to_numpy(), y, rng)
         res_["PM2_Supporting"] = lr((d["pm2"] == "PM2_Supporting").to_numpy(), y, rng)
         out["results"][name] = res_
-        print(name, {k: (v["pathogenic"], v["benign"], v["lr"]) for k, v in res_.items() if isinstance(v, dict)},
-              flush=True)
+        print(
+            name,
+            {k: (v["pathogenic"], v["benign"], v["lr"]) for k, v in res_.items() if isinstance(v, dict)},
+            flush=True,
+        )
     T.OUT.mkdir(exist_ok=True)
     (T.OUT / "acmg_criteria.json").write_text(json.dumps(out, indent=1))
     (T.OUT / "acmg_criteria.md").write_text(markdown(out))
@@ -132,23 +160,35 @@ def main() -> int:
 
 
 def markdown(rep: dict) -> str:
-    L = ["# Automated ACMG PS1, PM5 and PM2 on the held-out ClinVar benchmark", "",
-         f"Generated by `benchmarks/acmg_criteria.py`: {rep['variants']:,} germline missense variants "
-         f"({rep['pathogenic']:,} pathogenic, {rep['benign']:,} benign) from genes the model never saw; "
-         f"{rep['new_since_2023']} labelled since 2023.", "",
-         "Likelihood ratio = share of pathogenic variants with the criterion / share of benign ones. "
-         "ClinVar submitters use these criteria themselves, so the ratios are optimistic; the time split "
-         "(reference variants from the January 2023 release, tested on variants labelled later) limits this "
-         "for PS1/PM5.", ""]
+    L = [
+        "# Automated ACMG PS1, PM5 and PM2 on the held-out ClinVar benchmark",
+        "",
+        f"Generated by `benchmarks/acmg_criteria.py`: {rep['variants']:,} germline missense variants "
+        f"({rep['pathogenic']:,} pathogenic, {rep['benign']:,} benign) from genes the model never saw; "
+        f"{rep['new_since_2023']} labelled since 2023.",
+        "",
+        "Likelihood ratio = share of pathogenic variants with the criterion / share of benign ones. "
+        "ClinVar submitters use these criteria themselves, so the ratios are optimistic; the time split "
+        "(reference variants from the January 2023 release, tested on variants labelled later) limits this "
+        "for PS1/PM5.",
+        "",
+    ]
     for name, r in rep["results"].items():
-        L += [f"## {name}", "", f"{r['variants']:,} variants ({r['pathogenic']:,} pathogenic, {r['benign']:,} benign).", "",
-              "| Criterion | Pathogenic with it | Benign with it | Likelihood ratio (95% CI) | Needed |",
-              "|---|---|---|---|---|"]
+        L += [
+            f"## {name}",
+            "",
+            f"{r['variants']:,} variants ({r['pathogenic']:,} pathogenic, {r['benign']:,} benign).",
+            "",
+            "| Criterion | Pathogenic with it | Benign with it | Likelihood ratio (95% CI) | Needed |",
+            "|---|---|---|---|---|",
+        ]
         for code in ("PS1", "PS1_Moderate", "PM5", "PM5_Supporting", "any PS1/PM5", "PM2_Supporting"):
             x = r[code]
             need = NEEDED.get(CODES.get(code), "—")
-            L.append(f"| {code} | {x['pathogenic']} ({x['pathogenic_share']:.1%}) | {x['benign']} "
-                     f"({x['benign_share']:.1%}) | {x['lr']} ({x['ci'][0]}–{x['ci'][1]}) | {need} |")
+            L.append(
+                f"| {code} | {x['pathogenic']} ({x['pathogenic_share']:.1%}) | {x['benign']} "
+                f"({x['benign_share']:.1%}) | {x['lr']} ({x['ci'][0]}–{x['ci'][1]}) | {need} |"
+            )
         L.append("")
     return "\n".join(L)
 

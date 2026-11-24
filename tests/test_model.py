@@ -32,8 +32,8 @@ def test_score_with_frequency_matches_scikit_learn():
 
 def test_score_with_frequency_direction():
     f = model.with_frequency
-    assert f(0.9, 1e-5) > f(0.5, 1e-5) > f(0.1, 1e-5)          # higher model score, higher
-    assert f(0.9, None) > f(0.9, 1e-4) > f(0.9, 1e-2)        # more frequent, lower; absent counts as 0
+    assert f(0.9, 1e-5) > f(0.5, 1e-5) > f(0.1, 1e-5)  # higher model score, higher
+    assert f(0.9, None) > f(0.9, 1e-4) > f(0.9, 1e-2)  # more frequent, lower; absent counts as 0
     assert f(None, 1e-5) is None
 
 
@@ -46,16 +46,19 @@ def test_model_needs_alphamissense_or_revel():
 def test_model_direction_and_contributions():
     hi = model.score({"alphamissense": 0.99, "revel": 0.95, "cadd_phred": 32, "sift_score": 0.0, "polyphen_score": 1.0})
     lo = model.score({"alphamissense": 0.05, "revel": 0.05, "cadd_phred": 5, "sift_score": 0.8, "polyphen_score": 0.0})
-    assert hi.p > 0.95 and lo.p < 0.05
+    assert hi.p > 0.95
+    assert lo.p < 0.05
     assert dict(hi.contributions)["REVEL"] > 0 > dict(lo.contributions)["REVEL"]
-    assert abs(hi.contributions[0][1]) >= abs(hi.contributions[-1][1])   # largest first
+    assert abs(hi.contributions[0][1]) >= abs(hi.contributions[-1][1])  # largest first
     assert model.describe(hi).startswith(f"model score {hi.p:.2f} (")
 
 
 def test_classify_uses_model_and_falls_back_to_votes():
     r = {"alphamissense": 0.99, "alphamissense_class": "likely_pathogenic", "revel": 0.95, "cadd_phred": 32}
     label, score, basis = classify(r, {"missense_variant"})
-    assert label == "Likely damaging" and score > 0.9 and basis.startswith("model score")
+    assert label == "Likely damaging"
+    assert score > 0.9
+    assert basis.startswith("model score")
     assert "3 damaging / 0 benign predictors" in basis
     # neither AlphaMissense nor REVEL: the v2.1 vote decides
     assert classify({"cadd_phred": 30.0}, {"missense_variant"})[0] == "Likely damaging (single predictor)"
@@ -63,27 +66,41 @@ def test_classify_uses_model_and_falls_back_to_votes():
     assert classify(weak, {"missense_variant"})[0] == "Likely damaging (limited evidence: SIFT/PolyPhen only)"
 
 
-@pytest.mark.parametrize("row,code,pts", [
-    ({"revel": 0.932}, "PP3_Strong", 4), ({"revel": 0.931}, "PP3_Moderate", 3), ({"revel": 0.773}, "PP3_Moderate", 2),
-    ({"revel": 0.644}, "PP3_Supporting", 1), ({"revel": 0.643}, "none", 0), ({"revel": 0.291}, "none", 0),
-    ({"revel": 0.290}, "BP4_Supporting", -1), ({"revel": 0.183}, "BP4_Moderate", -2),
-    ({"revel": 0.052}, "BP4_Moderate", -3), ({"revel": 0.016}, "BP4_Strong", -4),
-    ({"alphamissense": 0.990}, "PP3_Strong", 4), ({"alphamissense": 0.989}, "PP3_Moderate", 3),
-    ({"alphamissense": 0.906}, "PP3_Moderate", 2), ({"alphamissense": 0.792}, "PP3_Supporting", 1),
-    ({"alphamissense": 0.791}, "none", 0), ({"alphamissense": 0.169}, "BP4_Supporting", -1),
-    ({"alphamissense": 0.099}, "BP4_Moderate", -2), ({"alphamissense": 0.05}, "BP4_Moderate", -3),
-    ({"revel": 0.95, "alphamissense": 0.1}, "PP3_Strong", 4),          # REVEL first, as ClinGen recommends one tool
-])
+@pytest.mark.parametrize(
+    ("row", "code", "pts"),
+    [
+        ({"revel": 0.932}, "PP3_Strong", 4),
+        ({"revel": 0.931}, "PP3_Moderate", 3),
+        ({"revel": 0.773}, "PP3_Moderate", 2),
+        ({"revel": 0.644}, "PP3_Supporting", 1),
+        ({"revel": 0.643}, "none", 0),
+        ({"revel": 0.291}, "none", 0),
+        ({"revel": 0.290}, "BP4_Supporting", -1),
+        ({"revel": 0.183}, "BP4_Moderate", -2),
+        ({"revel": 0.052}, "BP4_Moderate", -3),
+        ({"revel": 0.016}, "BP4_Strong", -4),
+        ({"alphamissense": 0.990}, "PP3_Strong", 4),
+        ({"alphamissense": 0.989}, "PP3_Moderate", 3),
+        ({"alphamissense": 0.906}, "PP3_Moderate", 2),
+        ({"alphamissense": 0.792}, "PP3_Supporting", 1),
+        ({"alphamissense": 0.791}, "none", 0),
+        ({"alphamissense": 0.169}, "BP4_Supporting", -1),
+        ({"alphamissense": 0.099}, "BP4_Moderate", -2),
+        ({"alphamissense": 0.05}, "BP4_Moderate", -3),
+        ({"revel": 0.95, "alphamissense": 0.1}, "PP3_Strong", 4),  # REVEL first, as ClinGen recommends one tool
+    ],
+)
 def test_pp3_bp4_intervals(row, code, pts):
     text, p = acmg.computational(row, "revel")
-    assert text.startswith(code) and p == pts
+    assert text.startswith(code)
+    assert p == pts
 
 
 def test_pp3_bp4_without_scores():
     for source in acmg.SOURCES:
         assert acmg.computational({"cadd_phred": 30}, source) == (None, None)
     assert acmg.computational({"revel": 0.5}, "revel")[0] == "none (REVEL 0.500, indeterminate)"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unknown PP3/BP4 source"):
         acmg.computational({"revel": 0.5}, "cadd")
 
 
@@ -91,17 +108,18 @@ def test_model_pp3_bp4_follows_its_calibration():
     assert acmg.MODEL_CALIBRATED, "the model was retrained: run benchmarks/calibrate_acmg.py"
     cal = acmg.CALIBRATION
     assert [p for _, p in cal["pp3"]] == sorted((p for _, p in cal["pp3"]), reverse=True)
-    assert cal["pp3"][-1][0] > cal["bp4"][-1][0]         # weakest PP3 cut-off above the weakest BP4 one
+    assert cal["pp3"][-1][0] > cal["bp4"][-1][0]  # weakest PP3 cut-off above the weakest BP4 one
     seen = set()
     for v in json.loads((DATA / "model_vectors.json").read_text()):
-        text, pts = acmg.computational(v)              # the model is the default source
+        text, pts = acmg.computational(v)  # the model is the default source
         if v["alphamissense"] is None and v["revel"] is None:
             assert (text, pts) == (None, None)
             continue
         p = round(model.score(v).p, 3)
-        assert f"model {p:.3f}" in text and pts == acmg._points(p, cal["pp3"], cal["bp4"])
+        assert f"model {p:.3f}" in text
+        assert pts == acmg._points(p, cal["pp3"], cal["bp4"])
         seen.add((pts > 0) - (pts < 0))
-    assert seen == {-1, 0, 1}                          # the vectors reach PP3, BP4 and no evidence
+    assert seen == {-1, 0, 1}  # the vectors reach PP3, BP4 and no evidence
 
 
 def test_frequency_evidence():
@@ -116,7 +134,8 @@ def test_frequency_evidence():
 def test_frequency_rule_keeps_the_protein_level_call_visible():
     label, basis = apply_frequency("Likely damaging", "model score 0.95", 0.08, 0.05)
     assert label == "Likely benign (common in population)"
-    assert "protein-level call: Likely damaging" in basis and basis.endswith("| model score 0.95")
+    assert "protein-level call: Likely damaging" in basis
+    assert basis.endswith("| model score 0.95")
     assert apply_frequency("Likely damaging", "x", 0.02, 0.05) == ("Likely damaging", "x")
     assert apply_frequency("Likely damaging", "x", 0.08, None) == ("Likely damaging", "x")
     assert apply_frequency("Uncertain (intermediate scores)", "x", 0.2, 0.05)[0].startswith("Likely benign")
@@ -124,17 +143,32 @@ def test_frequency_rule_keeps_the_protein_level_call_visible():
 
 
 def test_grpmax_excludes_bottlenecked_groups():
-    coloc = [{"id": "rs1", "frequencies": {"T": {"gnomade": 0.001, "gnomade_asj": 0.2, "gnomade_fin": 0.1,
-                                                 "gnomadg_ami": 0.3, "gnomade_remaining": 0.05, "gnomadg_mid": 0.04,
-                                                 "gnomade_nfe": 0.002, "gnomadg_afr": 0.004}}}]
+    coloc = [
+        {
+            "id": "rs1",
+            "frequencies": {
+                "T": {
+                    "gnomade": 0.001,
+                    "gnomade_asj": 0.2,
+                    "gnomade_fin": 0.1,
+                    "gnomadg_ami": 0.3,
+                    "gnomade_remaining": 0.05,
+                    "gnomadg_mid": 0.04,
+                    "gnomade_nfe": 0.002,
+                    "gnomadg_afr": 0.004,
+                }
+            },
+        }
+    ]
     info = colocated_info(coloc, "T", "T")
-    assert info["gnomad_popmax_af"] == 0.004 and info["gnomad_af"] == 0.001
+    assert info["gnomad_popmax_af"] == 0.004
+    assert info["gnomad_af"] == 0.001
 
 
 def test_ba1_exceptions_are_not_called_benign():
     c282y = {"rsid": "rs1800562", "alt": "A", "gnomad_af": 0.03, "gnomad_popmax_af": 0.071}
     assert acmg.ba1_exception(c282y).startswith("HFE")
     assert acmg.frequency(c282y) == "frequent, but on the ClinGen BA1 exception list (grpmax 7.1%)"
-    assert acmg.ba1_exception({**c282y, "alt": "C"}) is None              # another allele of the same rsID
-    assert acmg.ba1_exception({"rsid": "rs13078881", "alt": "C"}).startswith("BTD")   # D444H = D424H on MANE
+    assert acmg.ba1_exception({**c282y, "alt": "C"}) is None  # another allele of the same rsID
+    assert acmg.ba1_exception({"rsid": "rs13078881", "alt": "C"}).startswith("BTD")  # D444H = D424H on MANE
     assert acmg.ba1_exception({"rsid": "rs1, rs387906242", "alt": "TAAG"}).startswith("ACAD9")
