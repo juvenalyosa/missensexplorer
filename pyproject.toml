@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "missensexplorer"
-version = "2.3.0"
+version = "2.4.0"
 description = "Predict how DNA variants (VCF, HGVS, rsIDs, 'BRAF V600E') change the encoded human protein."
 readme = "README.md"
 license = { file = "LICENSE" }

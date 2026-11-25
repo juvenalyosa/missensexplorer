@@ -1,0 +1,41 @@
+MissensExplorer - installing and first launch
+=============================================
+
+Everything the app needs is included. It needs an internet connection while it runs (Ensembl,
+ClinVar, gnomAD, UniProt, AlphaFold). Research use only: predictions are not a clinical diagnosis.
+
+macOS (13 Ventura or later)
+  1. Open the .dmg and drag MissensExplorer onto the Applications folder.
+  2. First launch: the app is not signed with an Apple Developer ID, so macOS blocks it once.
+     Open it from Applications; when macOS says it cannot verify the developer, click Done, then
+     open System Settings > Privacy & Security and click "Open Anyway" (next to MissensExplorer).
+     From then on it opens normally.
+  Pick the right file: "AppleSilicon" for M1/M2/M3/M4 Macs, "Intel" for older Macs
+  (Apple menu > About This Mac > Chip or Processor).
+
+Windows (10 or 11, 64-bit)
+  1. Double-click MissensExplorer-...-Windows-Setup.exe.
+  2. If Windows says "Windows protected your PC", click "More info", then "Run anyway"
+     (the installer is not signed with a paid certificate).
+  3. Follow the steps. No administrator rights are needed. The app appears in the Start menu
+     (and on the desktop if you tick the box). Uninstall from Settings > Apps.
+
+Linux (64-bit; Ubuntu 22.04 or later, Debian 12 or later)
+  Ubuntu/Debian: double-click missensexplorer_..._amd64.deb and click Install, or in a terminal:
+      sudo apt install ./missensexplorer_*_amd64.deb
+  Then open MissensExplorer from the applications menu.
+  Other distributions: unpack the .tar.gz and run ./install.sh (installs for your user only).
+
+------------------------------------------------------------------------------------------
+MissensExplorer - instalación y primer arranque (español)
+
+Todo lo necesario viene incluido. Necesita conexión a internet mientras se usa. Solo para
+investigación: las predicciones no son un diagnóstico clínico.
+
+macOS (13 Ventura o posterior): abre el .dmg y arrastra MissensExplorer a Aplicaciones. La primera vez
+  macOS lo bloquea porque no está firmado por Apple: ábrelo, pulsa "OK", ve a Ajustes del Sistema >
+  Privacidad y seguridad y pulsa "Abrir igualmente". Elige "AppleSilicon" (chips M1-M4) o "Intel".
+Windows (10 u 11): doble clic en el Setup.exe. Si aparece "Windows protegió su PC", pulsa
+  "Más información" y "Ejecutar de todas formas". No hacen falta permisos de administrador.
+Linux (Ubuntu 22.04+, Debian 12+): doble clic en el .deb y "Instalar", o
+  sudo apt install ./missensexplorer_*_amd64.deb. Otras distribuciones: .tar.gz y ./install.sh.

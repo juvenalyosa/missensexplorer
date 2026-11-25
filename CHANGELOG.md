@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.4.0] — 2026-11-25
 
 ### Changed
 - Code-quality pass with no change in results:
@@ -96,6 +96,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   - Validated on EGFR and TP53 laboratory data (`benchmarks/validate_oncogenicity.py`).
 - ClinVar records keep the review status of their oncogenicity classification. The cache key changed,
   so records are fetched again once.
+- Double-click installers with everything inside (Python, Qt, the 3D viewer). Run
+  `packaging/build.py` on each system, or the `installers` workflow, which builds all of them and
+  self-tests each package:
+  - macOS: a .dmg for Apple Silicon and one for Intel (macOS 13 or later);
+  - Windows: a Setup.exe that installs for the user, with no admin rights;
+  - Linux: a .deb for Ubuntu/Debian and a .tar.gz with an install script.
+
+  The installers pin Qt 6.11. Qt 6.8 to 6.10 would support older systems, but their web engine
+  crashes on current macOS.
 - A tutorial [wiki](https://github.com/juvenalyosa/missensexplorer/wiki) with screenshots of every
   feature, and worked examples of every input format and kind of variant.
 

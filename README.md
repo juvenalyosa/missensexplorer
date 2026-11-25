@@ -13,7 +13,30 @@ from a web app, from the command line, or from Python.
 
 > **Research use only.** The predictions are computational. They are not a clinical diagnosis.
 
-## Quick start
+## Download and install (no Python needed)
+
+Installers with everything inside are on the [Releases page](https://github.com/juvenalyosa/missensexplorer/releases):
+
+| System | File | How |
+|---|---|---|
+| macOS 13 or later, Apple Silicon (M1-M4) | `MissensExplorer-…-macOS-AppleSilicon.dmg` | open it and drag the app to Applications |
+| macOS 13 or later, Intel | `MissensExplorer-…-macOS-Intel.dmg` | same |
+| Windows 10 or 11 (64-bit) | `MissensExplorer-…-Windows-Setup.exe` | double-click and follow the steps (no admin rights needed) |
+| Ubuntu 22.04+ / Debian 12+ | `missensexplorer_…_amd64.deb` | double-click and Install, or `sudo apt install ./missensexplorer_*_amd64.deb` |
+| Other Linux (64-bit) | `MissensExplorer-…-Linux-x86_64.tar.gz` | unpack and run `./install.sh` |
+
+The app needs an internet connection while it runs.
+
+The installers are not signed with paid certificates, so the first launch asks for one extra
+confirmation:
+- **macOS:** open the app once, then go to System Settings → Privacy & Security and click
+  **Open Anyway**.
+- **Windows:** in "Windows protected your PC", click **More info**, then **Run anyway**.
+
+Details are in [packaging/INSTALL.txt](packaging/INSTALL.txt). To build the installers yourself, run
+`python packaging/build.py --installer` on each system, or the `installers` GitHub workflow.
+
+## Quick start (from source)
 
 ```bash
 git clone https://github.com/juvenalyosa/missensexplorer

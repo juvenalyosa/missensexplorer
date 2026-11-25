@@ -1,7 +1,8 @@
-"""Entry point for the bundled macOS app (PyInstaller).
+"""Entry point of the packaged desktop app (PyInstaller: macOS, Windows and Linux).
 
 Set MISSENSEXPLORER_SMOKE=/path/shot.png to run a self-test of a packaged build: it predicts
-BRAF V600E, renders the 3D structure, saves a screenshot and exits (code 0 on success).
+BRAF V600E, renders the 3D structure, saves a screenshot and a log next to it (shot.png.log) and
+exits. Exit codes: 0 all fine, 1 no result, 2 no 3D viewer, 3 the 3D viewer did not draw.
 """
 
 import os
@@ -12,6 +13,12 @@ from missensexplorer.gui import main
 
 def smoke(out: str) -> int:
     from missensexplorer.gui import prepare_web_engine
+
+    def say(*parts: object) -> None:  # a windowed app may have no console: log to a file too
+        line = " ".join(str(p) for p in parts)
+        print(line, flush=True)
+        with open(out + ".log", "a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
 
     prepare_web_engine()
     import tempfile
@@ -44,20 +51,20 @@ def smoke(out: str) -> int:
         app.quit()
 
     def js(result):
-        print("3Dmol:", result, flush=True)
+        say("3Dmol:", result)
         state["code"] = 0 if str(result).startswith("object|1") else 3
         QTimer.singleShot(500, finish)
 
     def poll():
         state["ticks"] += 1
         if w.thread is None and w.res is not None and state["ticks"] > 40:
-            print("rows:", w.proxy.rowCount(), "prediction:", w.res.table["prediction"].tolist(), flush=True)
+            say("rows:", w.proxy.rowCount(), "prediction:", w.res.table["prediction"].tolist())
             if w.web is None:
                 state["code"] = 2
                 return finish()
             w.web.page().runJavaScript("[typeof $3Dmol, document.querySelectorAll('canvas').length].join('|')", 0, js)
         elif state["ticks"] > 600:
-            print("timeout", flush=True)
+            say("timeout")
             finish()
         else:
             QTimer.singleShot(250, poll)
@@ -68,6 +75,10 @@ def smoke(out: str) -> int:
 
 
 if __name__ == "__main__":
+    if sys.platform.startswith("linux"):
+        # Ubuntu 24.04+ blocks the user namespaces Chromium's sandbox needs, and Qt's web engine
+        # then fails to start. The web view only shows the app's own page, 3Dmol and AlphaFold models.
+        os.environ.setdefault("QTWEBENGINE_DISABLE_SANDBOX", "1")
     if os.environ.get("MISSENSEXPLORER_SMOKE"):
         sys.exit(smoke(os.environ["MISSENSEXPLORER_SMOKE"]))
     sys.exit(main([]))

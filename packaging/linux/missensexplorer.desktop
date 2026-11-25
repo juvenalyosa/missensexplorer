@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=MissensExplorer
+GenericName=Variant effect predictor
+Comment=Predict how DNA variants change the encoded human protein
+Comment[es]=Predice cómo cambian las variantes de ADN la proteína humana
+Exec=/opt/missensexplorer/MissensExplorer %F
+Icon=missensexplorer
+Terminal=false
+Categories=Science;Biology;Education;
+Keywords=variant;VCF;missense;protein;ClinVar;ACMG;genetics;
+StartupWMClass=MissensExplorer

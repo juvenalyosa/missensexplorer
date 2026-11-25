@@ -5,6 +5,6 @@ The public API is :func:`predict` (configured with :class:`PredictOptions`) and 
 """
 
 # Defined before the import below: api.py and predict.py import it from the package.
-__version__ = "2.3.0"
+__version__ = "2.4.0"
 
 from .predict import PredictOptions, predict, predict_text  # noqa: F401

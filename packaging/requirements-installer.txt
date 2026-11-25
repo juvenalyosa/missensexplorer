@@ -1,0 +1,7 @@
+# Pinned for the installers (see packaging/build.py).
+# Qt 6.11 runs on macOS 13+, Windows 10/11 and Linux with glibc 2.34+ (Ubuntu 22.04+, Debian 12+).
+# Older Qt (6.8-6.10) supports older systems, but its web engine (the 3D viewer) crashes on current
+# macOS (tested on macOS 15.7). Qt 6.12 would need macOS 14.4.
+PySide6==6.11.3
+pyinstaller>=6.10,<7
+pillow>=10   # converts the PNG icon to the Windows .ico

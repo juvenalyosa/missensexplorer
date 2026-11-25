@@ -129,3 +129,19 @@ Tests marked `network` call the live APIs. They run every night in CI (`.github/
 so a change in an external service shows up before users hit it.
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for the checks every change must pass.
+
+## Packaging
+
+`packaging/build.py` freezes the desktop app with PyInstaller (`packaging/launcher.py` is the entry
+point) and builds the installer for the system it runs on. PyInstaller does not cross-compile, so
+the `installers` workflow runs it on macOS (Apple Silicon and Intel), Windows and Linux.
+
+| System | Installer | Tooling |
+|---|---|---|
+| macOS | `.dmg` with the app and an Applications link; ad hoc signature | `hdiutil`, `codesign` |
+| Windows | `Setup.exe`, per-user, with Start menu and desktop shortcuts and an uninstaller | Inno Setup (`packaging/windows/MissensExplorer.iss`) |
+| Linux | `.deb` (installs in `/opt`, declares the X11 and NSS libraries Qt needs) and a `.tar.gz` with `install.sh` | `dpkg-deb` |
+
+Each build ends with the packaged app's self-test: it predicts BRAF V600E online and draws the 3D
+structure (`--smoke`). Qt is pinned in `packaging/requirements-installer.txt`.
+
