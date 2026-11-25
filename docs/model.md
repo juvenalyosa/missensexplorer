@@ -181,6 +181,131 @@ human assays on 61 proteins of [ProteinGym](https://proteingym.org). No ClinVar 
 - **Correlations are moderate for every tool,** because an assay measures one function in one
   experimental system, not disease.
 
+## Somatic activating mutations: EGFR (outside the model's scope)
+
+[Full results](../benchmarks/results/egfr_validation.md), from `benchmarks/validate_egfr.py`.
+
+**Data.** Ikeuchi et al. (Oncogene 2022) tested every EGFR variant seen in at least two tumours in
+COSMIC (most of them rare) for transformation of NIH-3T3 and Ba/F3 cells: 258 substitutions, plus
+in-frame deletions and insertions. None is in the model's training set.
+
+**Question.** The model separates disease-causing germline variants from harmless ones. Tumour
+drivers such as EGFR's are *activating*, and a change that breaks the kinase is damaging without
+activating it. How far does a damaging call carry over?
+
+| Against | Variants | MissensExplorer AUC | Best other score |
+|---|---|---|---|
+| 3T3 transformation (score 3-4 vs 1) | 218 | 0.54 (0.43-0.64) | AlphaMissense 0.55 |
+| OncoKB (oncogenic vs likely neutral) | 85 | 0.66 (0.49-0.81) | popEVE 0.68 |
+| Ba/F3 transformation | 251 | 0.21 (0.15-0.28) | CADD 0.30 |
+
+- **Activation is not what any of the scores measure.** Against 3T3 transformation every score is
+  close to chance. The model calls 30 of 38 transforming variants damaging, and 127 of 187
+  non-transforming ones too.
+- **Loss of function is what they measure.** The 58 substitutions that failed in Ba/F3 also failed
+  in 3T3. Most sit in the kinase domain, many on its catalytic motifs (glycine-rich loop, HRD loop,
+  DFG). The model calls 54 of them damaging: these are broken kinases. Hence an AUC below 0.5.
+- **The well-known uncommon lung-cancer mutations are flagged.** G719A/C/D/S, L861Q/R, S768I,
+  E709A/K, L747S and T790M are called damaging, like L858R. L747P, a two-base change without
+  AlphaMissense or REVEL scores, is damaging on a single predictor. Of the other variants the paper
+  marks as uncommon, L833V, V769L/M and A864T are uncertain, and H870R is benign.
+- **Use.** For a somatic variant, a damaging call means a change that matters to the protein, not an
+  activating one. For oncogenicity, see the points below, with curated sources and functional data.
+
+## Somatic oncogenicity points (ClinGen/CGC/VICC)
+
+Optional (`--somatic`, or the *Somatic oncogenicity* switch). [Full results](../benchmarks/results/oncogenicity_validation.md),
+from `benchmarks/validate_oncogenicity.py`; the rules are in `src/missensexplorer/oncogenicity.py`.
+
+**What it is.** The ClinGen/CGC/VICC standard (Horak et al., Genet Med 2022) scores how likely a
+somatic variant is to drive a tumour. Each criterion adds points: very strong 8, strong 4,
+moderate 2, supporting 1, and the benign criteria subtract. The total gives the class:
+
+| Points | 10 or more | 6 to 9 | 0 to 5 | -1 to -6 | -7 or fewer |
+|---|---|---|---|---|---|
+| Class | Oncogenic | Likely oncogenic | VUS | Likely benign | Benign |
+
+These class limits are as restated by OncoVI (Carta et al., J Mol Diagn 2026). They match the two
+worked examples in Horak et al.
+
+**What is computed, from open data.**
+
+| Criteria | Source |
+|---|---|
+| OS3 / OM3 / OP3: tumour hotspot, by the number of tumours at the residue and with this change | cancerhotspots.org |
+| OS1 / OM4: the same change, or another missense change at the residue, classified oncogenic in ClinVar (one strength lower when only *likely* oncogenic) | ClinVar |
+| OVS1: null variant in a loss-of-function gene; OM2: in-frame change in a cancer gene | IntOGen driver genes (CC0) |
+| OP4: absent from gnomAD or below 1e-5; SBS1 / SBVS1: above 1% / 5% in a continental population | gnomAD |
+| OS2 / SBS2: functional studies of this protein change (rated at least 3 of 5): evidence of an oncogenic effect, or of unaltered function | CIViC (CC0) |
+| OP1 / SBP1: the model calls the missense variant damaging / benign | MissensExplorer |
+
+For OS2, what counts as an oncogenic effect depends on the gene. Gain of function or neomorphic
+function counts in any driver. Loss of function or a dominant-negative effect counts only in a
+loss-of-function gene.
+
+**Clinical evidence (no points).** CIViC's predictive, diagnostic and prognostic evidence for the
+protein change goes in `clinical_evidence`. It gives the best level (A validated or in guidelines,
+B clinical trials, C case reports, D preclinical, E inferential), the drug and the tumour type. This
+is the other axis of somatic interpretation, what the variant means for treatment (AMP/ASCO/CAP),
+so it never adds oncogenicity points. For example, L858R reaches level A (erlotinib in lung cancer)
+and BRAF V600E level A (vemurafenib in melanoma), although CIViC has no functional study of either.
+
+**What is not computed.**
+- Functional studies outside CIViC, a critical functional domain (OM1) and OP2 need a curator. CIViC
+  holds few functional studies: 341 in 63 genes, 196 of them rated 3 stars or more.
+- The variant's own ClinVar oncogenicity classification never counts as evidence for itself; it is
+  shown apart (`clinvar_oncogenicity`).
+- OncoKB is not used: its terms do not allow use in clinical or commercial settings without a
+  licence.
+
+**Three choices.**
+1. **OP1/SBP1 only outside activating genes.** In a gene IntOGen calls activating, the model's call
+   does not count. The data:
+   - In EGFR, an oncogene, a damaging call marks broken kinases as much as activated ones. With OP1
+     the points ranked Ba/F3 transformation at 0.42, without it at 0.56.
+   - In TP53, a tumour suppressor, the model is the strongest criterion: the points rank loss of
+     function at 0.93 with it and 0.87 without it.
+2. **OP4 below 1e-5.** The standard says "absent or extremely low" without a number.
+3. **OS1 removes the hotspot criteria**, whose counts mix nucleotide changes. OM3 and OM4 are never
+   combined; the stronger one is kept.
+
+**Validation.** The points are ranked against laboratory assays: AUC, where ties count half.
+
+| Gene (role) | Assay | Variants | Model alone | Points |
+|---|---|---|---|---|
+| EGFR (oncogene) | 3T3 transformation (3-4 vs 1), missense | 225 | 0.543 | **0.729** (0.620-0.823) |
+| EGFR | Ba/F3 transformation, missense | 258 | 0.215 | **0.557** (0.507-0.608) |
+| TP53 (tumour suppressor) | Kato yeast transactivation | 1,724 | 0.928 | **0.932** (0.917-0.946) |
+| TP53 | Giacomelli loss of function | 2,158 | 0.841 | **0.842** (0.820-0.864) |
+
+In this validation, CIViC items that cite the assays themselves, or yeast assays like Kato's, are left
+out: 78 items. Otherwise the points would be tested against their own source. With the rest, OS2
+applies to 3 EGFR and 10 TP53 variants.
+
+- **Ranking:**
+  - In the oncogene the points rank far better than the model, because the tumour hotspots carry
+    the signal.
+  - In the tumour suppressor they rank as well as the model, which is already good.
+  - Without ClinVar the AUCs barely change: the points do not depend on ClinVar's classifications.
+- **Calls:** they are cautious.
+  - No TP53 variant functional in yeast is called oncogenic.
+  - One EGFR variant that does not transform 3T3, K754E, comes out *Likely oncogenic*. CIViC holds
+    evidence that it is oncogenic, and it does transform Ba/F3.
+  - Few variants reach *Likely oncogenic* or *Oncogenic*:
+    - TP53: 91 of 493 non-functional variants. G245S is *Oncogenic*, with 10 points from the
+      hotspot, a CIViC functional study, the model and gnomAD.
+    - EGFR: E746_A750del and T790M.
+  - L858R, the TP53 hotspot R273H and most uncommon EGFR mutations stay *VUS*. They have no
+    functional study in CIViC, and without one the automatic criteria rarely pass 5 points.
+- **Use:** the points rank and document the evidence; they do not replace curation.
+  - A *VUS* here means "not enough automatic evidence", not "probably harmless".
+  - ClinVar's classification of the variant itself is shown next to them.
+- **Not assessed:**
+  - Insertions written as protein changes, such as most EGFR exon 20 insertions, cannot be traced
+    to one DNA change; give the c. change.
+  - Hotspots come from about 25,000 tumours (cancerhotspots.org), with less coverage of
+    haematological, rare and paediatric cancers.
+
 ## Inputs that did not help
 
 `benchmarks/feature_tests.py` adds one input at a time to the four predictors and measures the change

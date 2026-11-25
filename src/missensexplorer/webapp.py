@@ -96,6 +96,12 @@ with st.sidebar:
         False,
         help="Also list intronic, UTR, upstream/downstream and intergenic consequences.",
     )
+    somatic = st.toggle(
+        "Somatic oncogenicity (tumours)",
+        False,
+        help="ClinGen/CGC/VICC oncogenicity points from cancerhotspots.org hotspots, IntOGen driver-gene roles "
+        "and ClinVar oncogenicity classifications.",
+    )
     workers = st.slider("Parallel requests", 1, 8, 4)
     if st.button("Clear cache", help="Cached API answers make repeated analyses instant (30 days)."):
         with Cache() as cache:
@@ -185,6 +191,7 @@ if run:
             predictors=predictors,
             protein_context=context,
             clinvar=clinvar_on,
+            oncogenicity=somatic,
             workers=workers,
         )
         try:
@@ -477,6 +484,19 @@ def _why_and_acmg(r: pd.Series) -> None:
             " · ".join(acmg_bits) + f"  \n:gray[{how}One part of an ACMG classification, not a replacement for "
             "expert review.]"
         )
+    if _val(r.get("oncogenicity")):
+        pts = r.get("oncogenicity_points")
+        head = f"**Somatic oncogenicity (automatic):** {r['oncogenicity']}" + (
+            f" ({int(pts or 0):+d} points)" if _isnum(pts) else ""
+        )
+        if _val(r.get("oncogenicity_codes")):
+            head += f" · {r['oncogenicity_codes']}"
+        st.markdown(
+            head + f"  \n:gray[{_val(r.get('oncogenicity_evidence')) or ''}. ClinGen/CGC/VICC standard with the "
+            "criteria that can be computed; functional studies (OS2) only as curated in CIViC.]"
+        )
+    if _val(r.get("clinical_evidence")):
+        st.markdown(f"**Clinical evidence (CIViC):** {r['clinical_evidence']}")
 
 
 # How the PP3/BP4 thresholds were set (acmg.thresholds_used); nothing for rows without PP3/BP4.

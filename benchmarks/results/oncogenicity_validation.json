@@ -1,0 +1,158 @@
+{
+ "EGFR": {
+  "variants": 345,
+  "assessed": 279,
+  "auc": {
+   "3T3 (missense)": {
+    "n": 225,
+    "positives": 38,
+    "points": 0.729,
+    "points_ci": [
+     0.62,
+     0.823
+    ],
+    "points_without_clinvar": 0.732,
+    "model": 0.543,
+    "model_n": 218
+   },
+   "3T3 (all)": {
+    "n": 243,
+    "positives": 46,
+    "points": 0.743,
+    "points_ci": [
+     0.658,
+     0.834
+    ],
+    "points_without_clinvar": 0.745,
+    "model": 0.543,
+    "model_n": 218
+   },
+   "Ba/F3 (missense)": {
+    "n": 258,
+    "positives": 200,
+    "points": 0.557,
+    "points_ci": [
+     0.507,
+     0.608
+    ],
+    "points_without_clinvar": 0.555,
+    "model": 0.215,
+    "model_n": 251
+   },
+   "Ba/F3 (all)": {
+    "n": 279,
+    "positives": 212,
+    "points": 0.513,
+    "points_ci": [
+     0.447,
+     0.574
+    ],
+    "points_without_clinvar": 0.511,
+    "model": 0.215,
+    "model_n": 251
+   }
+  },
+  "tiers": {
+   "4": {
+    "VUS": 19,
+    "not assessed": 38
+   },
+   "3": {
+    "Likely oncogenic": 2,
+    "VUS": 25,
+    "not assessed": 22
+   },
+   "2": {
+    "VUS": 35,
+    "Benign": 1,
+    "not assessed": 3
+   },
+   "1": {
+    "Likely oncogenic": 1,
+    "VUS": 196,
+    "not assessed": 3
+   }
+  },
+  "civic": {
+   "OS2": 3,
+   "SBS2": 0,
+   "clinical_evidence": {
+    "A": 2,
+    "B": 2,
+    "C": 11,
+    "D": 12
+   }
+  }
+ },
+ "TP53": {
+  "variants": 2314,
+  "assessed": 2306,
+  "auc": {
+   "Kato (missense)": {
+    "n": 1724,
+    "positives": 493,
+    "points": 0.932,
+    "points_ci": [
+     0.917,
+     0.946
+    ],
+    "points_without_clinvar": 0.928,
+    "model": 0.928,
+    "model_n": 1724
+   },
+   "Giacomelli (missense)": {
+    "n": 2158,
+    "positives": 570,
+    "points": 0.842,
+    "points_ci": [
+     0.82,
+     0.864
+    ],
+    "points_without_clinvar": 0.839,
+    "model": 0.841,
+    "model_n": 2158
+   }
+  },
+  "tiers": {
+   "non-functional": {
+    "Oncogenic": 1,
+    "Likely oncogenic": 90,
+    "VUS": 398,
+    "Likely benign": 1,
+    "mixed": 3
+   },
+   "partially functional": {
+    "Likely oncogenic": 5,
+    "VUS": 571,
+    "Likely benign": 5,
+    "mixed": 1
+   },
+   "functional": {
+    "VUS": 1121,
+    "Likely benign": 22,
+    "mixed": 4
+   },
+   "supertrans": {
+    "VUS": 80,
+    "Likely benign": 4
+   }
+  },
+  "civic": {
+   "OS2": 10,
+   "SBS2": 0,
+   "clinical_evidence": {
+    "B": 5,
+    "C": 5,
+    "D": 8,
+    "E": 1
+   }
+  }
+ },
+ "sources": {
+  "egfr": "Ikeuchi et al., Oncogene 2022, doi:10.1038/s41388-022-02263-4 (Supplementary Table 4)",
+  "tp53": "https://tp53.cancer.gov/static/data/MutationView_r21.csv",
+  "intogen": "IntOGen-Drivers-20240920",
+  "civic": "https://civicdb.org/downloads/nightly/nightly-ClinicalEvidenceSummaries.tsv"
+ },
+ "civic_dropped": 78
+}

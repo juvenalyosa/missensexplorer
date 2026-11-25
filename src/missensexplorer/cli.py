@@ -100,6 +100,12 @@ def _predict_parser() -> argparse.ArgumentParser:
         "(faster; rare variants then show no frequency and PM2 is not assessed)",
     )
     p.add_argument(
+        "--somatic",
+        action="store_true",
+        help="add somatic oncogenicity points (ClinGen/CGC/VICC standard) for tumour variants, from "
+        "cancerhotspots.org hotspots, IntOGen driver-gene roles, CIViC and ClinVar, and CIViC's clinical evidence",
+    )
+    p.add_argument(
         "-o",
         "--output",
         action="append",
@@ -175,6 +181,7 @@ def _options(args: argparse.Namespace) -> PredictOptions:
         common_af=args.common_af or None,
         acmg_source=args.acmg_source,
         gnomad_check=not args.no_gnomad_check,
+        oncogenicity=args.somatic,
     )
 
 

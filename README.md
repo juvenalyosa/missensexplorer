@@ -137,6 +137,7 @@ Useful flags:
 | `--common-af AF` | gnomAD grpmax at which damaging/uncertain calls become benign (default `0.05` = BA1; `0` = off) |
 | `--acmg-source revel` | PP3/BP4 from REVEL with ClinGen's published thresholds, instead of the model score |
 | `--no-gnomad-check` | do not ask gnomAD about variants without a frequency in Ensembl's data (faster; no PM2) |
+| `--somatic` | add somatic oncogenicity points (ClinGen/CGC/VICC) for tumour variants ([details](docs/model.md#somatic-oncogenicity-points-clingencgcvicc)) |
 | `--no-cache` | ignore the local cache |
 | `missensexplorer cache clear` | empty the local cache |
 
@@ -162,6 +163,7 @@ res.sequences      # wild-type and mutant protein sequences per row
 | Predictors | `alphamissense`, `revel`, `cadd_phred`, `eve`, `popeve`, `sift`, `polyphen`, `spliceai_max` |
 | Physico-chemistry | `grantham`, `blosum62`, `hydropathy_change`, `volume_change`, `charge_change`, `physchem_notes` |
 | Protein context | `protein_name`, `protein_window` (e.g. `GDFGLAT[V>E]KSRWSGS`), `key_site`, `protein_features`, `uniprot_variants_here`, `uniprot_mutagenesis_here`, `plddt`, `protein_function` |
+| Somatic (with `--somatic`) | `oncogenicity` (Oncogenic / Likely oncogenic / VUS / Likely benign / Benign), `oncogenicity_points`, `oncogenicity_codes` (e.g. `OS3 +4, OP1 +1, OP4 +1`), `oncogenicity_evidence`, `clinical_evidence_level` and `clinical_evidence` (CIViC: best evidence level A–E, drugs, tumour type) |
 | Clinical & population | `clinvar` (classification of the exact allele), `clinvar_review` and stars, `clinvar_conditions`, `clinvar_oncogenicity`, `gnomad_af`, `gnomad_popmax_af` (grpmax: highest main genetic ancestry group), `rsid`, `pubmed_ids` |
 | Truncating variants | `nmd` (rule-of-thumb nonsense-mediated decay), `mutant_protein` (% of the protein lost) |
 | Sample | `zygosity`, `genotype`, `sample` or `carriers` |

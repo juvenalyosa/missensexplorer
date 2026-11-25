@@ -151,19 +151,42 @@ class Vep:
         or CAT) is rejected by VEP; it is asked again with ``ambiguous_hgvs`` and answered with every
         genomic allele that gives the change: {"results": [...], "ambiguous": number of alleles}.
 
+        A protein change given with a gene symbol that VEP resolved on another isoform, away from the
+        given position on the gene's canonical transcript, is asked again on that transcript (see
+        `canonical_retry`); the first answer stays when the canonical transcript rejects the change.
+
         Returns:
             (kind, query) -> {"results": [VEP JSON object per consequence block]}, or
-            {"error": message} with "cache_error" or "service_error" set to True.
+            {"error": message} with "cache_error" or "service_error" set to True; a notation VEP
+            rejects also keeps VEP's own message, as "vep_error".
         """
         out = self._annotate(queries, params, progress, stage, source)
-        if AMBIGUOUS not in params:
-            retry = [q for (kind, q), val in out.items() if kind == "hgvs" and _needs_ambiguous_retry(q, val)]
-            if retry:
-                again = self._annotate({"hgvs": retry}, {**params, AMBIGUOUS: 1}, progress, stage, source)
-                for q in retry:
-                    hits = protein_matches(q, again.get(("hgvs", q), {}).get("results", []))
-                    if hits:
-                        out[("hgvs", q)] = {"results": hits, "ambiguous": len(hits)}
+        if AMBIGUOUS in params:
+            return out
+        retry = [q for (kind, q), val in out.items() if kind == "hgvs" and _needs_ambiguous_retry(q, val)]
+        if retry:
+            again = self._annotate({"hgvs": retry}, {**params, AMBIGUOUS: 1}, progress, stage, source)
+            for q in retry:
+                hits = protein_matches(q, again.get(("hgvs", q), {}).get("results", []))
+                if hits:
+                    out[("hgvs", q)] = {"results": hits, "ambiguous": len(hits)}
+        on_canonical = {}
+        for (kind, q), val in out.items():
+            if kind == "hgvs" and (tid := canonical_retry(q, val)):
+                on_canonical[q] = f"{tid}:{q.partition(':')[2]}"
+        if on_canonical:
+            again = self.annotate({"hgvs": sorted(set(on_canonical.values()))}, params, progress, stage, source)
+            for q, tq in on_canonical.items():
+                val = again.get(("hgvs", tq), {})
+                if val.get("results"):
+                    out[("hgvs", q)] = val
+        for (kind, q), val in out.items():
+            if (
+                kind == "hgvs"
+                and val.get("error") in (AA_MISMATCH, COULD_NOT_MAP)
+                and _PROTEIN_INS_QUERY.match(q.partition(":")[2])
+            ):  # VEP never maps inserted residues; in a batch it drops them, alone it blames the residue
+                out[(kind, q)] = {**val, "error": PROTEIN_INSERTION}
         return out
 
     def _annotate(
@@ -185,8 +208,8 @@ class Vep:
             for q, k in zip(qs, keys, strict=True):
                 if k in hit:
                     val = hit[k]
-                    if "error" in val:  # cached by an older version: give it today's wording
-                        val = {**val, "error": _short_error(val["error"])}
+                    if "error" in val:  # today's wording, from VEP's own message when it was kept
+                        val = {**val, "error": _short_error(val.get("vep_error") or val["error"])}
                     out[(kind, q)] = val
                 else:
                     missing.append(q)
@@ -268,7 +291,7 @@ class Vep:
                 except ValueError:
                     body = None
                 msg = body.get("error", r.text) if isinstance(body, dict) else r.text
-                return {batch[0]: {"error": _short_error(msg), "cache_error": True}}
+                return {batch[0]: {"error": _short_error(msg), "vep_error": str(msg)[:2000], "cache_error": True}}
             mid = len(batch) // 2  # isolate the offending entry
             res = self._run_batch(kind, batch[:mid], params)
             res.update(self._run_batch(kind, batch[mid:], params))
@@ -290,9 +313,7 @@ class Vep:
         for q in lost[:25] if len(batch) > 1 else []:
             res.update(self._run_batch(kind, [q], params))
         for q in lost:
-            res.setdefault(
-                q, {"error": "VEP could not map this variant (check notation/assembly)", "cache_error": True}
-            )
+            res.setdefault(q, {"error": COULD_NOT_MAP, "cache_error": True})
         return res
 
 
@@ -311,15 +332,24 @@ def _parse_json(text: str) -> JSON:
         return None
 
 
+COULD_NOT_MAP = "VEP could not map this variant (check notation/assembly)"
 AA_MISMATCH = "the amino acid at this position is not the one given (check the position and the isoform)"
 OUTSIDE_PROTEIN = "position outside the protein (check the position and the isoform)"
 PROTEIN_FRAMESHIFT = "a frameshift written as a protein change cannot be traced to one DNA change: give the c. change"
+PROTEIN_INSERTION = "an insertion written as a protein change cannot be traced to one DNA change: give the c. change"
+SEVERAL_CHANGES = "several DNA changes give this protein change and Ensembl did not resolve them: give the c. change"
 _PROTEIN_FS = re.compile(r"'[^']*:p\.[^']*fs[^']*'")
+_PROTEIN_INS = re.compile(r"'[^']*:p\.[^']*ins[^']*'")  # insertions and deletion-insertions
+_PROTEIN_INS_QUERY = re.compile(r"^p\.\(?[A-Z][a-z]{2}\d+(?:_[A-Z][a-z]{2}\d+)?(?:del)?ins[A-Z]")
 
 
 def _short_error(msg: str) -> str:
     """Return a short, readable version of a VEP error message for the results table."""
     msg = str(msg).strip()
+    if _PROTEIN_INS.search(msg) and ("does not match input sequence" in msg or "nucleotide change from peptide" in msg):
+        return PROTEIN_INSERTION  # VEP cannot trace inserted residues to DNA; its message blames the residue
+    if "Could not uniquely determine nucleotide change" in msg:  # VEP's wording for a transcript id
+        return SEVERAL_CHANGES
     if "Could not get a Transcript object" in msg:
         return "unknown gene or transcript symbol"
     if _PROTEIN_FS.search(msg):  # VEP maps protein substitutions, not frameshifts, back to the genome
@@ -343,12 +373,17 @@ def _needs_ambiguous_retry(query: str, answer: dict[str, Any]) -> bool:
     """Whether VEP rejected a protein substitution because several nucleotide changes produce it.
 
     Without ``ambiguous_hgvs`` VEP tries one codon per transcript and reports that the amino acid
-    does not match; with it, VEP returns every SNV that gives the change. Cached answers from older
-    versions still hold VEP's own wording, hence both tests.
+    does not match (given a gene symbol) or that it could not determine the nucleotide change (given a
+    transcript id); with it, VEP returns every SNV that gives the change. Cached answers from older
+    versions still hold VEP's own wording, hence the tests on it.
     """
-    err = str(answer.get("error") or "")
+    err = str(answer.get("vep_error") or answer.get("error") or "")
     protein = query.split(":", 1)[-1]
-    return bool(_PROTEIN_SUB.match(protein)) and (err == AA_MISMATCH or "does not match input sequence" in err)
+    return bool(_PROTEIN_SUB.match(protein)) and (
+        err in (AA_MISMATCH, SEVERAL_CHANGES)
+        or "does not match input sequence" in err
+        or "Could not uniquely determine nucleotide change" in err
+    )
 
 
 def protein_matches(query: str, results: list[JSON]) -> list[JSON]:
@@ -374,14 +409,85 @@ def protein_matches(query: str, results: list[JSON]) -> list[JSON]:
         return []
     want = f"{to_one_letter(m.group(1))}/{to_one_letter(m.group(3))}"
     pos = int(m.group(2))
-    symbols = {(tc.get("gene_symbol") or "").upper() for r in results for tc in r.get("transcript_consequences") or []}
-    only = gene.upper() if gene.upper() in symbols else None  # a transcript or protein id: any gene
+    tcs = [tc for r in results for tc in r.get("transcript_consequences") or []]
+    # the query names a gene, or a transcript (then only that transcript counts), or something else: any
+    if gene.upper() in {(tc.get("gene_symbol") or "").upper() for tc in tcs}:
+        field, only = "gene_symbol", gene.upper()
+    elif gene.split(".")[0].upper() in {(tc.get("transcript_id") or "").upper() for tc in tcs}:
+        field, only = "transcript_id", gene.split(".")[0].upper()
+    else:
+        field, only = "", ""
     kept: dict[tuple[Any, ...], JSON] = {}
     for r in results:
         key = (r.get("seq_region_name"), r.get("start"), r.get("end"), r.get("allele_string"))
         for tc in r.get("transcript_consequences") or []:
-            if only and (tc.get("gene_symbol") or "").upper() != only:
+            if only and (tc.get(field) or "").upper() != only:
                 continue
             if tc.get("amino_acids") == want and tc.get("protein_start") == pos:
                 kept.setdefault(key, r)
     return list(kept.values())
+
+
+_TRANSCRIPT_ID = re.compile(r"^(?:ENS[TP]\d|[NX][MRP]_\d|LRG_\d)", re.I)
+_PROTEIN_START = re.compile(r"^p\.\(?[A-Z][a-z]{2}(\d+)")
+
+
+def canonical_retry(query: str, answer: dict[str, Any]) -> str | None:
+    """Return the canonical transcript to ask a protein change on again, when VEP resolved it on another isoform.
+
+    Given a gene symbol, VEP resolves a protein change on the first isoform whose residue at that
+    position matches. That isoform can number the protein differently: ``EGFR:p.Thr725Met`` was placed
+    where another isoform has a threonine 725, in the 3' UTR of EGFR's MANE Select transcript, instead
+    of on MANE's threonine 725. VEP's answer reports the canonical transcript of the gene (MANE Select
+    where there is one, chosen by ``pick_allele_gene``); when that transcript does not carry the change at
+    the given position, the change is asked again on it.
+
+    Args:
+        query: The HGVS sent to VEP, e.g. ``"EGFR:p.Thr725Met"``.
+        answer: VEP's answer to it.
+
+    Returns:
+        The canonical transcript id, or None when the query is not a protein change given with a gene
+        symbol, when VEP gave no results, or when the canonical transcript already carries the change.
+    """
+    gene, _, change = query.partition(":")
+    if not _PROTEIN_START.match(change) or _TRANSCRIPT_ID.match(gene) or not answer.get("results"):
+        return None
+    canonical = _canonical_consequences(gene, answer["results"])
+    if not canonical or any(_carries(tc, change) for tc in canonical):
+        return None
+    return str(canonical[0].get("transcript_id") or "") or None
+
+
+def on_canonical(query: str, result: JSON) -> bool:
+    """Whether a VEP result gives a protein change (gene symbol given) at its position on the canonical transcript.
+
+    Args:
+        query: The HGVS sent to VEP, e.g. ``"EGFR:p.Ala750_Lys754del"``.
+        result: One of VEP's results for it.
+    """
+    gene, _, change = query.partition(":")
+    if not _PROTEIN_START.match(change):
+        return False
+    return any(_carries(tc, change) for tc in _canonical_consequences(gene, [result]))
+
+
+def _canonical_consequences(gene: str, results: list[JSON]) -> list[JSON]:
+    """The consequences, in `results`, on the canonical (or MANE Select) transcript of `gene`."""
+    return [
+        tc
+        for r in results
+        for tc in r.get("transcript_consequences") or []
+        if (tc.get("gene_symbol") or "").upper() == gene.upper() and (tc.get("canonical") or tc.get("mane_select"))
+    ]
+
+
+def _carries(tc: JSON, change: str) -> bool:
+    """Whether a consequence is the protein change `change` (``p.Thr725Met``) at its position.
+
+    A deletion across two codons has the given HGVS but starts at the codon before, hence the second test.
+    """
+    m = _PROTEIN_START.match(change)
+    if m is None:
+        return False
+    return tc.get("protein_start") == int(m.group(1)) or str(tc.get("hgvsp") or "").endswith(f":{change}")

@@ -33,6 +33,7 @@ same answer.
 | `model.py` | The missense model score (logistic regression over AlphaMissense, REVEL, CADD and popEVE) and the score with frequency |
 | `acmg.py` | ACMG/AMP evidence: PP3/BP4 at calibrated thresholds, PM2, BA1/BS1 and the code summary |
 | `residue.py` | PS1/PM5 from ClinVar's pathogenic variants at the same residue |
+| `oncogenicity.py` | Optional somatic oncogenicity points (ClinGen/CGC/VICC): cancerhotspots.org hotspots, IntOGen gene roles, CIViC functional evidence, ClinVar oncogenicity classifications at the residue, gnomAD and the model; and CIViC's clinical evidence |
 | `report.py` | Exports (CSV, TSV, Excel with a run-info sheet, JSON, FASTA) and the terminal view |
 | `_types.py` | Shared type aliases (`Row`, `JSON`, `Progress`) and the cache protocol |
 | `model_params.py`, `calibration_params.py`, `frequency_params.py` | Generated coefficients and thresholds. Never edited by hand: see [Reproducibility](#reproducibility) |
@@ -51,9 +52,10 @@ which the desktop app shows as a progress bar.
 | 4 | Predictor scores for protein-altering and splice variants only (a slower second pass on large inputs) | `vep.py` | Ensembl VEP plugins | 30 days |
 | 5 | ClinVar record of the exact allele | `clinvar.py` | NCBI | 7 days |
 | 6 | ClinVar pathogenic variants at the same residue (PS1/PM5) | `clinvar.py`, `residue.py` | NCBI | 7 days |
+| 6b | Only with `oncogenicity=True`: hotspots, IntOGen gene roles, CIViC evidence, and ClinVar variants with an oncogenicity classification at the same residue | `oncogenicity.py`, `clinvar.py` | cancerhotspots.org, IntOGen, CIViC, NCBI | 90 days (CIViC and ClinVar 7) |
 | 7 | Direct gnomAD check for variants VEP gave no frequency (PM2) | `gnomad.py` | gnomAD | 90 days |
 | 8 | Protein context: UniProt features, AlphaFold pLDDT | `protein.py` | UniProt, AlphaFold | 30 days |
-| 9 | Build the rows: model score, prediction, ACMG evidence, protein sequences | `model.py`, `acmg.py`, `residue.py`, `aa.py` | — | — |
+| 9 | Build the rows: model score, prediction, ACMG evidence, oncogenicity points, protein sequences | `model.py`, `acmg.py`, `residue.py`, `oncogenicity.py`, `aa.py` | — | — |
 
 **Transcript.** VEP picks one consequence per allele and gene, preferring MANE Select, then the
 canonical transcript (`pick_allele_gene`).
@@ -109,6 +111,8 @@ to `benchmarks/results/`:
 | `train_frequency_score.py` | `frequency_params.py` (score with frequency) |
 | `clinvar_benchmark.py`, `compare_tools.py` | Held-out ClinVar benchmark, comparison with 31 tools |
 | `validate_proteingym.py` | Validation on deep mutational scanning data |
+| `validate_egfr.py` | EGFR tumour variants against a transformation assay (outside the model's scope) |
+| `validate_oncogenicity.py` | The oncogenicity points on EGFR (oncogene, transformation assays) and TP53 (tumour suppressor, NCI TP53 Database functional classes) |
 | `feature_tests.py`, `acmg_criteria.py` | Inputs tested and rejected; how informative PS1/PM5/PM2 are |
 
 **Version guard.** The calibration and the score with frequency belong to one trained model. Each

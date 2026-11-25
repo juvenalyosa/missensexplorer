@@ -63,6 +63,17 @@ def _result():
             "acmg_codes": "PP3_Moderate +3, PM5 +2",
             "population_frequency": "rare (grpmax 0.0004%)",
             "score_with_frequency": 0.97,
+            "oncogenicity": "VUS",
+            "oncogenicity_points": 4,
+            "oncogenicity_codes": "OS3 +4",
+            "oncogenicity_evidence": "OS3 (hotspot V600: 897 tumours, 833 with E; cancerhotspots.org); BRAF: "
+            "activating in 54 of 57 IntOGen cohorts; OP1/SBP1 not applied (activating gene: the model measures "
+            "damage to the protein, not activation); not assessed automatically: functional studies beyond CIViC, "
+            "OM1 functional domain, OP2",
+            "clinvar_oncogenicity": "Oncogenic",
+            "clinical_evidence_level": "A",
+            "clinical_evidence": "88 CIViC items (level A 6, B 55, C 16, D 11); best: level A predictive, "
+            "Sensitivity/Response: Vemurafenib in Skin Melanoma (EID1409)",
         },
         {
             "input": "TP53 P72R",
@@ -130,6 +141,15 @@ def test_window_shows_results_and_details(app, lang):
     assert ("PM5 (p.Val600Gly: patogénica, 3★" if lang == "es" else "PM5 (p.Val600Gly: Pathogenic, 3★") in texts
     assert "PP3_Moderate +3, PM5 +2" in texts
     assert ("con frecuencia 0.97" if lang == "es" else "with frequency 0.97") in texts
+    assert ("Significado incierto (VUS) · +4 puntos" if lang == "es" else "VUS · +4 points") in texts
+    assert ("hotspot V600: 897 tumores, 833 con E" if lang == "es" else "hotspot V600: 897 tumours") in texts
+    assert ("activador en 54 de 57 cohortes de IntOGen" if lang == "es" else "activating in 54 of 57") in texts
+    assert (
+        "88 evidencias en CIViC (nivel A 6, B 55, C 16, D 11); la mejor: nivel A, predictiva, sensibilidad/respuesta: "
+        "Vemurafenib en Skin Melanoma (EID1409)"
+        if lang == "es"
+        else "best: level A predictive, Sensitivity/Response: Vemurafenib in Skin Melanoma"
+    ) in texts
     from missensexplorer.gui.widgets import ContributionChart
 
     charts = w.detail.findChildren(ContributionChart)
@@ -187,10 +207,28 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "the amino acid at this position is not the one given (check the position and the isoform)",
         "position outside the protein (check the position and the isoform)",
         "a frameshift written as a protein change cannot be traced to one DNA change: give the c. change",
+        "an insertion written as a protein change cannot be traced to one DNA change: give the c. change",
+        "several DNA changes give this protein change and Ensembl did not resolve them: give the c. change",
+        "Ensembl places this protein change outside the coding sequence of the gene's main transcript "
+        "(check the position and the isoform)",
         "2 nucleotide changes give this protein change; each is reported",
         "protein notation: other DNA changes can give the same F508del; this is the one Ensembl maps "
         "(c.1522_1524del). Give the c. or genomic change to analyse a specific one",
         "not checked (no MANE Select transcript, on which ClinVar names its variants)",
+        "OP1/SBP1 not applied (activating gene: the model measures damage to the protein, not activation)",
+        "OS1/OM4 not checked (ClinVar oncogenicity search unavailable)",
+        "hotspot not counted (OS1 already uses this amino-acid change)",
+        "OM4 not applied (this change is milder than the oncogenic ones at the residue)",
+        "OVS1 not applied (the gene is not a loss-of-function driver in IntOGen)",
+        "OM2 not applied (not a known cancer gene in IntOGen)",
+        "OM4_Supporting not used (p.Gly719Ser: Likely oncogenic; the hotspot criterion OM3 is stronger)",
+        "not assessed (cancerhotspots.org or IntOGen unavailable)",
+        "OS1 (same change by c.524_525delinsAT: Oncogenic, VCV000000001)",
+        "OS2/SBS2 not checked (CIViC unavailable)",
+        "OS2/SBS2 not applied (CIViC functional evidence conflicts)",
+        "CIViC functional evidence rated below 3 stars not used",
+        "OS2 not applied (OS1 already uses this amino-acid change)",
+        "not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2",
         "protein change given as p.Gly396Asp (another isoform's numbering); on the reported transcript it is G368D",
         "protein change given as p.Ala175His exists only on another isoform; on the reported transcript this DNA "
         "change is C182S: check the input",

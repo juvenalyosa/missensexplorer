@@ -78,6 +78,7 @@ COLUMNS: list[tuple[str, str, str]] = [
     ("cadd_phred", "CADD", "num1"),
     ("plddt", "pLDDT", "num0"),
     ("clinvar", "col_clinvar", "clinvar"),
+    ("oncogenicity", "col_oncogenicity", "onco"),
     ("gnomad_af", "col_gnomad", "sci"),
     ("zygosity", "col_zyg", "zyg"),
 ]
@@ -160,6 +161,9 @@ class ResultsModel(QAbstractTableModel):
                 return clinvar_text(r)
             if kind == "zyg":
                 return tr_text(v) if v else ""
+            if kind == "onco":
+                pts = r.get("oncogenicity_points")
+                return f"{tr_text(v)} ({int(pts):+d})" if v and isnum(pts) else tr_text(v) if v else ""
             if v is None:
                 return ""
             if kind == "bar":
@@ -177,6 +181,9 @@ class ResultsModel(QAbstractTableModel):
                 return th.STATUS_ORDER.index(prediction_status(v)) * 10 - (score if isnum(score) else 0)
             if kind in ("bar", "num1", "num0", "sci"):
                 return float(v) if isnum(v) else -1.0
+            if kind == "onco":
+                pts = r.get("oncogenicity_points")
+                return float(pts) if isnum(pts) else -99.0
             return str(v or "").lower()
         if role == STATUS_ROLE:
             return prediction_status(r.get("prediction"))
@@ -199,6 +206,8 @@ class ResultsModel(QAbstractTableModel):
                 return tr_text(val(r.get("prediction_basis"), "")) or None
             if kind == "clinvar" and val(r.get("clinvar_review")):
                 return r["clinvar_review"]
+            if kind == "onco":
+                return tr_text(val(r.get("oncogenicity_codes"), "")) or None
             if kind == "text":
                 return str(v or "")
         return None

@@ -20,13 +20,14 @@ import pandas as pd
 
 from . import __version__, acmg, gnomad, model, residue
 from . import clinvar as cv
+from . import oncogenicity as onco
 from . import protein as prot
 from ._types import JSON, KeyValueCache, Progress, Row
 from .aa import AA3_TO_1, substitution_profile
 from .api import ENSEMBL, ApiError, Http, OfflineError, SourceStatus, ensembl_release
 from .cache import Cache, NullCache
 from .inputs import CHROMS, ParsedInput, VariantInput, _assembly_from_header, parse_text, read_file, region_query
-from .vep import BASE_PARAMS, DETAIL_CONSEQUENCES, PREDICTOR_PARAMS, Vep
+from .vep import BASE_PARAMS, DETAIL_CONSEQUENCES, PREDICTOR_PARAMS, Vep, on_canonical
 from .vep_local import LocalVep
 
 log = logging.getLogger(__name__)
@@ -87,6 +88,12 @@ COLUMNS = [
     "acmg_ps1_pm5",
     "acmg_pm2",
     "population_frequency",
+    "oncogenicity",
+    "oncogenicity_points",
+    "oncogenicity_codes",
+    "oncogenicity_evidence",
+    "clinical_evidence_level",
+    "clinical_evidence",
     "alphamissense",
     "alphamissense_class",
     "revel",
@@ -179,6 +186,9 @@ class PredictOptions:
         common_af: gnomAD grpmax at/above which damaging/uncertain calls become benign (None = off)
         acmg_source: PP3/BP4 from: model (own ClinGen-method calibration) | revel (ClinGen's)
         gnomad_check: ask gnomAD directly about variants Ensembl gives no frequency (PM2)
+        oncogenicity: somatic oncogenicity points (ClinGen/CGC/VICC) from cancerhotspots.org, the IntOGen
+            driver genes, CIViC and ClinVar oncogenicity classifications, and CIViC's clinical evidence
+            (see oncogenicity.py)
         workers: parallel requests to Ensembl VEP, UniProt and AlphaFold
         cache: keep the web answers in an on-disk cache (False: ask the services every time)
         cache_path: cache file (None: the default cache directory)
@@ -201,6 +211,7 @@ class PredictOptions:
     common_af: float | None = 0.05
     acmg_source: str = "model"
     gnomad_check: bool = True
+    oncogenicity: bool = False
     workers: int = 4
     cache: bool = True
     cache_path: str | None = None
@@ -979,6 +990,8 @@ class _Lookups:
         uniprot: UniProt accession -> UniProt entry.
         alphafold: UniProt accession -> AlphaFold info.
         protein_seqs: Ensembl protein ID (without version) -> reference protein sequence.
+        onco_data: hotspots and gene roles for the oncogenicity points (None: not asked for or offline).
+        onco_refs: row index -> ClinVar oncogenic variants at the same residue, for the rows searched.
     """
 
     windows: dict[int, tuple[str, int, int]] = field(default_factory=dict)
@@ -988,6 +1001,8 @@ class _Lookups:
     uniprot: dict[str, dict[str, Any]] = field(default_factory=dict)
     alphafold: dict[str, dict[str, Any]] = field(default_factory=dict)
     protein_seqs: dict[str, str] = field(default_factory=dict)
+    onco_data: onco.Data | None = None
+    onco_refs: dict[int, list[onco.Reference]] = field(default_factory=dict)
 
 
 def predict(
@@ -1070,6 +1085,7 @@ def predict(
         _add_clinvar(ctx, rows)
         found = _Lookups()
         found.windows, found.residue_refs = _search_same_residue(ctx, rows)
+        found.onco_data, found.onco_refs = _oncogenicity_lookups(ctx, rows, found.windows)
         found.gnomad_need, found.gnomad_info = _check_gnomad(ctx, rows)
         found.uniprot, found.alphafold, found.protein_seqs = _fetch_protein_context(ctx, rows)
         sequences = _finish_rows(ctx, rows, found)
@@ -1300,6 +1316,24 @@ def _annotate_two_passes(
     return part, no_predictors
 
 
+OUTSIDE_CODING = (
+    "Ensembl places this protein change outside the coding sequence of the gene's main transcript "
+    "(check the position and the isoform)"
+)
+
+
+def _protein_change_of_kept_gene(v: VariantInput, gene_set: set[str] | None) -> bool:
+    """Whether `v` is a protein change written with a gene symbol that the gene filter keeps.
+
+    Such an input must give a protein-coding row; when it gives none, Ensembl placed it outside the
+    protein, and the input is reported as an error instead of being counted among the non-coding ones.
+    """
+    gene, _, change = v.query.partition(":")
+    if v.kind != "hgvs" or not change.startswith("p."):
+        return False
+    return gene_set is None or gene.upper() in {g.upper() for g in gene_set}
+
+
 _PROTEIN_POS = re.compile(r"^p\.\(?([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})?")
 
 
@@ -1315,8 +1349,8 @@ def _renumbered(v: VariantInput, row: Row) -> str | None:
     pos = row.get("protein_position")
     if v.kind != "hgvs" or not m or not pos or str(row.get("gene") or "").upper() != gene.upper():
         return None
-    if int(m.group(2)) == int(pos):
-        return None
+    if int(m.group(2)) == int(pos) or _bare(row.get("hgvsp")) == _bare(protein):
+        return None  # same position; or a deletion across two codons, numbered by its first codon
     shown = row.get("protein_change") or pos
     given = (AA3_TO_1.get(m.group(1).upper()), AA3_TO_1.get((m.group(3) or "").upper()))
     if m.group(3) and given != (row.get("ref_aa"), row.get("alt_aa")):  # not even the same amino acids
@@ -1325,6 +1359,11 @@ def _renumbered(v: VariantInput, row: Row) -> str | None:
             f"DNA change is {shown}: check the input"
         )
     return f"protein change given as {protein} (another isoform's numbering); on the reported transcript it is {shown}"
+
+
+def _bare(hgvsp: Any) -> str:
+    """Return a protein HGVS without its sequence id and parentheses: ``ENSP…:p.(Leu747del)`` -> ``p.Leu747del``."""
+    return str(hgvsp or "").rpartition(":")[2].replace("(", "").replace(")", "")
 
 
 _PROTEIN_INDEL = re.compile(r"^p\.\(?[A-Z][a-z]{2}\d+(?:_[A-Z][a-z]{2}\d+)?(?:del|dup|ins)(?!.*fs)", re.I)
@@ -1371,6 +1410,8 @@ def _normalise_indels(
             rq = region_of.get(loc)
             got = extra.get(("region", rq), {}).get("results") if rq else None
             if got:
+                if on_canonical(key[1], results[j]):  # aligning moves the start, not the residues
+                    answers[key] = {**answers[key], "given_on_canonical": True}
                 results[j] = {**got[0], "input": key[1]}
                 if ("region", rq) in extra_np:
                     no_predictors.add(key)
@@ -1499,13 +1540,16 @@ def _build_rows(
             errors.append({"input": v.raw, "source": v.source, "error": val["error"]})
             continue
         vrows = _rows_for_variant(v, val.get("results", []), ctx.assembly, gene_set, ctx.opt.include_noncoding)
+        if not vrows and _protein_change_of_kept_gene(v, gene_set):
+            errors.append({"input": v.raw, "source": v.source, "error": OUTSIDE_CODING})
+            continue
         if not vrows:
             ctx.n_no_protein += 1
         for r in vrows:
             notes = []
             if val.get("ambiguous", 0) > 1:
                 notes.append(f"{val['ambiguous']} nucleotide changes give this protein change; each is reported")
-            renumbered = _renumbered(v, r)
+            renumbered = None if val.get("given_on_canonical") else _renumbered(v, r)
             if renumbered:
                 notes.append(renumbered)
             if v.kind == "hgvs" and _PROTEIN_INDEL.match(v.query.split(":", 1)[-1]):
@@ -1574,6 +1618,35 @@ def _search_same_residue(
                 residue_refs[i] = residue.references(rows[i], {v: recs[v] for v in found[w]}, ctx.assembly)
         ctx.say("ClinVar: same residue", 1, 1)
     return windows, residue_refs
+
+
+def _oncogenicity_lookups(
+    ctx: _Context, rows: list[Row], windows: dict[int, tuple[str, int, int]]
+) -> tuple[onco.Data | None, dict[int, list[onco.Reference]]]:
+    """Somatic oncogenicity: the hotspots and gene roles, and the ClinVar oncogenic variants at each residue.
+
+    Returns:
+        The data (None when the points were not asked for, or offline) and row index -> ClinVar oncogenic
+        missense variants at its residue, for the rows whose search and records were obtained.
+    """
+    if not ctx.opt.oncogenicity or not rows:
+        return None, {}
+    if not ctx.net:
+        for src in ("cancerhotspots.org", "IntOGen", "CIViC"):
+            ctx.status.skip(src, "offline: oncogenicity points not computed")
+        return None, {}
+    ctx.say("Oncogenicity (hotspots, IntOGen, CIViC)", 0, 1)
+    data = onco.load(ctx.http, ctx.cache, ctx.status)
+    refs: dict[int, list[onco.Reference]] = {}
+    searched = {i: w for i, w in windows.items() if rows[i].get("mane_select")}
+    if searched and ctx.opt.clinvar:
+        found = cv.search_oncogenicity_windows(ctx.http, ctx.cache, list(searched.values()), ctx.assembly, ctx.status)
+        recs = cv.fetch(ctx.http, ctx.cache, {v for w in found.values() for v in w}, status=ctx.status)
+        for i, w in searched.items():
+            if w in found and all(v in recs for v in found[w]):
+                refs[i] = onco.references(rows[i], {v: recs[v] for v in found[w]}, ctx.assembly)
+    ctx.say("Oncogenicity (hotspots, IntOGen, CIViC)", 1, 1)
+    return data, refs
 
 
 def _check_gnomad(
@@ -1748,6 +1821,8 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     if "missense_variant" in terms and (ms := model.score(r)) is not None:
         r["score_with_frequency"] = model.with_frequency(ms.p, r.get("gnomad_popmax_af"))
     r["acmg_codes"] = acmg.codes(r)
+    if found.onco_data is not None:
+        _add_oncogenicity(r, i, terms, label, found)
     if not acmg.ba1_exception(r):  # common but pathogenic/uncertain (ClinGen list): no frequency rule
         label, basis = apply_frequency(label, basis, r.get("gnomad_popmax_af"), ctx.opt.common_af)
     r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis
@@ -1758,6 +1833,25 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
         if (r.get("spliceai_max") or 0) >= 0.2
         else None
     )
+
+
+def _add_oncogenicity(r: Row, i: int, terms: set[str], label: str, found: _Lookups) -> None:
+    """Add the somatic oncogenicity class, points, criteria and evidence to row ``i``."""
+    data = found.onco_data
+    if data is None:
+        return
+    if not (data.hotspots_ok and data.roles_ok):
+        r["oncogenicity"] = "not assessed (cancerhotspots.org or IntOGen unavailable)"
+        return
+    call = "damaging" if is_damaging(label) else "benign" if "benign" in label.lower() else None
+    refs = found.onco_refs.get(i) if i in found.windows else []
+    a = onco.assess(r, terms, call, data, refs, found.gnomad_info.get(i))
+    r["oncogenicity"] = onco.tier(a.points)
+    r["oncogenicity_points"] = a.points
+    r["oncogenicity_codes"] = a.summary()
+    r["oncogenicity_evidence"] = a.evidence()
+    if data.civic_ok:
+        r["clinical_evidence_level"], r["clinical_evidence"] = onco.clinical(r, data)
 
 
 def _ps1_pm5(ctx: _Context, i: int, r: Row, found: _Lookups) -> str | None:

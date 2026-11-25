@@ -59,7 +59,43 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   reference amino acid and a frameshift written as a protein change. Errors cached by older versions
   are shown with the new wording.
 
+- A protein change given with a gene symbol is resolved on the gene's canonical (MANE Select)
+  transcript. Ensembl resolved it on the first isoform with a matching residue, which can number the
+  protein differently. `EGFR T725M`, `EGFR L747P` and `EGFR p.Glu746_Ala750del` landed in the 3' UTR and
+  gave no row and no error; `EGFR V689L` became V742L. The change is now asked again on the canonical
+  transcript when VEP's first answer does not carry it there; the first answer stays when the canonical
+  transcript has another residue at that position (MUTYH p.Gly396Asp, with its note).
+- A protein change that still gives no protein-coding row is reported as an error instead of being
+  dropped silently.
+- Protein insertions and deletion-insertions (`EGFR p.Asp770_Asn771insSerValAsp`), which Ensembl cannot
+  trace back to DNA, say so and ask for the c. change. Before, they said the reference amino acid was
+  wrong, or that VEP could not map them.
+- A protein deletion that left-alignment moves into the previous codon (`EGFR p.Leu747del`) no longer
+  gets the note about another isoform's numbering.
+- VEP's own error message is kept in the cache, so a later version can reword it.
+
 ### Added
+- EGFR validation (`benchmarks/validate_egfr.py`): 356 tumour variants against a laboratory
+  transformation assay (Ikeuchi et al., Oncogene 2022). The scores detect loss of function, not
+  activation; see `docs/model.md`. OncoKB's annotation from the paper's table is used only for a
+  summary AUC and is not written out per variant, because OncoKB's terms do not allow sharing it.
+- Somatic oncogenicity points, following the ClinGen/CGC/VICC standard (Horak et al., Genet Med
+  2022). They are optional: `--somatic` on the command line, or a switch in the desktop and web apps.
+  - Only the criteria that can be computed automatically are applied, with open data:
+    - hotspots from cancerhotspots.org;
+    - gene roles from IntOGen (CC0);
+    - functional studies curated in CIViC (CC0) for OS2/SBS2;
+    - ClinVar oncogenicity classifications of other variants at the residue;
+    - gnomAD and the model.
+  - The model's call counts (OP1/SBP1) only in genes that are not activating. In EGFR it pointed the
+    wrong way.
+  - CIViC's clinical evidence is shown next to the points but adds none: the best evidence level (A
+    to E), drugs and tumour type.
+  - New columns: `oncogenicity`, `oncogenicity_points`, `oncogenicity_codes`,
+    `oncogenicity_evidence`, `clinical_evidence_level` and `clinical_evidence`.
+  - Validated on EGFR and TP53 laboratory data (`benchmarks/validate_oncogenicity.py`).
+- ClinVar records keep the review status of their oncogenicity classification. The cache key changed,
+  so records are fetched again once.
 - A tutorial [wiki](https://github.com/juvenalyosa/missensexplorer/wiki) with screenshots of every
   feature, and worked examples of every input format and kind of variant.
 

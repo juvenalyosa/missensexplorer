@@ -1,7 +1,8 @@
 """ClinVar through NCBI E-utilities (batched).
 
-Provides the classification of an exact allele, and the pathogenic variants near a position (for ACMG
-PS1/PM5, see residue.py).
+Provides the classification of an exact allele, the pathogenic variants near a position (for ACMG
+PS1/PM5, see residue.py) and the variants with an oncogenicity classification near a position (for
+the somatic OS1/OM4, see oncogenicity.py).
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ log = logging.getLogger(__name__)
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
 ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 PATHOGENIC_FILTER = "(clinsig_pathogenic[prop] OR clinsig_likely_pathogenic[prop])"
+ONCOGENICITY_FILTER = "oncogenicity_classification[prop]"  # any oncogenicity classification
 WINDOWS_PER_SEARCH = 25
 CLINVAR_MAX_AGE = 7 * 86400  # ClinVar is updated weekly
 
@@ -40,7 +42,8 @@ _NC_CHROM.update({"NC_000023": "X", "NC_000024": "Y", "NC_012920": "MT"})
 def _compact(r: JSON) -> dict[str, Any]:
     """Return the fields used here from one E-utilities esummary record (the ClinVar record kept in the cache)."""
     g = r.get("germline_classification") or {}
-    onc = (r.get("oncogenicity_classification") or {}).get("description") or None
+    oc = r.get("oncogenicity_classification") or {}
+    onc = oc.get("description") or None
     som = (r.get("clinical_impact_classification") or {}).get("description") or None
     vsets = r.get("variation_set") or []
     spdi, cdna, loc = None, None, {}
@@ -58,6 +61,7 @@ def _compact(r: JSON) -> dict[str, Any]:
         "last_evaluated": (g.get("last_evaluated") or "").split(" ")[0] or None,
         "conditions": [t.get("trait_name") for t in g.get("trait_set", []) if t.get("trait_name")],
         "oncogenicity": onc,
+        "oncogenicity_review": oc.get("review_status") or None,
         "somatic_impact": som,
         "spdi": spdi,
         "cdna": cdna,
@@ -80,13 +84,14 @@ def fetch(
 
     Returns:
         The records found, by accession: ``accession``, ``title``, ``classification``, ``review_status``,
-        ``last_evaluated``, ``conditions``, ``oncogenicity``, ``somatic_impact``, ``spdi``, ``cdna`` and
-        ``loc`` (assembly -> [chrom, start, stop], 1-based). Accessions of failed requests are missing.
+        ``last_evaluated``, ``conditions``, ``oncogenicity``, ``oncogenicity_review``, ``somatic_impact``,
+        ``spdi``, ``cdna`` and ``loc`` (assembly -> [chrom, start, stop], 1-based). Accessions of failed
+        requests are missing.
     """
     ids = sorted({v for v in vcv_ids if v and v.startswith("VCV")})
     if status is not None and ids:
         status.use("ClinVar", len(ids))
-    keys = {v: f"clinvar2|{v}" for v in ids}  # clinvar2: records with positions
+    keys = {v: f"clinvar3|{v}" for v in ids}  # clinvar3: records with positions and oncogenicity review
     hit = cache.get_many(list(keys.values()), max_age=CLINVAR_MAX_AGE)
     out = {v: hit[keys[v]] for v in ids if keys[v] in hit}
     missing = [v for v in ids if v not in out]
@@ -202,9 +207,37 @@ def search_windows(
         assembly: ``"GRCh38"`` or ``"GRCh37"``.
         status: Records which sources were used and which requests failed; None to not record.
     """
+    return _search(http, cache, windows, assembly, PATHOGENIC_FILTER, "clinvar-window", status)
+
+
+def search_oncogenicity_windows(
+    http: Http,
+    cache: KeyValueCache,
+    windows: Iterable[tuple[str, int, int]],
+    assembly: str,
+    status: SourceStatus | None = None,
+) -> dict[tuple[str, int, int], list[str]]:
+    """Find the ClinVar variants with an oncogenicity classification in genomic windows.
+
+    Like :func:`search_windows`, for any oncogenicity classification (the caller keeps the oncogenic
+    ones); results are cached for a week under their own keys.
+    """
+    return _search(http, cache, windows, assembly, ONCOGENICITY_FILTER, "clinvar-onc-window", status)
+
+
+def _search(
+    http: Http,
+    cache: KeyValueCache,
+    windows: Iterable[tuple[str, int, int]],
+    assembly: str,
+    term_filter: str,
+    key_prefix: str,
+    status: SourceStatus | None,
+) -> dict[tuple[str, int, int], list[str]]:
+    """Search ClinVar for the variants matching `term_filter` in each window (batched, cached a week)."""
     field = "chrpos38" if assembly == "GRCh38" else "chrpos37"
     windows = sorted(set(windows))
-    keys = {w: f"clinvar-window|{assembly}|{w[0]}:{w[1]}-{w[2]}" for w in windows}
+    keys = {w: f"{key_prefix}|{assembly}|{w[0]}:{w[1]}-{w[2]}" for w in windows}
     hit = cache.get_many(list(keys.values()), max_age=CLINVAR_MAX_AGE)
     out = {w: hit[keys[w]] for w in windows if keys[w] in hit}
     todo = [w for w in windows if w not in out]
@@ -217,7 +250,7 @@ def search_windows(
                 ESEARCH,
                 data={
                     "db": "clinvar",
-                    "term": f"({term}) AND {PATHOGENIC_FILTER}",
+                    "term": f"({term}) AND {term_filter}",
                     "retmode": "json",
                     "retmax": 10000,
                     "tool": "missensexplorer",

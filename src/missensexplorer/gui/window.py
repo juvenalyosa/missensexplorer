@@ -583,7 +583,8 @@ class MainWindow(QMainWindow):
         self.opt_ctx = Toggle(t("opt_context"), True)
         self.opt_cv = Toggle(t("opt_clinvar"), True)
         self.opt_nc = Toggle(t("opt_noncoding"), False)
-        for tg in (self.opt_pred, self.opt_ctx, self.opt_cv, self.opt_nc):
+        self.opt_onc = Toggle(t("opt_oncogenicity"), False, t("opt_oncogenicity_tip"))
+        for tg in (self.opt_pred, self.opt_ctx, self.opt_cv, self.opt_nc, self.opt_onc):
             op.addWidget(tg)
             tg.toggled.connect(self._options_summary)
         self.build.currentIndexChanged.connect(self._options_summary)
@@ -654,7 +655,7 @@ class MainWindow(QMainWindow):
 
     def _options_summary(self, *_: object) -> None:
         """Update the one-line options summary (genome build, number of data sources, local VEP)."""
-        n = sum(w.isChecked() for w in (self.opt_pred, self.opt_ctx, self.opt_cv, self.opt_nc))
+        n = sum(w.isChecked() for w in (self.opt_pred, self.opt_ctx, self.opt_cv, self.opt_nc, self.opt_onc))
         txt = t("options_summary", build=self.build.currentText().split(" /")[0], n=n)
         if self.engine.currentData() == "local":
             txt += f" · {t('engine_local')}"
@@ -1022,6 +1023,7 @@ class MainWindow(QMainWindow):
             ("context", self.opt_ctx, True),
             ("clinvar", self.opt_cv, True),
             ("noncoding", self.opt_nc, False),
+            ("oncogenicity", self.opt_onc, False),
         ):
             w.setChecked(str(value(key, default)).lower() == "true")
         self.workers.setValue(int(value("workers", 4)))
@@ -1044,6 +1046,7 @@ class MainWindow(QMainWindow):
         s.setValue("context", self.opt_ctx.isChecked())
         s.setValue("clinvar", self.opt_cv.isChecked())
         s.setValue("noncoding", self.opt_nc.isChecked())
+        s.setValue("oncogenicity", self.opt_onc.isChecked())
         s.setValue("workers", self.workers.value())
         s.setValue("common_af", self.freq_rule.currentData())
         s.setValue("acmg_source", self.acmg_src.currentData())
@@ -1152,6 +1155,7 @@ class MainWindow(QMainWindow):
             offline=self.offline.isChecked() and self.engine.currentData() == "local",
             common_af=self.freq_rule.currentData() or None,
             acmg_source=self.acmg_src.currentData(),
+            oncogenicity=self.opt_onc.isChecked(),
         )
 
     def run_prediction(self) -> None:
@@ -1413,6 +1417,7 @@ class MainWindow(QMainWindow):
         self._detail_header(r)
         self._detail_why(r)
         self._detail_acmg(r)
+        self._detail_somatic(r)
         self._detail_predictors(r)
         self._detail_physchem(r)
         self._detail_sequence_window(r)
@@ -1501,6 +1506,27 @@ class MainWindow(QMainWindow):
             self.dl.addWidget(label(t(note), "Muted", wrap=True))
             if g("acmg_ps1_pm5") or g("acmg_pm2"):
                 self.dl.addWidget(label(t("acmg_note_residue"), "Muted", wrap=True))
+
+    def _detail_somatic(self, r: Row) -> None:
+        """Add the somatic oncogenicity class, its criteria and evidence, and ClinVar's call on this variant."""
+        g = _getter(r)
+        if not g("oncogenicity"):
+            return
+        self.dl.addWidget(section(t("somatic")))
+        pts = r.get("oncogenicity_points")
+        extra = f" · {t('points', n=f'{int(pts):+d}')}" if isnum(pts) else ""
+        lines = [(t("somatic_class"), tr_text(g("oncogenicity")) + extra)]
+        if g("oncogenicity_codes"):
+            lines.append((t("somatic_codes"), g("oncogenicity_codes")))
+        if g("clinvar_oncogenicity"):
+            lines.append((t("somatic_clinvar"), g("clinvar_oncogenicity")))
+        if g("clinical_evidence"):
+            lines.append((t("somatic_clinical"), tr_text(g("clinical_evidence"))))
+        for k, v in lines:
+            self.dl.addWidget(_rich(f"<b>{k}:</b> {html.escape(v)}"))
+        if g("oncogenicity_evidence"):
+            self.dl.addWidget(label(tr_text(g("oncogenicity_evidence")), "Body", wrap=True, selectable=True))
+        self.dl.addWidget(label(t("somatic_note"), "Muted", wrap=True))
 
     def _detail_predictors(self, r: Row) -> None:
         """Add one bar per predictor with a score or a call (and the popEVE score, which has no fixed scale)."""

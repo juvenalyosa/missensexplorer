@@ -1,0 +1,515 @@
+{
+ "paper": "Ikeuchi et al., Oncogene 2022, doi:10.1038/s41388-022-02263-4 (Supplementary Table 4)",
+ "table": "https://static-content.springer.com/esm/art%3A10.1038%2Fs41388-022-02263-4/MediaObjects/41388_2022_2263_MOESM5_ESM.xlsx",
+ "training_overlap": [],
+ "missense": {
+  "variants": 258,
+  "scored": 251,
+  "auc_3t3": [
+   {
+    "score": "MissensExplorer v2.3",
+    "n": 218,
+    "positives": 34,
+    "auc": 0.5425,
+    "ci95": [
+     0.433,
+     0.6418
+    ],
+    "minus_model_ci95": null
+   },
+   {
+    "score": "AlphaMissense",
+    "n": 218,
+    "positives": 34,
+    "auc": 0.5451,
+    "ci95": [
+     0.4387,
+     0.6455
+    ],
+    "minus_model_ci95": [
+     -0.0407,
+     0.0483
+    ]
+   },
+   {
+    "score": "REVEL",
+    "n": 218,
+    "positives": 34,
+    "auc": 0.5277,
+    "ci95": [
+     0.4223,
+     0.6394
+    ],
+    "minus_model_ci95": [
+     -0.0609,
+     0.0266
+    ]
+   },
+   {
+    "score": "CADD",
+    "n": 218,
+    "positives": 34,
+    "auc": 0.4998,
+    "ci95": [
+     0.3885,
+     0.6064
+    ],
+    "minus_model_ci95": [
+     -0.1358,
+     0.0491
+    ]
+   },
+   {
+    "score": "popEVE",
+    "n": 218,
+    "positives": 34,
+    "auc": 0.5372,
+    "ci95": [
+     0.4391,
+     0.6345
+    ],
+    "minus_model_ci95": [
+     -0.0482,
+     0.0396
+    ]
+   }
+  ],
+  "auc_3t3_kinase": [
+   {
+    "score": "MissensExplorer v2.3",
+    "n": 151,
+    "positives": 20,
+    "auc": 0.5702,
+    "ci95": [
+     0.435,
+     0.6963
+    ],
+    "minus_model_ci95": null
+   },
+   {
+    "score": "AlphaMissense",
+    "n": 151,
+    "positives": 20,
+    "auc": 0.6122,
+    "ci95": [
+     0.4852,
+     0.7301
+    ],
+    "minus_model_ci95": [
+     -0.025,
+     0.1134
+    ]
+   },
+   {
+    "score": "REVEL",
+    "n": 151,
+    "positives": 20,
+    "auc": 0.5462,
+    "ci95": [
+     0.4014,
+     0.6957
+    ],
+    "minus_model_ci95": [
+     -0.0773,
+     0.0332
+    ]
+   },
+   {
+    "score": "CADD",
+    "n": 151,
+    "positives": 20,
+    "auc": 0.488,
+    "ci95": [
+     0.3657,
+     0.6099
+    ],
+    "minus_model_ci95": [
+     -0.2259,
+     0.064
+    ]
+   },
+   {
+    "score": "popEVE",
+    "n": 151,
+    "positives": 20,
+    "auc": 0.5502,
+    "ci95": [
+     0.4319,
+     0.6739
+    ],
+    "minus_model_ci95": [
+     -0.0728,
+     0.032
+    ]
+   }
+  ],
+  "auc_3t3_outside": [
+   {
+    "score": "MissensExplorer v2.3",
+    "n": 67,
+    "positives": 14,
+    "auc": 0.566,
+    "ci95": [
+     0.3704,
+     0.7561
+    ],
+    "minus_model_ci95": null
+   },
+   {
+    "score": "AlphaMissense",
+    "n": 67,
+    "positives": 14,
+    "auc": 0.5054,
+    "ci95": [
+     0.3333,
+     0.6812
+    ],
+    "minus_model_ci95": [
+     -0.1369,
+     0.0051
+    ]
+   },
+   {
+    "score": "REVEL",
+    "n": 67,
+    "positives": 14,
+    "auc": 0.5957,
+    "ci95": [
+     0.4242,
+     0.7579
+    ],
+    "minus_model_ci95": [
+     -0.0641,
+     0.1128
+    ]
+   },
+   {
+    "score": "CADD",
+    "n": 67,
+    "positives": 14,
+    "auc": 0.564,
+    "ci95": [
+     0.3765,
+     0.7506
+    ],
+    "minus_model_ci95": [
+     -0.0918,
+     0.0964
+    ]
+   },
+   {
+    "score": "popEVE",
+    "n": 67,
+    "positives": 14,
+    "auc": 0.5991,
+    "ci95": [
+     0.4098,
+     0.779
+    ],
+    "minus_model_ci95": [
+     -0.0431,
+     0.1125
+    ]
+   }
+  ],
+  "auc_baf3": [
+   {
+    "score": "MissensExplorer v2.3",
+    "n": 251,
+    "positives": 194,
+    "auc": 0.215,
+    "ci95": [
+     0.1538,
+     0.2814
+    ],
+    "minus_model_ci95": null
+   },
+   {
+    "score": "AlphaMissense",
+    "n": 251,
+    "positives": 194,
+    "auc": 0.2172,
+    "ci95": [
+     0.156,
+     0.2876
+    ],
+    "minus_model_ci95": [
+     -0.0328,
+     0.0393
+    ]
+   },
+   {
+    "score": "REVEL",
+    "n": 251,
+    "positives": 194,
+    "auc": 0.2476,
+    "ci95": [
+     0.1793,
+     0.317
+    ],
+    "minus_model_ci95": [
+     0.0024,
+     0.066
+    ]
+   },
+   {
+    "score": "CADD",
+    "n": 251,
+    "positives": 194,
+    "auc": 0.3003,
+    "ci95": [
+     0.2295,
+     0.3745
+    ],
+    "minus_model_ci95": [
+     0.0171,
+     0.1508
+    ]
+   },
+   {
+    "score": "popEVE",
+    "n": 251,
+    "positives": 194,
+    "auc": 0.2049,
+    "ci95": [
+     0.1432,
+     0.2747
+    ],
+    "minus_model_ci95": [
+     -0.0422,
+     0.0223
+    ]
+   }
+  ],
+  "auc_oncokb": [
+   {
+    "score": "MissensExplorer v2.3",
+    "n": 85,
+    "positives": 72,
+    "auc": 0.6592,
+    "ci95": [
+     0.4938,
+     0.8132
+    ],
+    "minus_model_ci95": null
+   },
+   {
+    "score": "AlphaMissense",
+    "n": 85,
+    "positives": 72,
+    "auc": 0.641,
+    "ci95": [
+     0.4874,
+     0.7851
+    ],
+    "minus_model_ci95": [
+     -0.0926,
+     0.0514
+    ]
+   },
+   {
+    "score": "REVEL",
+    "n": 85,
+    "positives": 72,
+    "auc": 0.6651,
+    "ci95": [
+     0.5092,
+     0.806
+    ],
+    "minus_model_ci95": [
+     -0.0485,
+     0.0648
+    ]
+   },
+   {
+    "score": "CADD",
+    "n": 85,
+    "positives": 72,
+    "auc": 0.6405,
+    "ci95": [
+     0.457,
+     0.8179
+    ],
+    "minus_model_ci95": [
+     -0.1549,
+     0.125
+    ]
+   },
+   {
+    "score": "popEVE",
+    "n": 85,
+    "positives": 72,
+    "auc": 0.6763,
+    "ci95": [
+     0.5279,
+     0.8151
+    ],
+    "minus_model_ci95": [
+     -0.102,
+     0.1469
+    ]
+   }
+  ],
+  "calls": {
+   "4": {
+    "Damaging": 12,
+    "Uncertain": 0,
+    "Benign / silent": 3,
+    "Not assessed": 0
+   },
+   "3": {
+    "Damaging": 18,
+    "Uncertain": 3,
+    "Benign / silent": 2,
+    "Not assessed": 0
+   },
+   "2": {
+    "Damaging": 18,
+    "Uncertain": 6,
+    "Benign / silent": 9,
+    "Not assessed": 0
+   },
+   "1": {
+    "Damaging": 127,
+    "Uncertain": 28,
+    "Benign / silent": 30,
+    "Not assessed": 0,
+    "mixed": 2
+   }
+  },
+  "rates": {
+   "damaging_if_transforming": [
+    30,
+    38
+   ],
+   "benign_if_transforming": [
+    5,
+    38
+   ],
+   "damaging_if_not_transforming": [
+    127,
+    187
+   ],
+   "benign_if_not_transforming": [
+    30,
+    187
+   ]
+  },
+  "baf3_negative": {
+   "variants": 58,
+   "3t3_score_1": 58,
+   "damaging": 54,
+   "kinase_domain": 51,
+   "median_model": 0.981,
+   "median_model_transformed": 0.861,
+   "in_motifs": {
+    "glycine-rich loop GSGAFG (719-724)": [
+     "G721A",
+     "G721S"
+    ],
+    "catalytic loop HRDLAARN (835-842)": [
+     "A839T",
+     "D837N",
+     "L838P",
+     "N842D",
+     "R836H",
+     "R836S",
+     "R841K"
+    ],
+    "DFG motif (855-857)": [
+     "D855N",
+     "F856L",
+     "G857E"
+    ]
+   }
+  }
+ },
+ "indels": {
+  "variants": 87,
+  "annotated": 21,
+  "errors": 66,
+  "with_cadd": 0,
+  "error_kinds": "66 \u00d7 an insertion written as a protein change cannot be traced to one DNA change: give the c. change",
+  "calls": {
+   "4": {
+    "Damaging": 0,
+    "Uncertain": 4,
+    "Benign / silent": 0,
+    "Not assessed": 0,
+    "error": 38
+   },
+   "3": {
+    "Damaging": 0,
+    "Uncertain": 4,
+    "Benign / silent": 0,
+    "Not assessed": 0,
+    "error": 22
+   },
+   "2": {
+    "Damaging": 0,
+    "Uncertain": 3,
+    "Benign / silent": 0,
+    "Not assessed": 0,
+    "error": 3
+   },
+   "1": {
+    "Damaging": 0,
+    "Uncertain": 10,
+    "Benign / silent": 0,
+    "Not assessed": 0,
+    "error": 3
+   }
+  }
+ },
+ "compound": 9,
+ "run": {
+  "tool": "MissensExplorer 2.3.0",
+  "started_utc": "2026-11-25T08:59:26+00:00",
+  "seconds": 2.6,
+  "assembly": "GRCh38",
+  "annotation": "Ensembl VEP REST, release 116",
+  "ensembl_release": 116,
+  "options": {
+   "assembly": "auto",
+   "default_gene": null,
+   "genes": null,
+   "sample": null,
+   "pass_only": false,
+   "include_noncoding": false,
+   "predictors": true,
+   "protein_context": false,
+   "clinvar": true,
+   "sequences": false,
+   "vep": "rest",
+   "vep_command": null,
+   "vep_args": null,
+   "offline": false,
+   "common_af": 0.05,
+   "acmg_source": "model",
+   "gnomad_check": false,
+   "oncogenicity": false,
+   "workers": 6,
+   "cache": true
+  },
+  "inputs": {
+   "text_lines": 347,
+   "files": []
+  },
+  "sources": {
+   "ClinVar": "ok",
+   "Ensembl VEP": "ok",
+   "Ensembl VEP + predictors": "ok",
+   "VEP predictor plugins": "ok"
+  },
+  "missense_model": {
+   "version": "2.3",
+   "trained": "2026-11-23",
+   "training_variants": 9218,
+   "cut_offs": [
+    0.3,
+    0.76
+   ]
+  },
+  "python": "3.13.5"
+ }
+}

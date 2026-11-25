@@ -51,6 +51,13 @@ S: dict[str, tuple[str, str]] = {
     "opt_context": ("Contexto proteico (UniProt, AlphaFold)", "Protein context (UniProt, AlphaFold)"),
     "opt_clinvar": ("Clasificación ClinVar", "ClinVar classification"),
     "opt_noncoding": ("Incluir variantes no codificantes", "Include non-coding variants"),
+    "opt_oncogenicity": ("Oncogenicidad somática (tumores)", "Somatic oncogenicity (tumours)"),
+    "opt_oncogenicity_tip": (
+        "Puntos de oncogenicidad ClinGen/CGC/VICC para variantes de tumores, con hotspots de cancerhotspots.org, "
+        "el papel del gen en IntOGen y las clasificaciones de oncogenicidad de ClinVar.",
+        "ClinGen/CGC/VICC oncogenicity points for tumour variants, from cancerhotspots.org hotspots, the gene's "
+        "role in IntOGen and ClinVar oncogenicity classifications.",
+    ),
     "workers": ("Peticiones en paralelo", "Parallel requests"),
     "freq_rule": ("Frecuencia", "Frequency"),
     "freq_ba1": ("≥ 5 % en gnomAD → benigna (BA1)", "≥ 5% in gnomAD → benign (BA1)"),
@@ -171,6 +178,7 @@ S: dict[str, tuple[str, str]] = {
     "col_effect": ("Efecto", "Effect"),
     "col_with_freq": ("Con frecuencia", "With frequency"),
     "col_clinvar": ("ClinVar", "ClinVar"),
+    "col_oncogenicity": ("Oncogenicidad", "Oncogenicity"),
     "col_gnomad": ("gnomAD AF", "gnomAD AF"),
     "col_zyg": ("Cigosidad", "Zygosity"),
     "col_source": ("Origen", "Source"),
@@ -244,6 +252,24 @@ S: dict[str, tuple[str, str]] = {
     "function": ("Función de la proteína", "Protein function"),
     "clinvar": ("ClinVar", "ClinVar"),
     "oncogenicity": ("Somático / oncogenicidad", "Somatic / oncogenicity"),
+    "somatic": ("Oncogenicidad somática (automática)", "Somatic oncogenicity (automatic)"),
+    "somatic_class": ("Clase", "Class"),
+    "somatic_codes": ("Criterios", "Criteria"),
+    "somatic_evidence": ("Evidencia", "Evidence"),
+    "somatic_clinvar": ("ClinVar, esta misma variante", "ClinVar, this very variant"),
+    "somatic_clinical": ("Evidencia clínica (CIViC)", "Clinical evidence (CIViC)"),
+    "somatic_note": (
+        "Norma ClinGen/CGC/VICC (Horak et al. 2022) con los criterios que se calculan solos: hotspots de "
+        "cancerhotspots.org, papel del gen en IntOGen, otras variantes del residuo en ClinVar, estudios funcionales "
+        "curados en CIViC (OS2/SBS2), gnomAD y el modelo (solo en genes que no son activadores). CIViC cubre pocos "
+        "estudios funcionales: revisa la literatura. La evidencia clínica de CIViC (fármacos, pronóstico) no suma "
+        "puntos, y la clasificación de ClinVar de esta misma variante se muestra aparte y no cuenta como evidencia.",
+        "ClinGen/CGC/VICC standard (Horak et al. 2022) with the criteria that can be computed: hotspots from "
+        "cancerhotspots.org, the gene's role in IntOGen, other ClinVar variants at the residue, functional studies "
+        "curated in CIViC (OS2/SBS2), gnomAD and the model (only in genes that are not activating). CIViC covers few "
+        "functional studies: check the literature. CIViC's clinical evidence (drugs, prognosis) adds no points, and "
+        "ClinVar's classification of this very variant is shown apart and does not count as evidence.",
+    ),
     "conditions": ("Condiciones", "Conditions"),
     "gnomad": ("Frecuencia en gnomAD", "gnomAD allele frequency"),
     "gnomad_none": ("No observada en gnomAD", "Not observed in gnomAD"),
@@ -580,6 +606,20 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         "indica el cambio c.",
     ),
     (
+        r"several DNA changes give this protein change and Ensembl did not resolve them: give the c\. change",
+        "varios cambios de ADN producen este cambio de proteína y Ensembl no los resolvió: indica el cambio c.",
+    ),
+    (
+        r"an insertion written as a protein change cannot be traced to one DNA change: give the c\. change",
+        "una inserción escrita como cambio de proteína no lleva a un único cambio de ADN: indica el cambio c.",
+    ),
+    (
+        r"Ensembl places this protein change outside the coding sequence of the gene's main transcript "
+        r"\(check the position and the isoform\)",
+        "Ensembl sitúa este cambio de proteína fuera de la secuencia codificante del transcrito principal del gen "
+        "(revisa la posición y la isoforma)",
+    ),
+    (
         r"(\d+) nucleotide changes give this protein change; each is reported",
         r"\1 cambios de nucleótido producen este cambio de proteína; se informa cada uno",
     ),
@@ -602,6 +642,110 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (
         r"not checked \(no MANE Select transcript, on which ClinVar names its variants\)",
         "no comprobado (sin transcrito MANE Select, en el que ClinVar nombra sus variantes)",
+    ),
+    (r"^Oncogenic$", "Oncogénica"),
+    (r"^Likely oncogenic$", "Probablemente oncogénica"),
+    (r"^VUS$", "Significado incierto (VUS)"),
+    (r"^Benign$", "Benigna"),
+    (
+        r"hotspot (\S+): (\d+) tumours, (\d+) with (\S+); cancerhotspots\.org",
+        r"hotspot \1: \2 tumores, \3 con \4; cancerhotspots.org",
+    ),
+    (
+        r"in-frame indel hotspot (\d+-\d+): (\d+) tumours, (\d+) with (\S+)",
+        r"hotspot de indels en fase \1: \2 tumores, \3 con \4",
+    ),
+    (r"same change by (\S+): ", r"mismo cambio por \1: "),
+    (r"the MissensExplorer model calls it damaging", "el modelo de MissensExplorer la llama dañina"),
+    (r"the MissensExplorer model calls it benign", "el modelo de MissensExplorer la llama benigna"),
+    (r"null variant in a loss-of-function gene", "variante nula en un gen de pérdida de función"),
+    (r"in-frame change in a cancer gene \(", "cambio en fase en un gen del cáncer ("),
+    (r"stop lost in a loss-of-function gene", "codón de parada perdido en un gen de pérdida de función"),
+    (
+        r"\b(activating|loss-of-function|ambiguous) in (\d+) of (\d+) IntOGen cohorts",
+        lambda m: (
+            {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
+            + f" en {m[2]} de {m[3]} cohortes de IntOGen"
+        ),
+    ),
+    (r"(\S+) is not an IntOGen driver gene", r"\1 no es un gen impulsor en IntOGen"),
+    (
+        r"OP1/SBP1 not applied \(activating gene: the model measures damage to the protein, not activation\)",
+        "OP1/SBP1 no aplicados (gen activador: el modelo mide el daño a la proteína, no la activación)",
+    ),
+    (
+        r"not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2",
+        "no evaluados automáticamente: estudios funcionales fuera de CIViC, OM1 dominio funcional, OP2",
+    ),
+    (r"OS2/SBS2 not checked \(CIViC unavailable\)", "OS2/SBS2 no comprobados (CIViC no disponible)"),
+    (
+        r"CIViC functional evidence rated below (\d) stars not used",
+        r"evidencia funcional de CIViC con menos de \1 estrellas no usada",
+    ),
+    (
+        r"OS2/SBS2 not applied \(CIViC functional evidence conflicts\)",
+        "OS2/SBS2 no aplicados (la evidencia funcional de CIViC es contradictoria)",
+    ),
+    (
+        r"OS2 not applied \(OS1 already uses this amino-acid change\)",
+        "OS2 no aplicado (OS1 ya usa este cambio de aminoácido)",
+    ),
+    (r"\bDominant Negative\b", "dominante negativa"),
+    (r"\bGain of Function\b", "ganancia de función"),
+    (r"\bLoss of Function\b", "pérdida de función"),
+    (r"\bNeomorphic\b", "neomórfica"),
+    (r"\bUnaltered Function\b", "función inalterada"),
+    (r"\boncogenicity supports\b", "apoya la oncogenicidad"),
+    (r"\boncogenicity does not support\b", "no apoya la oncogenicidad"),
+    (r"(\d) stars, EID", r"\1 estrellas, EID"),
+    (r"(\d+) CIViC items \(level ", r"\1 evidencias en CIViC (nivel "),
+    (
+        r"; best: level ([A-E]) (predictive|diagnostic|prognostic)",
+        lambda m: (
+            f"; la mejor: nivel {m[1]}, "
+            + {"predictive": "predictiva", "diagnostic": "diagnóstica", "prognostic": "pronóstica"}[m[2]]
+        ),
+    ),
+    (r"Sensitivity/Response", "sensibilidad/respuesta"),
+    (r"Reduced Sensitivity", "sensibilidad reducida"),
+    (r"\bResistance\b", "resistencia"),
+    (r"Poor Outcome", "mal pronóstico"),
+    (r"Better Outcome", "mejor pronóstico"),
+    (r" in ([^()]+) \(EID(\d+)\)$", r" en \1 (EID\2)"),
+    (r"OP4 \(absent from gnomAD\)", "OP4 (ausente de gnomAD)"),
+    (r"gnomAD frequency (\S+) < 1e-5", r"frecuencia en gnomAD \1 < 1e-5"),
+    (r"gnomAD grpmax (\S+) > (\d+)%", r"grpmax de gnomAD \1 > \2 %"),
+    (
+        r"OS1/OM4 not checked \(ClinVar oncogenicity search unavailable\)",
+        "OS1/OM4 no comprobados (búsqueda de oncogenicidad en ClinVar no disponible)",
+    ),
+    (
+        r"hotspot not counted \(OS1 already uses this amino-acid change\)",
+        "hotspot no contado (OS1 ya usa este cambio de aminoácido)",
+    ),
+    (
+        r"OM4 not applied \(this change is milder than the oncogenic ones at the residue\)",
+        "OM4 no aplicado (este cambio es más leve que los oncogénicos del residuo)",
+    ),
+    (
+        r"OVS1 not applied \(the gene is not a loss-of-function driver in IntOGen\)",
+        "OVS1 no aplicado (el gen no es impulsor de pérdida de función en IntOGen)",
+    ),
+    (
+        r"OVS1 not applied \((.+?): the truncated protein may keep its function\)",
+        r"OVS1 no aplicado (\1: la proteína truncada puede conservar su función)",
+    ),
+    (
+        r"OM2 not applied \(not a known cancer gene in IntOGen\)",
+        "OM2 no aplicado (no es un gen del cáncer conocido en IntOGen)",
+    ),
+    (
+        r"(OM4\S*) not used \((p\.\S+): (.+?); the hotspot criterion OM3 is stronger\)",
+        r"\1 no usado (\2: \3; el criterio de hotspot OM3 es más fuerte)",
+    ),
+    (
+        r"not assessed \(cancerhotspots\.org or IntOGen unavailable\)",
+        "no evaluada (cancerhotspots.org o IntOGen no disponibles)",
     ),
 ]
 
@@ -651,6 +795,7 @@ STAGES_ES: dict[str, str] = {
     "Annotating variants (VEP, fast pass)": "Anotando variantes (VEP, pasada rápida)",
     "Scoring coding variants (predictors)": "Puntuando variantes codificantes",
     "ClinVar classification": "Clasificación ClinVar",
+    "Oncogenicity (hotspots, IntOGen, CIViC)": "Oncogenicidad (hotspots, IntOGen, CIViC)",
     "Protein context (UniProt, AlphaFold)": "Contexto proteico (UniProt, AlphaFold)",
     "Done": "Listo",
 }
