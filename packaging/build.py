@@ -16,7 +16,9 @@ installer is built on its own system (PyInstaller does not cross-compile); the G
 
 --smoke runs the packaged app's self-test (packaging/launcher.py): it predicts BRAF V600E online,
 draws the 3D structure and saves a screenshot. It uses a temporary cache and settings, never the
-user's.
+user's. --test-install also installs the installer as a user would (the .dmg copied out, the
+Setup.exe run silently into a temporary folder, the .deb with apt and the .tar.gz with install.sh),
+runs the self-test of the installed app and uninstalls it. On Linux it uses sudo (meant for CI).
 """
 
 from __future__ import annotations
@@ -184,6 +186,46 @@ def linux_packages(folder: Path, ver: str, out: Path) -> list[Path]:
 # --------------------------------------------------------------------------- self-test
 
 
+def test_installs(osname: str, made: list[Path], allow_no_3d: bool) -> int:
+    """Install each installer as a user would, self-test the installed app, uninstall; 0 if all pass."""
+    worst = 0
+    for f in made:
+        tmp = Path(tempfile.mkdtemp(prefix="mx-install-"))
+        print(f"== install test: {f.name}", flush=True)
+        if f.suffix == ".dmg":
+            mnt = tmp / "mnt"
+            run(["hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", mnt, f])
+            try:
+                run(["ditto", mnt / f"{NAME}.app", tmp / "Applications" / f"{NAME}.app"])
+            finally:
+                run(["hdiutil", "detach", mnt])
+            code = smoke(tmp / "Applications" / f"{NAME}.app", osname)
+        elif f.suffix == ".exe":
+            target = tmp / "MissensExplorer"
+            run([f, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", f"/DIR={target}"])  # per-user by default
+            code = smoke(target, osname)
+            run([target / "unins000.exe", "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"])
+        elif f.suffix == ".deb":
+            run(["sudo", "apt-get", "install", "-y", f.resolve()])  # a path (with a slash): apt installs the file
+            code = smoke(Path("/opt/missensexplorer"), osname)
+            run(["sudo", "apt-get", "remove", "-y", "missensexplorer"])
+        elif f.name.endswith(".tar.gz"):
+            home = tmp / "home"
+            home.mkdir()
+            with tarfile.open(f) as tar:
+                tar.extractall(tmp, filter="tar")
+            folder = next(p for p in tmp.iterdir() if p.name.startswith(NAME))
+            run(["sh", folder / "install.sh"], env={**os.environ, "HOME": str(home)})
+            code = smoke(home / ".local" / "share" / "missensexplorer", osname)
+        else:
+            continue
+        if code == 3 and allow_no_3d:
+            code = 0
+        print(f"== install test {f.name}: {'ok' if code == 0 else f'FAILED ({code})'}", flush=True)
+        worst = worst or code
+    return worst
+
+
 def smoke(app: Path, osname: str) -> int:
     """Run the packaged app's self-test with a temporary cache; return its exit code."""
     exe = app / "Contents" / "MacOS" / NAME if osname == "macos" else app / (f"{NAME}.exe" if osname == "windows" else NAME)
@@ -202,6 +244,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--installer", action="store_true", help="also build the installer")
     ap.add_argument("--smoke", action="store_true", help="run the packaged app's self-test")
+    ap.add_argument("--test-install", action="store_true", help="install each installer and self-test it")
     ap.add_argument(
         "--allow-no-3d",
         action="store_true",
@@ -223,13 +266,15 @@ def main(argv: list[str] | None = None) -> int:
             made += linux_packages(app, ver, out)
     for f in made:
         print(f"built {f.name} ({f.stat().st_size / 1e6:.0f} MB)")
+    code = 0
     if args.smoke:
         code = smoke(app, osname)
         if code == 3 and args.allow_no_3d:
             print("the 3D page and 3Dmol loaded but drew nothing (no WebGL on this machine); everything else passed")
             code = 0
-        return code
-    return 0
+    if args.test_install and made:
+        code = code or test_installs(osname, made, args.allow_no_3d)
+    return code
 
 
 if __name__ == "__main__":

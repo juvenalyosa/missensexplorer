@@ -1,7 +1,7 @@
 name: installers
 # Builds the double-click installers on each system (PyInstaller does not cross-compile), runs the
-# packaged app's self-test (it predicts BRAF V600E online and draws the 3D structure), and uploads
-# them as artifacts:
+# packaged app's self-test (it predicts BRAF V600E online and draws the 3D structure), installs each
+# installer as a user would and self-tests the installed app, and uploads them as artifacts:
 #   macOS Apple Silicon and Intel: .dmg     Windows: Setup .exe     Linux: .deb and .tar.gz
 # A tag v* also drafts a GitHub release with all of them (publish it by hand after checking).
 on:
@@ -39,10 +39,10 @@ jobs:
         run: python -m pip install ".[gui]" -r packaging/requirements-installer.txt
       - name: Build, package and self-test
         if: runner.os != 'Linux'
-        run: python packaging/build.py --installer --smoke --allow-no-3d
+        run: python packaging/build.py --installer --smoke --test-install --allow-no-3d
       - name: Build, package and self-test (virtual display)
         if: runner.os == 'Linux'
-        run: xvfb-run -a -s "-screen 0 1600x1000x24" python packaging/build.py --installer --smoke --allow-no-3d
+        run: xvfb-run -a -s "-screen 0 1600x1000x24" python packaging/build.py --installer --smoke --test-install --allow-no-3d
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}
