@@ -203,7 +203,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--installer", action="store_true", help="also build the installer")
     ap.add_argument("--smoke", action="store_true", help="run the packaged app's self-test")
     ap.add_argument(
-        "--allow-no-3d", action="store_true", help="accept a self-test whose 3D viewer did not draw (headless CI)"
+        "--allow-no-3d",
+        action="store_true",
+        help="accept a self-test whose 3D page loaded but drew nothing (no WebGL on CI machines)",
     )
     args = ap.parse_args(argv)
     osname, ver = system(), version()
@@ -224,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.smoke:
         code = smoke(app, osname)
         if code == 3 and args.allow_no_3d:
-            print("the 3D viewer did not draw (no GPU/WebGL on this machine); everything else passed")
+            print("the 3D page and 3Dmol loaded but drew nothing (no WebGL on this machine); everything else passed")
             code = 0
         return code
     return 0

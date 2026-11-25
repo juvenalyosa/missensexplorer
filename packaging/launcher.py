@@ -2,7 +2,9 @@
 
 Set MISSENSEXPLORER_SMOKE=/path/shot.png to run a self-test of a packaged build: it predicts
 BRAF V600E, renders the 3D structure, saves a screenshot and a log next to it (shot.png.log) and
-exits. Exit codes: 0 all fine, 1 no result, 2 no 3D viewer, 3 the 3D viewer did not draw.
+exits. Exit codes: 0 all fine; 1 no result; 2 no 3D viewer; 3 the 3D page and 3Dmol loaded but
+nothing was drawn (no WebGL, as on machines without a GPU); 4 the 3D page or 3Dmol did not load
+within a minute.
 """
 
 import os
@@ -44,16 +46,26 @@ def smoke(out: str) -> int:
     w.show()
     w.text.setPlainText("BRAF V600E")
     w.run_prediction()
-    state = {"code": 1, "ticks": 0}
+    state = {"code": 1, "ticks": 0, "checks": 0}
+    probe = "[typeof $3Dmol, document.querySelectorAll('canvas').length].join('|')"
 
     def finish():
         w.grab().save(out)
         app.quit()
 
-    def js(result):
-        say("3Dmol:", result)
-        state["code"] = 0 if str(result).startswith("object|1") else 3
-        QTimer.singleShot(500, finish)
+    def js(result):  # the structure and 3Dmol.js are downloaded first: ask again for up to a minute
+        state["checks"] += 1
+        r = str(result)
+        if r.startswith("object|") and not r.startswith("object|0"):
+            say("3Dmol:", r, f"after {state['checks']} s")
+            state["code"] = 0
+            QTimer.singleShot(500, finish)
+        elif state["checks"] >= 60:
+            say("3Dmol:", r, "after 60 s")
+            state["code"] = 3 if r.startswith("object|") else 4
+            QTimer.singleShot(500, finish)
+        else:
+            QTimer.singleShot(1000, lambda: w.web.page().runJavaScript(probe, 0, js))
 
     def poll():
         state["ticks"] += 1
@@ -62,7 +74,7 @@ def smoke(out: str) -> int:
             if w.web is None:
                 state["code"] = 2
                 return finish()
-            w.web.page().runJavaScript("[typeof $3Dmol, document.querySelectorAll('canvas').length].join('|')", 0, js)
+            w.web.page().runJavaScript(probe, 0, js)
         elif state["ticks"] > 600:
             say("timeout")
             finish()
