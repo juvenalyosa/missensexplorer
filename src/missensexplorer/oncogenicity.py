@@ -3,57 +3,75 @@
 The standard scores how likely a somatic variant is to drive a tumour. Each criterion adds points
 (very strong 8, strong 4, moderate 2, supporting 1; benign ones subtract), and the total gives the
 class: Oncogenic >= 10, Likely oncogenic 6 to 9, VUS 0 to 5, Likely benign -1 to -6, Benign <= -7.
+The class here comes from the criteria that can be computed automatically, with no tumour type: it is
+a starting point for a curator, not an oncogenicity classification.
+
+Gene roles: IntOGen's role weighted by mutated samples (loss-of-function when >= 60% of the samples in
+loss-of-function or activating cohorts are in loss-of-function ones, activating when <= 40%), when it
+rests on enough samples (Role); otherwise, or when IntOGen is ambiguous, UniProt's curated keyword
+(Tumor suppressor / Proto-oncogene) when it names one role. When the two disagree, IntOGen decides only
+with strong evidence; otherwise the role is ambiguous.
 
 Criteria applied automatically, and where their data come from:
 
-OVS1  null variant (stop gained, frameshift, canonical splice site, start lost) in a gene IntOGen
-      calls loss-of-function, unless nonsense-mediated decay is likely escaped (last exon).
+OVS1  null variant (stop gained, frameshift, canonical splice site, start lost) in a loss-of-function
+      gene, graded as ClinGen's loss-of-function guidance grades PVS1 (Abou Tayoun et al. 2018), which
+      the standard recommends, using its option to downgrade a criterion: full when nonsense-mediated
+      decay is expected or skipping the exon shifts the frame; OVS1_Strong (4) when decay is escaped
+      (last exon, single-exon gene) and more than 10% of the protein is removed, or an in-frame skip
+      removes more than 10% of the coding sequence; OVS1_Moderate (2) otherwise, and for a lost start.
 OS1   same amino-acid change as a ClinVar Oncogenic variant made by another nucleotide change
       (OS1_Moderate, 2 points, when it is only Likely oncogenic).
 OS3   cancerhotspots.org hotspot with >= 50 tumours at the residue and >= 10 with this change;
 OM3   fewer than 50 at the residue and >= 10 with this change; OP3 fewer than 10 with this change.
       Single-residue hotspots for missense variants, in-frame indel hotspots for in-frame indels.
-OM2   in-frame deletion or insertion in a known cancer gene (IntOGen), or stop lost in a
-      loss-of-function gene.
+OM2   in-frame deletion or insertion in a known cancer gene, or stop lost in a loss-of-function gene.
 OM4   another missense change at the residue is ClinVar Oncogenic (OM4_Supporting, 1 point, when
       only Likely oncogenic), and this change is at least about as different (Grantham distance at
-      least 80% of the reference change's).
-OP1   the MissensExplorer model calls the missense variant damaging; SBP1 (-1) benign. Not applied in
-      genes IntOGen calls activating: there, a damaging call does not mean activation (in EGFR it
-      pointed the wrong way, see docs/model.md).
+      least 80% of the reference change's), as the standard asks.
+OP1   the calibrated computational evidence reaches PP3 (the model score, or REVEL, at the PP3/BP4
+      thresholds of acmg.py, BP4 withheld when SpliceAI does not rule out a splicing effect);
+      SBP1 (-1) when it reaches BP4. Applied in every gene, as the standard does; in activating genes a
+      damage prediction does not tell activation from inactivation, which is noted.
 OP4   absent from gnomAD or below an allele frequency of 1e-5 (the standard asks for "absent or
       extremely low" without a number);
 SBS1  above 1% in a gnomAD continental population (grpmax); SBVS1 above 5%.
-OS2   functional evidence for this protein change curated in CIViC (rated >= 3 of 5): CIViC
-      "Oncogenic" evidence supporting oncogenicity, or "Functional" evidence of an effect that drives
-      tumours in that kind of gene (gain of function or neomorphic in any driver; also loss of function
-      or dominant negative in a loss-of-function gene). SBS2 (-4): CIViC evidence of unaltered
+OS2   functional studies for this protein change curated in CIViC (preclinical evidence level D, rated
+      >= 3 of 5): "Oncogenic" evidence supporting oncogenicity, or "Functional" evidence of an effect
+      that drives tumours in that kind of gene (gain of function or neomorphic in any driver; also loss
+      of function or dominant negative in a loss-of-function gene). SBS2 (-4): evidence of unaltered
       function, or Oncogenic evidence that does not support oncogenicity. Neither when the evidence
-      conflicts, and not with OS1 (the studies concern the amino-acid change, not one nucleotide change).
+      conflicts.
 
 Not assessed (they need a curator): functional studies beyond CIViC, OM1 critical functional domain,
-OP2 single-aetiology tumours, SBP2 synonymous variants. The variant's own ClinVar classification
-never counts as evidence for itself: it is shown separately (``clinvar_oncogenicity``).
+OP2 single-aetiology tumours, SBP2 synonymous variants; nor the tumour type, which the standard asks
+classifications to consider. The variant's own ClinVar classification never counts as evidence for
+itself: it is shown separately (``clinvar_oncogenicity``).
 
 Clinical evidence (not points): :func:`clinical` summarises CIViC's predictive, diagnostic and
 prognostic evidence for the protein change (the AMP/ASCO/CAP axis: what the variant means for
 treatment), with the best evidence level (A validated or guideline ... E inferential).
 
-Exclusions follow the standard: OS1 removes the hotspot criteria (its count mixes nucleotide
-changes), OS1 and OS3 remove OM4, and OM4 and OM3 are not combined (the stronger one is kept; OM4
-wins a tie, as the standard has it).
+Exclusions: the standard does not use OS3 with OS1 (its count mixes nucleotide changes), counts OS2 with
+OS1 only for studies of the particular nucleotide change, and does not use OM4 with OS1 or OS3. Here OS1
+and the evidence for the same change (OS3, OM3, OP3, OS2, OM4) are alternatives and the stronger is kept,
+so a reference never lowers the points; when the standard's rule would give fewer points, the evidence
+says so. OM4 and OM3 are not combined (the stronger one is kept; OM4 wins a tie).
 
-Data: cancerhotspots.org (Chang et al., Cancer Discov 2018), the IntOGen driver compendium
-(Martinez-Jimenez et al., Nat Rev Cancer 2020; CC0) and CIViC's nightly evidence (Griffith et al.,
-Nat Genet 2017; CC0), downloaded on first use and cached; ClinVar oncogenicity classifications through
-NCBI E-utilities.
+Data: cancerhotspots.org (Chang et al., Cancer Discov 2018; gene symbols updated to HGNC's current
+ones), the IntOGen driver compendium (Martinez-Jimenez et al., Nat Rev Cancer 2020; CC0), UniProt's
+keywords (CC BY 4.0) and CIViC's monthly release (Griffith et al., Nat Genet 2017; CC0), downloaded
+on first use and cached; ClinVar oncogenicity classifications through NCBI E-utilities; transcript
+structures from Ensembl.
 """
 
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import io
 import re
+import time
 import zipfile
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -61,22 +79,50 @@ from typing import Any
 
 from ._types import KeyValueCache, Row
 from .aa import grantham, to_one_letter
-from .api import ApiError, Http, OfflineError, SourceStatus
+from .api import ENSEMBL, ApiError, Http, OfflineError, SourceStatus
 
 HOTSPOTS_URL = "https://www.cancerhotspots.org/api/hotspots/single"
 INTOGEN_RELEASE = "IntOGen-Drivers-20240920"
 INTOGEN_URL = f"https://www.intogen.org/download?file={INTOGEN_RELEASE}.zip"
 DATA_MAX_AGE = 90 * 86400  # both resources are released rarely
-CIVIC_URL = "https://civicdb.org/downloads/nightly/nightly-ClinicalEvidenceSummaries.tsv"
-CIVIC_MAX_AGE = 7 * 86400  # CIViC is updated nightly
-CIVIC_MIN_RATING = 3  # of 5 stars: "well-established" functional studies
+CIVIC_URL = "https://civicdb.org/downloads/{d}/{d}-ClinicalEvidenceSummaries.tsv"  # monthly release, citable
+CIVIC_MAX_AGE = 35 * 86400  # a new monthly release appears on the first of each month
+CIVIC_MIN_RATING = 3  # of 5 stars (CIViC: 3 = "convincing evidence")
+CIVIC_FUNCTIONAL_LEVELS = {"D"}  # OS2 needs functional studies: CIViC's preclinical level (cell or animal models)
 LEVELS = "ABCDE"
+# UniProt's curated keywords (Swiss-Prot, human; CC BY 4.0): Tumor suppressor (KW-0043), Proto-oncogene (KW-0656)
+UNIPROT_KEYWORD_URL = (
+    "https://rest.uniprot.org/uniprotkb/stream?query=%28keyword%3A{kw}%29%20AND%20%28organism_id%3A9606%29"
+    "%20AND%20%28reviewed%3Atrue%29&fields=accession%2Cgene_primary&format=tsv"
+)
+UNIPROT_KEYWORDS = {"LoF": "KW-0043", "Act": "KW-0656"}
+LOF_SHARE, ACT_SHARE = 0.6, 0.4  # IntOGen: share of mutated samples in loss-of-function cohorts
+INTOGEN_MIN_COHORTS, INTOGEN_MIN_SAMPLES = 2, 20  # below both, IntOGen's role is too thin to decide
+INTOGEN_OVERRIDE_COHORTS, INTOGEN_OVERRIDE_SAMPLES = 3, 50  # IntOGen against UniProt's keyword needs both
+MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")  # CIViC's names
+TRUNCATION_SHARE = 0.10  # ClinGen LoF guidance (Abou Tayoun 2018): removing > 10% of the protein
+# cancerhotspots.org names genes by the symbols of its release (2017); the current HGNC symbols (HGNC REST,
+# fetch/prev_symbol, 2026-11-25), so that hotspots match the gene names Ensembl VEP reports.
+HOTSPOT_SYMBOLS = {
+    "FAM58A": "CCNQ",
+    "H3F3A": "H3-3A",
+    "HIST1H1C": "H1-2",
+    "HIST1H3B": "H3C2",
+    "HIST1H3C": "H3C3",
+    "HIST1H3H": "H3C10",
+    "PAK7": "PAK5",
+    "STK19": "WHR1",
+    "TCEB1": "ELOC",
+    "WHSC1": "NSD2",
+}
 OP4_MAX_AF = 1e-5
 SBS1_AF, SBVS1_AF = 0.01, 0.05
 OM4_GRANTHAM_SHARE = 0.8
 
 POINTS = {
     "OVS1": 8,
+    "OVS1_Strong": 4,
+    "OVS1_Moderate": 2,
     "OS1": 4,
     "OS1_Moderate": 2,
     "OS2": 4,
@@ -104,7 +150,7 @@ REVIEWED = {
 }
 ROLE_NAMES = {"Act": "activating", "LoF": "loss-of-function", "ambiguous": "ambiguous"}
 TITLE = re.compile(r"^(N[MR]_\d+)(?:\.\d+)?\([^)]*\):(c\.\S+) \(p\.([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})\)$")
-NOT_ASSESSED = "not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2"
+NOT_ASSESSED = "not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2, tumour type"
 ONCOGENIC_FUNCTION = {  # CIViC functional significance that supports an oncogenic effect, by gene role
     "Act": {"Gain of Function", "Neomorphic"},
     "LoF": {"Gain of Function", "Neomorphic", "Loss of Function", "Dominant Negative"},
@@ -129,15 +175,57 @@ def tier(points: int) -> str:
 
 @dataclass
 class Role:
-    """A gene's role in IntOGen: the role most of its cohorts give, and how many do."""
+    """A gene's role in cancer and where it comes from.
+
+    IntOGen decides when its evidence is enough: at least 2 cohorts or 20 mutated samples in cohorts that
+    give the gene a role (loss-of-function or activating), and at least as many samples there as in its
+    cohorts of ambiguous role. The role is loss-of-function when at least 60% of those samples are in
+    loss-of-function cohorts, activating when at most 40%. Counting samples rather than cohorts keeps many
+    small cohorts from outvoting large ones (SMARCA4 is "Act" in 27 of 45 cohorts but loss-of-function in
+    47% of its mutated samples; KEAP1 7 of 14 but 69%). UniProt's curated keyword (Tumor suppressor or
+    Proto-oncogene, not both) decides when IntOGen is absent, ambiguous or too thin; its Proto-oncogene
+    keyword also marks genes known from fusions, such as RUNX1, NSD1 and CBFB, whose point mutations
+    inactivate them. When IntOGen and UniProt disagree, IntOGen decides only with at least 3 cohorts and
+    50 samples (so RUNX1 is loss-of-function); otherwise the role is ambiguous (SMARCB1, on 13 samples).
+    """
 
     role: str  # Act | LoF | ambiguous
-    cohorts: int
-    total: int
+    source: str  # UniProt | IntOGen
+    lof_share: float | None = None  # among the samples of cohorts with a role
+    cohorts: int = 0
+    samples: float = 0.0  # in cohorts with a role (loss-of-function or activating)
+    why: str = "decided"  # decided | thin | ambiguous cohorts | conflict
+    other: str | None = None  # UniProt's keyword when it disagrees with IntOGen
+    ambiguous_samples: float = 0.0
+
+    @property
+    def decisive(self) -> bool:
+        """False when IntOGen's evidence was too thin, mostly ambiguous or contradicted by UniProt."""
+        return self.why == "decided"
 
     def text(self) -> str:
-        """'activating in 22 of 22 IntOGen cohorts'."""
-        return f"{ROLE_NAMES.get(self.role, self.role)} in {self.cohorts} of {self.total} IntOGen cohorts"
+        """'loss-of-function (UniProt: tumour suppressor)' or '... (IntOGen: 69% loss-of-function ...)'."""
+        name = ROLE_NAMES.get(self.role, self.role)
+        kw = {"LoF": "tumour suppressor", "Act": "proto-oncogene"}
+        if self.source == "UniProt":
+            return f"{name} (UniProt: {kw.get(self.role, 'tumour suppressor and proto-oncogene')})"
+        k = f"{self.cohorts} cohort{'s' if self.cohorts != 1 else ''}"
+        share = f"{self.lof_share:.0%}" if self.lof_share is not None else "?"
+        if self.why == "thin":
+            total = self.samples + self.ambiguous_samples
+            return f"{name} (IntOGen: {k}, {total:.0f} mutated samples: too few to decide)"
+        if self.why == "ambiguous cohorts":
+            total = self.samples + self.ambiguous_samples
+            return (
+                f"{name} (IntOGen: {self.ambiguous_samples:.0f} of {total:.0f} mutated samples in cohorts of "
+                "ambiguous role)"
+            )
+        if self.why == "conflict":
+            return (
+                f"{name} (IntOGen: {share} loss-of-function in {self.samples:.0f} samples, {k}; "
+                f"UniProt: {kw.get(str(self.other), str(self.other))}: they disagree)"
+            )
+        return f"{name} (IntOGen: {share} loss-of-function in {self.samples:.0f} samples of cohorts with a role, {k})"
 
 
 @dataclass
@@ -160,6 +248,8 @@ class Data:
     hotspots_ok: bool = False
     roles_ok: bool = False
     civic_ok: bool = False
+    roles_partial: bool = False  # UniProt's keywords could not be obtained: roles from IntOGen only
+    versions: dict[str, str] = field(default_factory=dict)  # source -> release or retrieval date
 
 
 def parse_hotspots(items: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Hotspot]], dict[str, list]]:
@@ -168,6 +258,7 @@ def parse_hotspots(items: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Hot
     indels: dict[str, list[tuple[int, int, Hotspot]]] = defaultdict(list)
     for h in items:
         gene, kind = h.get("hugoSymbol"), h.get("type")
+        gene = HOTSPOT_SYMBOLS.get(str(gene), gene) if gene else gene
         hs = Hotspot(
             int(h.get("tumorCount") or 0), dict(h.get("variantAminoAcid") or {}), str(h.get("transcriptId") or "")
         )
@@ -181,19 +272,63 @@ def parse_hotspots(items: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Hot
     return dict(residues), dict(indels)
 
 
-def parse_intogen(zip_bytes: bytes) -> dict[str, Role]:
-    """Return each gene's majority role across the cohorts of IntOGen's Compendium_Cancer_Genes.tsv."""
+def parse_intogen(zip_bytes: bytes) -> dict[str, list[float]]:
+    """Return, for each gene of IntOGen's Compendium_Cancer_Genes.tsv, the mutated samples by cohort role.
+
+    gene -> [samples in LoF cohorts, in Act cohorts, in ambiguous cohorts, number of cohorts].
+    """
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
         name = next(n for n in z.namelist() if n.endswith("Compendium_Cancer_Genes.tsv"))
         text = z.read(name).decode("utf-8")
-    by_gene: dict[str, Counter[str]] = defaultdict(Counter)
+    out: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0, 0])
     for rec in csv.DictReader(io.StringIO(text), delimiter="\t"):
-        if rec.get("SYMBOL") and rec.get("ROLE"):
-            by_gene[rec["SYMBOL"]][rec["ROLE"]] += 1
-    out = {}
-    for gene, c in by_gene.items():
-        (role, n), total = c.most_common(1)[0], sum(c.values())
-        out[gene] = Role(role, n, total)
+        gene, role = rec.get("SYMBOL"), rec.get("ROLE")
+        if not gene or role not in ("LoF", "Act", "ambiguous"):
+            continue
+        c = out[gene]
+        c[("LoF", "Act", "ambiguous").index(role)] += _num(rec.get("SAMPLES")) or 0.0
+        c[3] += 1
+    return dict(out)
+
+
+def parse_uniprot(tsv: str) -> set[str]:
+    """Gene symbols (primary names) in a UniProt TSV download with a 'Gene Names (primary)' column."""
+    rows = list(csv.DictReader(io.StringIO(tsv), delimiter="\t"))
+    col = next((k for k in (rows[0] if rows else {}) if "primary" in k.lower()), None)
+    return {g.strip() for r in rows for g in str(r.get(col) or "").split(";") if g.strip()} if col else set()
+
+
+def combine_roles(intogen: dict[str, list[float]], suppressors: set[str], oncogenes: set[str]) -> dict[str, Role]:
+    """Each gene's role: IntOGen's sample-weighted role when it has enough evidence, else UniProt's keyword."""
+    out: dict[str, Role] = {}
+    for gene in set(intogen) | suppressors | oncogenes:
+        ts, og = gene in suppressors, gene in oncogenes
+        uni = ("LoF" if ts else "Act") if ts != og else None
+        c = intogen.get(gene)
+        if not c:
+            out[gene] = Role(uni or "ambiguous", "UniProt")
+            continue
+        lof, act, amb, cohorts = float(c[0]), float(c[1]), float(c[2]), int(c[3])
+        decided = lof + act
+        share = lof / decided if decided else None
+
+        def make(role: str, source: str, why: str = "decided", other: str | None = None) -> Role:
+            return Role(role, source, share, cohorts, decided, why, other, amb)  # noqa: B023 (used at once)
+
+        if share is None or decided < amb:  # mostly in cohorts where IntOGen could not tell the role
+            out[gene] = make(uni, "UniProt") if uni else make("ambiguous", "IntOGen", "ambiguous cohorts")
+        elif cohorts < INTOGEN_MIN_COHORTS and decided < INTOGEN_MIN_SAMPLES:
+            out[gene] = make(uni, "UniProt") if uni else make("ambiguous", "IntOGen", "thin")
+        elif ACT_SHARE < share < LOF_SHARE:
+            out[gene] = make(uni, "UniProt") if uni else make("ambiguous", "IntOGen")
+        else:
+            role = "LoF" if share >= LOF_SHARE else "Act"
+            strong = cohorts >= INTOGEN_OVERRIDE_COHORTS and decided >= INTOGEN_OVERRIDE_SAMPLES
+            out[gene] = (
+                make("ambiguous", "IntOGen", "conflict", uni)
+                if uni and uni != role and not strong
+                else make(role, "IntOGen")
+            )
     return out
 
 
@@ -231,10 +366,20 @@ def parse_civic(text: str) -> dict[str, dict[str, list[dict[str, Any]]]]:
 def load(http: Http, cache: KeyValueCache, status: SourceStatus | None = None) -> Data:
     """Return the hotspots, gene roles and CIViC evidence, from the cache or downloaded.
 
-    The hotspots and roles are kept 90 days, CIViC a week. A failed download is recorded in `status`
-    (sources 'cancerhotspots.org', 'IntOGen' and 'CIViC') and leaves that part of the data empty.
+    The hotspots and roles are kept 90 days, CIViC 35 days (it is released monthly). A failed download is
+    recorded in `status` (sources 'cancerhotspots.org', 'IntOGen', 'UniProt' and 'CIViC') and leaves that
+    part of the data empty.
     """
     data = Data()
+    today = time.strftime("%Y-%m-%d")
+    stored: dict[str, str] = dict(cache.get("oncogenicity|versions") or {})  # what each cached download was
+    versions: dict[str, str] = {}  # the sources used in this run
+
+    def from_cache(source: str, key: str) -> None:
+        when = getattr(cache, "stored", lambda k: None)(key)
+        day = time.strftime("%Y-%m-%d", time.localtime(when)) if when else "an earlier run"
+        versions[source] = stored.get(source) or f"cached copy retrieved {day}"
+
     hot = cache.get("oncogenicity|cancerhotspots-single", max_age=DATA_MAX_AGE)
     if hot is None:
         try:
@@ -243,50 +388,139 @@ def load(http: Http, cache: KeyValueCache, status: SourceStatus | None = None) -
                 raise ApiError(f"HTTP {r.status_code}", r.status_code)
             hot = r.json()
             cache.set("oncogenicity|cancerhotspots-single", hot)
+            versions["cancerhotspots.org"] = stored["cancerhotspots.org"] = f"API, retrieved {today}"
         except (ApiError, OfflineError, ValueError) as e:
             if status is not None:
                 status.fail("cancerhotspots.org", str(e))
             hot = None
     if hot is not None:
+        if "cancerhotspots.org" not in versions:
+            from_cache("cancerhotspots.org", "oncogenicity|cancerhotspots-single")
         if status is not None:
             status.use("cancerhotspots.org")
         data.residues, data.indels = parse_hotspots(hot)
         data.hotspots_ok = True
-    roles = cache.get(f"oncogenicity|{INTOGEN_RELEASE}", max_age=DATA_MAX_AGE)
-    if roles is None:
+    intogen = cache.get(f"oncogenicity|{INTOGEN_RELEASE}|samples", max_age=DATA_MAX_AGE)
+    if intogen is None:
         try:
             r = http.request("GET", INTOGEN_URL, follow_redirects=True)
             if r.status_code != 200:
                 raise ApiError(f"HTTP {r.status_code}", r.status_code)
-            roles = {g: [x.role, x.cohorts, x.total] for g, x in parse_intogen(r.content).items()}
-            cache.set(f"oncogenicity|{INTOGEN_RELEASE}", roles)
+            intogen = parse_intogen(r.content)
+            cache.set(f"oncogenicity|{INTOGEN_RELEASE}|samples", intogen)
         except (ApiError, OfflineError, ValueError, KeyError, StopIteration, zipfile.BadZipFile) as e:
             if status is not None:
                 status.fail("IntOGen", str(e))
-            roles = None
-    if roles is not None:
+            intogen = None
+    keywords = cache.get("oncogenicity|uniprot-keywords", max_age=DATA_MAX_AGE)
+    if keywords is None:
+        try:
+            keywords = {}
+            for role, kw in UNIPROT_KEYWORDS.items():
+                r = http.request("GET", UNIPROT_KEYWORD_URL.format(kw=kw))
+                if r.status_code != 200:
+                    raise ApiError(f"HTTP {r.status_code}", r.status_code)
+                keywords[role] = sorted(parse_uniprot(r.text))
+                release = r.headers.get("x-uniprot-release") if hasattr(r, "headers") else None
+            cache.set("oncogenicity|uniprot-keywords", keywords)
+            versions["UniProt"] = stored["UniProt"] = f"release {release}" if release else f"retrieved {today}"
+        except (ApiError, OfflineError, ValueError) as e:
+            if status is not None:
+                status.fail("UniProt", str(e))
+            keywords = None
+    if intogen is not None:
+        versions["IntOGen"] = INTOGEN_RELEASE
+        if keywords is not None and "UniProt" not in versions:
+            from_cache("UniProt", "oncogenicity|uniprot-keywords")
         if status is not None:
             status.use("IntOGen")
-        data.roles = {g: Role(*v) for g, v in roles.items()}
+            if keywords is not None:
+                status.use("UniProt")
+        found = keywords or {}
+        data.roles = combine_roles(intogen, set(found.get("LoF", [])), set(found.get("Act", [])))
         data.roles_ok = True
-    civic = cache.get("oncogenicity|civic-evidence", max_age=CIVIC_MAX_AGE)
+        data.roles_partial = keywords is None
+    civic = cache.get("oncogenicity|civic-evidence-monthly", max_age=CIVIC_MAX_AGE)
     if civic is None:
         try:
-            r = http.request("GET", CIVIC_URL, follow_redirects=True)
-            if r.status_code != 200:
-                raise ApiError(f"HTTP {r.status_code}", r.status_code)
-            civic = parse_civic(r.text)
-            cache.set("oncogenicity|civic-evidence", civic)
+            text, code = None, 0
+            for d in civic_releases():
+                r = http.request("GET", CIVIC_URL.format(d=d), follow_redirects=True)
+                code = r.status_code
+                if code == 200:
+                    versions["CIViC"] = stored["CIViC"] = f"monthly release {d}"
+                    text = r.text
+                    break
+            if text is None:
+                raise ApiError(f"HTTP {code}", code)
+            civic = parse_civic(text)
+            cache.set("oncogenicity|civic-evidence-monthly", civic)
         except (ApiError, OfflineError, ValueError, KeyError) as e:
             if status is not None:
                 status.fail("CIViC", str(e))
             civic = None
     if civic is not None:
+        if "CIViC" not in versions:
+            from_cache("CIViC", "oncogenicity|civic-evidence-monthly")
         if status is not None:
             status.use("CIViC")
         data.civic = civic
         data.civic_ok = True
+    cache.set("oncogenicity|versions", stored)
+    data.versions = versions
     return data
+
+
+def civic_releases(today: dt.date | None = None) -> list[str]:
+    """CIViC's monthly release names to try, newest first: ['01-Nov-2026', '01-Oct-2026']."""
+    d = today or dt.date.today()
+    first = d.replace(day=1)
+    prev = (first - dt.timedelta(days=1)).replace(day=1)
+    # English month names whatever the locale (the desktop app sets the user's locale)
+    return [f"01-{MONTHS[x.month - 1]}-{x.year}" for x in (first, prev)]
+
+
+def transcript_structures(
+    http: Http, cache: KeyValueCache, transcripts: set[str], assembly: str, status: SourceStatus | None = None
+) -> dict[str, dict[str, Any]]:
+    """Exons (transcript order), translated region and protein length of Ensembl transcripts (cached).
+
+    For the strength of OVS1: the share of the protein a truncation removes and whether skipping an exon
+    keeps the frame. transcript id (no version) -> {"exons": [[start, end], ...], "cds": [start, end],
+    "length": amino acids}; transcripts whose lookup failed are missing.
+    """
+    ids = sorted({t.split(".")[0] for t in transcripts if t})
+    keys = {t: f"txstruct|{assembly}|{t}" for t in ids}
+    hit = cache.get_many(list(keys.values()))
+    out = {t: hit[keys[t]] for t in ids if keys[t] in hit}
+    todo = [t for t in ids if t not in out]
+    if status is not None and todo:
+        status.use("Ensembl transcripts", len(todo))
+    for i in range(0, len(todo), 50):
+        chunk = todo[i : i + 50]
+        try:
+            data = http.post_json(
+                f"{ENSEMBL[assembly]}/lookup/id",
+                {"ids": chunk, "expand": 1},
+                headers={"Content-Type": "application/json"},
+            )
+        except ApiError as e:
+            if status is not None:
+                status.fail("Ensembl transcripts", str(e), chunk)
+            continue
+        res = {}
+        for t in chunk:
+            d = (data or {}).get(t) or {}
+            tr, exons = d.get("Translation") or {}, d.get("Exon") or []
+            if not tr or not exons:
+                continue
+            ex = sorted([int(e["start"]), int(e["end"])] for e in exons)
+            if d.get("strand") == -1:
+                ex.reverse()
+            res[t] = {"exons": ex, "cds": [int(tr["start"]), int(tr["end"])], "length": int(tr.get("length") or 0)}
+        out.update(res)
+        cache.set_many({keys[t]: v for t, v in res.items()})
+    return out
 
 
 # --------------------------------------------------------------------------- ClinVar references
@@ -342,6 +576,8 @@ class Assessment:
 
     codes: list[tuple[str, str]] = field(default_factory=list)  # (code, why)
     notes: list[str] = field(default_factory=list)
+    same_change: tuple[str, str] | None = None  # OS1 candidate, kept only if stronger than the alternatives
+    sop_delta: int = 0  # points the standard's rule for OS1 would add (negative: remove) to this assessment
 
     def ordered(self) -> list[tuple[str, str]]:
         """The criteria from the strongest oncogenic to the benign ones."""
@@ -368,6 +604,7 @@ def assess(
     data: Data,
     refs: list[Reference] | None,
     gnomad_info: dict[str, Any] | None = None,
+    structure: dict[str, Any] | None = None,
 ) -> Assessment:
     """Return the oncogenicity criteria a row meets.
 
@@ -375,37 +612,113 @@ def assess(
         row: One results row; reads ``gene``, ``transcript``, ``canonical``, ``protein_position``,
             ``ref_aa``, ``alt_aa``, ``protein_change``, ``nmd``, ``gnomad_af`` and ``gnomad_popmax_af``.
         terms: The row's VEP consequence terms.
-        model_call: ``"damaging"``, ``"benign"`` or None: the model's call before the frequency rule.
+        model_call: ``"damaging"`` when the calibrated computational evidence reaches PP3 (supporting or
+            stronger), ``"benign"`` when it reaches BP4, otherwise None.
         data: Hotspots and gene roles, from :func:`load`.
         refs: ClinVar oncogenic variants at the residue (:func:`references`); None when not searched.
         gnomad_info: gnomAD's own answer for a variant Ensembl gave no frequency (``found``, ``af``).
+        structure: The transcript's exons and translation (:func:`transcript_structures`), for the
+            strength of OVS1; None when unknown.
     """
     a = Assessment()
     gene = str(row.get("gene") or "")
     role = data.roles.get(gene)
     if data.roles_ok:
-        a.notes.append(f"{gene}: {role.text()}" if role else f"{gene} is not an IntOGen driver gene")
+        a.notes.append(f"{gene}: {role.text()}" if role else f"{gene} is not a known cancer gene (UniProt, IntOGen)")
+        if data.roles_partial:
+            a.notes.append("UniProt keywords unavailable: gene roles from IntOGen only")
     missense = "missense_variant" in terms
     if terms & NULL_TERMS:
-        _null(a, row, role)
+        _null(a, row, role, terms, structure)
     elif missense:
         _missense(a, row, model_call, data, refs, role)
     elif "stop_lost" in terms or (terms & INFRAME_TERMS and re.search(r"del|ins|dup", str(row.get("protein_change")))):
         _inframe(a, row, terms, data, role)
     _functional(a, row, data, role)
+    _same_change(a)
     _frequency(a, row, gnomad_info)
+    if a.sop_delta:
+        a.notes.append(f"the standard's rule for OS1 would give {a.points + a.sop_delta} points")
     a.notes.append(NOT_ASSESSED)
     return a
 
 
-def _null(a: Assessment, row: Row, role: Role | None) -> None:
-    """OVS1: a null variant in a loss-of-function gene, unless decay is likely escaped."""
+def _null(a: Assessment, row: Row, role: Role | None, terms: set[str], structure: dict[str, Any] | None) -> None:
+    """OVS1 for a null variant in a loss-of-function gene, graded as ClinGen's LoF guidance grades PVS1.
+
+    The standard asks for caution with truncations at the extreme 3' end, splice variants that skip an
+    exon in frame and alternative isoforms, recommends ClinGen's guidance on loss-of-function variants
+    (Abou Tayoun et al. 2018), and lets a criterion be downgraded when the evidence falls short. So:
+    a truncation expected to undergo nonsense-mediated decay gets OVS1; one that escapes it (last exon,
+    single-exon gene) OVS1_Strong when it removes more than 10% of the protein and OVS1_Moderate
+    otherwise; a canonical splice variant OVS1 when skipping its exon shifts the frame, and OVS1_Strong or
+    OVS1_Moderate (more or less than 10% of the coding sequence) when the skip is in frame or the
+    structure is unknown; a lost start codon OVS1_Moderate (another start codon may be used).
+    """
     if not role or role.role != "LoF":
-        a.notes.append("OVS1 not applied (the gene is not a loss-of-function driver in IntOGen)")
-    elif "escape" in str(row.get("nmd") or ""):
-        a.notes.append(f"OVS1 not applied ({row['nmd']}: the truncated protein may keep its function)")
-    else:
-        a.codes.append(("OVS1", f"null variant in a {ROLE_NAMES['LoF']} gene"))
+        why = role.text() if role else "not a known cancer gene"
+        a.notes.append(f"OVS1 not applied (not a loss-of-function gene: {why})")
+        return
+    a.codes.append(_ovs1(row, terms, structure))
+
+
+def _ovs1(row: Row, terms: set[str], structure: dict[str, Any] | None) -> tuple[str, str]:
+    """The OVS1 code (full, Strong or Moderate) of a null variant in a loss-of-function gene, with its reason."""
+    if "start_lost" in terms and not terms & {"stop_gained", "frameshift_variant"}:
+        return "OVS1_Moderate", "start codon lost: another in-frame start codon may be used (ClinGen LoF guidance)"
+    if terms & {"splice_donor_variant", "splice_acceptor_variant"} and not terms & {
+        "stop_gained",
+        "frameshift_variant",
+    }:
+        skip = skipped_exon(row, terms, structure)
+        if skip is None:
+            return "OVS1_Strong", "canonical splice site; whether skipping the exon keeps the frame is unknown"
+        exon, coding, total = skip
+        if coding % 3:
+            return "OVS1", f"canonical splice site; skipping exon {exon} would shift the reading frame"
+        share = coding / total if total else 0.0
+        code = "OVS1_Strong" if share > TRUNCATION_SHARE else "OVS1_Moderate"
+        return (
+            code,
+            f"canonical splice site; skipping exon {exon} would remove {share:.0%} of the coding sequence in frame",
+        )
+    nmd = str(row.get("nmd") or "")
+    if "escape" not in nmd:
+        return "OVS1", "truncating variant expected to undergo nonsense-mediated decay" + (
+            f" ({nmd})" if "uncertain" in nmd else ""
+        )
+    length = _num(row.get("protein_length")) or _num((structure or {}).get("length"))
+    pos = _num(row.get("protein_position"))
+    if not length or not pos:
+        return "OVS1_Moderate", f"{nmd}; the share of the protein removed is unknown"
+    share = max(0.0, (length - pos + 1) / length)
+    code = "OVS1_Strong" if share > TRUNCATION_SHARE else "OVS1_Moderate"
+    return code, f"{nmd}; the truncation removes {share:.0%} of the protein (ClinGen LoF guidance: > 10% strong)"
+
+
+def skipped_exon(row: Row, terms: set[str], structure: dict[str, Any] | None) -> tuple[int, int, int] | None:
+    """The exon a canonical splice variant would skip: (exon number, its coding bases, all coding bases).
+
+    VEP numbers introns in transcript order: a donor variant in intron i acts on exon i, an acceptor
+    variant on exon i + 1. Coding bases are the exon's overlap with the translated region.
+    """
+    if not structure or not structure.get("exons") or not structure.get("cds"):
+        return None
+    try:
+        intron = int(str(row.get("intron") or "").split("/")[0])
+    except ValueError:
+        return None
+    exon = intron + (1 if "splice_acceptor_variant" in terms and "splice_donor_variant" not in terms else 0)
+    exons = structure["exons"]
+    if not 1 <= exon <= len(exons):
+        return None
+    lo, hi = structure["cds"]
+
+    def coding(e: list[int]) -> int:
+        return max(0, min(e[1], hi) - max(e[0], lo) + 1)
+
+    total = sum(coding(e) for e in exons)
+    return exon, coding(exons[exon - 1]), total
 
 
 def _missense(
@@ -417,21 +730,21 @@ def _missense(
     other = [x for x in refs or [] if not x.same_change]
     if refs is None:
         a.notes.append("OS1/OM4 not checked (ClinVar oncogenicity search unavailable)")
-    if same:
+    if same:  # resolved in _same_change, once the hotspot and CIViC evidence are known
         x = same[0]
-        code = "OS1" if x.level == "O" else "OS1_Moderate"
-        a.codes.append((code, f"same change by {x.cdna}: {_level(x)}, {x.accession}"))
+        a.same_change = (
+            "OS1" if x.level == "O" else "OS1_Moderate",
+            f"same change by {x.cdna}: {_level(x)}, {x.accession}",
+        )
     hot = _residue_hotspot(row, data)
-    if hot and not same:
+    if hot:
         n_aa = hot.changes.get(str(alt_aa), 0)
         code = "OS3" if hot.tumours >= 50 and n_aa >= 10 else "OM3" if n_aa >= 10 else "OP3"
         a.codes.append(
             (code, f"hotspot {ref_aa}{pos}: {hot.tumours} tumours, {n_aa} with {alt_aa}; cancerhotspots.org")
         )
-    elif hot and same:
-        a.notes.append("hotspot not counted (OS1 already uses this amino-acid change)")
     has = {c for c, _ in a.codes}
-    if other and not has & {"OS1", "OS1_Moderate", "OS3"}:
+    if other and "OS3" not in has:  # with a same-change reference, OM4 is weighed against OS1 in _same_change
         g_new = grantham(str(ref_aa), str(alt_aa)) or 0
         ok = [x for x in other if g_new >= OM4_GRANTHAM_SHARE * (grantham(str(ref_aa), x.alt_aa) or 0)]
         if ok:
@@ -444,14 +757,43 @@ def _missense(
                 a.codes.append((code, f"{x.protein}: {_level(x)}, {x.accession}"))
         else:
             a.notes.append("OM4 not applied (this change is milder than the oncogenic ones at the residue)")
-    if role and role.role == "Act":
-        a.notes.append(
-            "OP1/SBP1 not applied (activating gene: the model measures damage to the protein, not activation)"
-        )
-    elif model_call == "damaging":
-        a.codes.append(("OP1", "the MissensExplorer model calls it damaging"))
+    if model_call == "damaging":
+        a.codes.append(("OP1", "calibrated computational evidence reaches PP3"))
     elif model_call == "benign":
-        a.codes.append(("SBP1", "the MissensExplorer model calls it benign"))
+        a.codes.append(("SBP1", "calibrated computational evidence reaches BP4"))
+    if model_call and role and role.role == "Act":
+        a.notes.append("in an activating gene, a damage prediction does not tell activation from inactivation")
+
+
+SAME_CHANGE = ("OS3", "OM3", "OP3", "OS2", "OM4", "OM4_Supporting")  # evidence that OS1 would replace
+
+
+def _same_change(a: Assessment) -> None:
+    """OS1 from a ClinVar classification of the same amino-acid change, or the hotspot and CIViC evidence.
+
+    The standard does not use OS3 with OS1 (unless the hotspot count is specific to the nucleotide change)
+    and counts OS2 with OS1 only for studies of the particular nucleotide change (Horak et al. 2022, Table
+    1). Here the two ways of counting the change are alternatives and the stronger is kept, so that adding
+    a reference never lowers the points: this departs from the standard when the hotspot and CIViC
+    evidence are stronger than OS1. A likely oncogenic reference (OS1_Moderate, two points, the tool's own
+    level) therefore never removes stronger evidence.
+    """
+    if a.same_change is None:
+        return
+    code, why = a.same_change
+    alt = [(c, w) for c, w in a.codes if c in SAME_CHANGE]
+    alt_points = sum(POINTS[c] for c, _ in alt)
+    if POINTS[code] >= alt_points:
+        a.codes = [(c, w) for c, w in a.codes if c not in SAME_CHANGE]
+        a.codes.append((code, why))
+        if alt:
+            a.notes.append(f"{', '.join(c for c, _ in alt)} not counted ({code} uses this amino-acid change)")
+        chosen = POINTS[code]
+    else:
+        a.notes.append(f"{code} not counted ({why}; {' + '.join(c for c, _ in alt)} for this change is stronger)")
+        chosen = alt_points
+    # the standard's rule: OS1 from an oncogenic reference replaces this evidence; no OS1 from a likely oncogenic one
+    a.sop_delta = (POINTS["OS1"] if code == "OS1" else alt_points) - chosen
 
 
 def _inframe(a: Assessment, row: Row, terms: set[str], data: Data, role: Role | None) -> None:
@@ -465,7 +807,7 @@ def _inframe(a: Assessment, row: Row, terms: set[str], data: Data, role: Role | 
     if role:
         a.codes.append(("OM2", f"in-frame change in a cancer gene ({role.text()})"))
     else:
-        a.notes.append("OM2 not applied (not a known cancer gene in IntOGen)")
+        a.notes.append("OM2 not applied (not a known cancer gene: UniProt, IntOGen)")
     m = re.match(r"^[A-Z*](\d+)(?:_[A-Z*](\d+))?", change)
     if not m:
         return
@@ -491,6 +833,13 @@ def _functional(a: Assessment, row: Row, data: Data, role: Role | None) -> None:
     items = [x for x in _civic_items(row, data) if x["type"] in ("Oncogenic", "Functional")]
     if not items:
         return
+    clinical_only = [x for x in items if x["level"] not in CIVIC_FUNCTIONAL_LEVELS]
+    items = [x for x in items if x["level"] in CIVIC_FUNCTIONAL_LEVELS]
+    if clinical_only and not items:
+        a.notes.append("CIViC oncogenic evidence from clinical observations (not functional studies) not used")
+        return
+    if not items:
+        return
     good = [x for x in items if x["rating"] >= CIVIC_MIN_RATING]
     if not good:
         a.notes.append(f"CIViC functional evidence rated below {CIVIC_MIN_RATING} stars not used")
@@ -508,8 +857,6 @@ def _functional(a: Assessment, row: Row, data: Data, role: Role | None) -> None:
             con.append(x)
     if pro and con:
         a.notes.append("OS2/SBS2 not applied (CIViC functional evidence conflicts)")
-    elif pro and any(c.startswith("OS1") for c, _ in a.codes):
-        a.notes.append("OS2 not applied (OS1 already uses this amino-acid change)")
     elif pro:
         a.codes.append(("OS2", "CIViC: " + _civic_refs(pro)))
     elif con:
@@ -568,9 +915,16 @@ def _frequency(a: Assessment, row: Row, gnomad_info: dict[str, Any] | None) -> N
         a.codes.append(("SBVS1", f"gnomAD grpmax {grpmax:.3g} > 5%"))
     elif grpmax is not None and grpmax > SBS1_AF:
         a.codes.append(("SBS1", f"gnomAD grpmax {grpmax:.3g} > 1%"))
-    elif not af:
-        a.codes.append(("OP4", "absent from gnomAD"))
-    elif af < OP4_MAX_AF:
+    elif af is None:
+        from .gnomad import covered
+
+        if gnomad_info and not gnomad_info.get("found") and covered(gnomad_info):
+            a.codes.append(("OP4", f"absent from {gnomad_info.get('dataset') or 'gnomAD'}"))
+        elif gnomad_info and not gnomad_info.get("found"):
+            a.notes.append("OP4 not applied (absent from gnomAD, but few reads there)")
+        else:
+            a.notes.append("OP4 not checked (absence from gnomAD not confirmed)")
+    elif af == 0 or af < OP4_MAX_AF:
         a.codes.append(("OP4", f"gnomAD frequency {af:.2g} < 1e-5"))
 
 

@@ -65,6 +65,12 @@ class Cache:
             return None
         return json.loads(row[0])
 
+    def stored(self, key: str) -> float | None:
+        """Return when `key` was stored (epoch seconds), or None when it is not in the cache."""
+        with self._lock:
+            row = self._db.execute("SELECT t FROM kv WHERE k = ?", (key,)).fetchone()
+        return None if row is None else float(row[0])
+
     def get_many(self, keys: list[str], max_age: float | None = None) -> dict[str, Any]:
         """Return key -> value for the `keys` that are stored and not older than `max_age` seconds.
 
@@ -120,6 +126,10 @@ class NullCache:
     """Drop-in replacement when caching is disabled."""
 
     def get(self, key: str, max_age: float | None = None) -> Any:
+        """Return None: nothing is ever cached."""
+        return None
+
+    def stored(self, key: str) -> float | None:
         """Return None: nothing is ever cached."""
         return None
 

@@ -5,7 +5,10 @@
 
 1. Uses the same ClinVar selection as clinvar_benchmark.py (germline missense SNVs on GRCh38,
    >= 2 review stars, P/LP or B/LB), at most 8 variants per gene and class.
-2. Leaves out every gene of the benchmark sample, so the benchmark stays a held-out test.
+2. Leaves out every gene of the benchmark sample, so the benchmark stays a held-out test. A variant
+   is left out when the gene in its ClinVar name (NM_...(GENE):c.) or any of its ClinVar gene
+   symbols is a benchmark gene: ClinVar lists overlapping genes together ('LDLR;MIR6886'), and up
+   to v2.4 an exact match on that string let 63 variants of 36 benchmark genes into training.
 3. Builds a training set that is enriched in rare benign variants:
      * every pathogenic variant;
      * every RARE benign variant (gnomAD grpmax < 0.1% or absent);
@@ -16,8 +19,10 @@
    "benign" mostly from common variants. Version 2.2 was trained that way and called more rare
    benign variants damaging than the v2.1 vote did.
 4. Annotates the set with the pipeline (without ClinVar, which is never an input of the verdict)
-   and fits median imputation -> standardisation -> L2 logistic regression on the scores of
-   AlphaMissense, REVEL, CADD and popEVE, with the classes weighted equally.
+   and fits mean imputation -> standardisation -> L2 logistic regression on the scores of
+   AlphaMissense, REVEL, CADD and popEVE, with the classes weighted equally. A missing score is
+   filled with the training mean, which is 0 after standardisation: it adds nothing to the score
+   (up to v2.4 the median was used, which added a small hidden term).
    Allele frequency is NOT a feature: it is applied as a separate, visible rule (BA1/BS1).
 5. Chooses the cut-offs by 5-fold cross-validation split by gene, on rare variants (the training
    genes only; the benchmark plays no part):
@@ -72,8 +77,9 @@ def pipeline(c: float = 1.0):
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
 
-    # No missing-value indicators: a missing score must never count as evidence either way.
-    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), LogisticRegression(C=c, max_iter=5000))
+    # No missing-value indicators: a missing score must never count as evidence either way. The mean
+    # (0 after standardisation) makes a missing score contribute exactly nothing to the log-odds.
+    return make_pipeline(SimpleImputer(strategy="mean"), StandardScaler(), LogisticRegression(C=c, max_iter=5000))
 
 
 def _progress(s, d, n):
@@ -127,6 +133,7 @@ def annotate(picked: list[dict]) -> tuple[pd.DataFrame, dict]:
         {
             "clinvar_id": p["id"],
             "gene": p["gene"],
+            "gene_key": B.gene_of(p.get("name", ""), p["gene"]),
             "label": p["label"],
             "year": p["year"],
             **{f: r.get(f) for f in FEATURES},
@@ -163,7 +170,7 @@ def cv_predictions(df: pd.DataFrame, seed: int) -> np.ndarray:
     """Out-of-fold model scores, 5-fold cross-validation split by gene."""
     from sklearn.model_selection import GroupKFold
 
-    X, y, g = df[FEATURES], df["label"].values, df["gene"].values
+    X, y, g = df[FEATURES], df["label"].values, df["gene_key"].values
     p = np.zeros(len(df))
     for tr, te in GroupKFold(n_splits=5, shuffle=True, random_state=seed).split(X, y, g):
         m = pipeline().fit(X.iloc[tr], y[tr], logisticregression__sample_weight=class_weights(y[tr]))
@@ -232,8 +239,8 @@ def main(argv=None) -> int:
 
     cands = B.load_candidates(B.download())
     bench = B.sample(list(cands), 1000, 8, 42)  # the benchmark sample (same arguments as its defaults)
-    held_out = {p["gene"] for p in bench}
-    pool = [c for c in cands if c["gene"] not in held_out]
+    held_out = set().union(*(B.gene_keys(p) for p in bench))
+    pool = [c for c in cands if not (B.gene_keys(c) & held_out)]
     picked = B.sample(pool, len(pool), args.per_gene, args.seed)
     print(
         f"{len(pool)} candidates outside the {len(held_out)} benchmark genes; {len(picked)} with at most "
@@ -265,18 +272,19 @@ def main(argv=None) -> int:
     imp, sc, lr = model[0], model[1], model[2]
     rare = (df["grpmax"].fillna(0) < RARE).values
     params = {
-        "version": "2.3",
+        "version": "2.5",
         "trained": dt.date.today().isoformat(),
         "training": {
             "source": B.URL,
             "selection": "germline missense SNVs, GRCh38, >= 2 review stars, "
-            f"P/LP vs B/LB, at most {args.per_gene} per gene and class, benchmark genes excluded; every pathogenic "
+            f"P/LP vs B/LB, at most {args.per_gene} per gene and class, benchmark genes excluded (by the gene of the "
+            "ClinVar name and every ClinVar gene symbol); every pathogenic "
             "and every rare benign variant (gnomAD grpmax < 0.1%), common benign variants up to "
             "balance; classes weighted equally",
             "n": len(df),
             "pathogenic": int(y.sum()),
             "rare_benign": int(((y == 0) & rare).sum()),
-            "genes": int(df["gene"].nunique()),
+            "genes": int(df["gene_key"].nunique()),
             "seed": args.seed,
             "annotation": run.get("annotation"),
             "cut_off_rule": "rare variants, CV by gene: highest damaging cut-off >= 0.70 that keeps the "
@@ -285,7 +293,7 @@ def main(argv=None) -> int:
             "cv_by_gene": cv,
         },
         "features": FEATURES,
-        "median": [round(float(x), 6) for x in imp.statistics_],
+        "fill": [round(float(x), 6) for x in imp.statistics_],
         "mean": [round(float(x), 6) for x in sc.mean_],
         "scale": [round(float(x), 6) for x in sc.scale_],
         "coef": [round(float(x), 6) for x in lr.coef_[0]],

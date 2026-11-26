@@ -16,7 +16,7 @@ import httpx
 import pandas as pd
 import streamlit as st
 
-from missensexplorer import __version__, acmg
+from missensexplorer import __version__, acmg, vcep
 from missensexplorer.aa import AA_NAMES
 from missensexplorer.cache import Cache
 from missensexplorer.inputs import vcf_samples
@@ -99,8 +99,9 @@ with st.sidebar:
     somatic = st.toggle(
         "Somatic oncogenicity (tumours)",
         False,
-        help="ClinGen/CGC/VICC oncogenicity points from cancerhotspots.org hotspots, IntOGen driver-gene roles "
-        "and ClinVar oncogenicity classifications.",
+        help="ClinGen/CGC/VICC oncogenicity points from cancerhotspots.org hotspots, the gene's role (IntOGen, or "
+        "UniProt when IntOGen does not decide), ClinVar oncogenicity classifications, CIViC functional studies, "
+        "gnomAD and the calibrated computational evidence.",
     )
     workers = st.slider("Parallel requests", 1, 8, 4)
     if st.button("Clear cache", help="Cached API answers make repeated analyses instant (30 days)."):
@@ -393,7 +394,8 @@ def _results_table(view: pd.DataFrame) -> Any:
             "Prediction": view["status"].map(lambda k: STATUS[k][2]) + " " + view["prediction"].fillna(""),
             "Effect": view["effect_score"],
             "With frequency": view["score_with_frequency"],
-            "ACMG": view["acmg_codes"].fillna(""),
+            "ACMG": view["acmg_codes"].fillna("")
+            + view.get("acmg_notes", pd.Series("", index=view.index)).map(lambda x: " ⚠" if _val(x) else ""),
             "AlphaMissense": view["alphamissense"],
             "REVEL": view["revel"],
             "CADD": view["cadd_phred"],
@@ -475,8 +477,9 @@ def _why_and_acmg(r: pd.Series) -> None:
             ("PS1/PM5", "acmg_ps1_pm5"),
             ("PM2", "acmg_pm2"),
             ("Population frequency", "population_frequency"),
+            ("ClinGen expert panel specification", "vcep_specification"),
         )
-        if _val(r[c])
+        if c in r and _val(r[c])
     ]
     if acmg_bits:
         how = ACMG_THRESHOLDS[acmg.thresholds_used(_val(r["acmg_pp3_bp4"]))]
@@ -484,6 +487,8 @@ def _why_and_acmg(r: pd.Series) -> None:
             " · ".join(acmg_bits) + f"  \n:gray[{how}One part of an ACMG classification, not a replacement for "
             "expert review.]"
         )
+    if "acmg_notes" in r and _val(r["acmg_notes"]):
+        st.warning("\n".join(f"- {x}" for x in str(r["acmg_notes"]).split(vcep.SEP)), icon="⚠️")
     if _val(r.get("oncogenicity")):
         pts = r.get("oncogenicity_points")
         head = f"**Somatic oncogenicity (automatic):** {r['oncogenicity']}" + (

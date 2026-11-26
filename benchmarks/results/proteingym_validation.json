@@ -1,521 +1,3255 @@
 {
  "tools": {
-  "MissensExplorer v2.3": {
+  "MissensExplorer v2.5": {
    "labels": "ClinVar (other genes)",
    "proteins": 61,
-   "spearman": 0.4691,
+   "spearman": 0.4618,
    "ci": [
-    0.4302,
-    0.5069
+    0.4224,
+    0.5018
    ],
+   "ours_same_variants": 0.4618,
    "difference": 0.0,
    "difference_ci": [
     0.0,
     0.0
    ],
-   "auc": 0.7828
-  },
-  "popEVE": {
-   "labels": "none (population)",
-   "proteins": 58,
-   "spearman": 0.4601,
-   "ci": [
-    0.4199,
-    0.5003
-   ],
-   "difference": -0.009,
-   "difference_ci": [
-    -0.0289,
-    0.0078
-   ],
-   "auc": 0.7703
+   "auc": 0.78
   },
   "AlphaMissense": {
    "labels": "none (population)",
    "proteins": 59,
-   "spearman": 0.4578,
+   "spearman": 0.4528,
    "ci": [
-    0.4119,
-    0.4993
+    0.4081,
+    0.4948
    ],
-   "difference": -0.0122,
+   "ours_same_variants": 0.4657,
+   "difference": -0.0129,
    "difference_ci": [
-    -0.0251,
-    0.0001
+    -0.0247,
+    -0.0011
    ],
-   "auc": 0.7765
+   "auc": 0.7763
   },
-  "MetaRNN": {
-   "labels": "ClinVar",
-   "proteins": 60,
-   "spearman": 0.4377,
+  "popEVE": {
+   "labels": "none (population)",
+   "proteins": 58,
+   "spearman": 0.4525,
    "ci": [
-    0.3982,
-    0.4771
+    0.4108,
+    0.4944
    ],
-   "difference": -0.0348,
+   "ours_same_variants": 0.4611,
+   "difference": -0.0086,
    "difference_ci": [
-    -0.0522,
-    -0.0185
+    -0.0247,
+    0.0053
    ],
-   "auc": 0.7647
-  },
-  "VARITY_R": {
-   "labels": "ClinVar, HGMD",
-   "proteins": 57,
-   "spearman": 0.4307,
-   "ci": [
-    0.3859,
-    0.472
-   ],
-   "difference": -0.037,
-   "difference_ci": [
-    -0.0585,
-    -0.0182
-   ],
-   "auc": 0.7604
+   "auc": 0.7671
   },
   "gMVP": {
    "labels": "ClinVar, HGMD, UniProt",
    "proteins": 59,
-   "spearman": 0.4305,
+   "spearman": 0.431,
    "ci": [
-    0.3856,
-    0.4684
+    0.3871,
+    0.4691
    ],
-   "difference": -0.0394,
+   "ours_same_variants": 0.4655,
+   "difference": -0.0345,
    "difference_ci": [
-    -0.0595,
-    -0.0205
+    -0.0534,
+    -0.0167
    ],
-   "auc": 0.7615
+   "auc": 0.7633
   },
-  "REVEL": {
-   "labels": "HGMD",
-   "proteins": 61,
-   "spearman": 0.4246,
+  "MetaRNN": {
+   "labels": "ClinVar",
+   "proteins": 60,
+   "spearman": 0.4308,
    "ci": [
-    0.3868,
-    0.4633
+    0.3911,
+    0.4717
    ],
-   "difference": -0.0445,
+   "ours_same_variants": 0.4651,
+   "difference": -0.0343,
    "difference_ci": [
-    -0.0558,
-    -0.034
+    -0.0519,
+    -0.0176
    ],
-   "auc": 0.7588
+   "auc": 0.762
+  },
+  "VARITY_R": {
+   "labels": "ClinVar, HGMD",
+   "proteins": 57,
+   "spearman": 0.4302,
+   "ci": [
+    0.3838,
+    0.4713
+   ],
+   "ours_same_variants": 0.4629,
+   "difference": -0.0328,
+   "difference_ci": [
+    -0.0529,
+    -0.0147
+   ],
+   "auc": 0.7592
   },
   "VARITY_R (leave-one-out)": {
    "labels": "ClinVar, HGMD",
    "proteins": 57,
-   "spearman": 0.4245,
+   "spearman": 0.4246,
    "ci": [
     0.3795,
-    0.4652
+    0.4657
    ],
-   "difference": -0.0431,
+   "ours_same_variants": 0.4629,
+   "difference": -0.0383,
    "difference_ci": [
-    -0.0634,
-    -0.0239
+    -0.0584,
+    -0.0187
    ],
-   "auc": 0.7557
+   "auc": 0.756
+  },
+  "REVEL": {
+   "labels": "HGMD",
+   "proteins": 61,
+   "spearman": 0.4192,
+   "ci": [
+    0.3803,
+    0.4597
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.0425,
+   "difference_ci": [
+    -0.0529,
+    -0.0323
+   ],
+   "auc": 0.7546
   },
   "BayesDel (no AF)": {
    "labels": "ClinVar, UniProt",
    "proteins": 61,
-   "spearman": 0.4124,
+   "spearman": 0.4108,
    "ci": [
-    0.3742,
-    0.4496
+    0.3741,
+    0.4466
    ],
-   "difference": -0.0568,
+   "ours_same_variants": 0.4618,
+   "difference": -0.051,
    "difference_ci": [
-    -0.07,
-    -0.0437
+    -0.0634,
+    -0.0386
    ],
-   "auc": 0.7482
-  },
-  "EVE": {
-   "labels": "none",
-   "proteins": 30,
-   "spearman": 0.4117,
-   "ci": [
-    0.3523,
-    0.4687
-   ],
-   "difference": -0.0334,
-   "difference_ci": [
-    -0.0741,
-    0.0058
-   ],
-   "auc": 0.7465
+   "auc": 0.746
   },
   "BayesDel (with AF)": {
    "labels": "ClinVar, UniProt",
    "proteins": 61,
-   "spearman": 0.4115,
+   "spearman": 0.4105,
    "ci": [
-    0.3736,
-    0.4477
+    0.3737,
+    0.4452
    ],
-   "difference": -0.0576,
+   "ours_same_variants": 0.4618,
+   "difference": -0.0513,
    "difference_ci": [
-    -0.0713,
-    -0.0449
+    -0.0638,
+    -0.0392
    ],
-   "auc": 0.7484
+   "auc": 0.7464
   },
   "PHACTboost": {
    "labels": "ClinVar",
    "proteins": 59,
-   "spearman": 0.4112,
+   "spearman": 0.4105,
    "ci": [
-    0.3748,
-    0.4482
+    0.3722,
+    0.4487
    ],
-   "difference": -0.0542,
+   "ours_same_variants": 0.4604,
+   "difference": -0.0499,
    "difference_ci": [
-    -0.0761,
-    -0.0352
+    -0.0692,
+    -0.0331
    ],
-   "auc": 0.7438
+   "auc": 0.7428
   },
-  "MutationAssessor": {
+  "EVE": {
    "labels": "none",
-   "proteins": 57,
-   "spearman": 0.4102,
+   "proteins": 30,
+   "spearman": 0.4085,
    "ci": [
-    0.3611,
-    0.457
+    0.35,
+    0.4674
    ],
-   "difference": -0.0578,
+   "ours_same_variants": 0.4474,
+   "difference": -0.0389,
    "difference_ci": [
-    -0.0836,
-    -0.0328
+    -0.0724,
+    -0.0027
    ],
-   "auc": 0.7442
-  },
-  "DEOGEN2": {
-   "labels": "UniProt",
-   "proteins": 59,
-   "spearman": 0.41,
-   "ci": [
-    0.3661,
-    0.4522
-   ],
-   "difference": -0.0618,
-   "difference_ci": [
-    -0.0878,
-    -0.0364
-   ],
-   "auc": 0.7447
+   "auc": 0.747
   },
   "MutFormer": {
    "labels": "HGMD",
    "proteins": 61,
-   "spearman": 0.41,
+   "spearman": 0.4081,
    "ci": [
-    0.3649,
-    0.4508
+    0.3619,
+    0.4493
    ],
-   "difference": -0.0591,
+   "ours_same_variants": 0.4615,
+   "difference": -0.0535,
    "difference_ci": [
-    -0.0779,
-    -0.0411
-   ],
-   "auc": 0.7483
-  },
-  "ESM1b": {
-   "labels": "none",
-   "proteins": 61,
-   "spearman": 0.4084,
-   "ci": [
-    0.3679,
-    0.4491
-   ],
-   "difference": -0.0607,
-   "difference_ci": [
-    -0.0834,
-    -0.0388
+    -0.0712,
+    -0.0368
    ],
    "auc": 0.7446
   },
-  "MutPred2": {
-   "labels": "HGMD, SwissVar",
-   "proteins": 61,
-   "spearman": 0.4061,
+  "MutationAssessor": {
+   "labels": "none",
+   "proteins": 57,
+   "spearman": 0.4079,
    "ci": [
-    0.3684,
-    0.4413
+    0.3592,
+    0.4533
    ],
-   "difference": -0.063,
+   "ours_same_variants": 0.4616,
+   "difference": -0.0537,
    "difference_ci": [
-    -0.0776,
-    -0.0489
+    -0.0784,
+    -0.0329
    ],
-   "auc": 0.7471
+   "auc": 0.744
+  },
+  "DEOGEN2": {
+   "labels": "UniProt",
+   "proteins": 59,
+   "spearman": 0.4051,
+   "ci": [
+    0.3602,
+    0.4476
+   ],
+   "ours_same_variants": 0.4659,
+   "difference": -0.0608,
+   "difference_ci": [
+    -0.0859,
+    -0.0366
+   ],
+   "auc": 0.7444
   },
   "ClinPred": {
    "labels": "ClinVar",
    "proteins": 61,
-   "spearman": 0.4045,
+   "spearman": 0.4024,
    "ci": [
-    0.3675,
-    0.4419
+    0.3658,
+    0.4403
    ],
-   "difference": -0.0646,
+   "ours_same_variants": 0.4618,
+   "difference": -0.0593,
    "difference_ci": [
-    -0.0796,
-    -0.0477
+    -0.0728,
+    -0.0444
    ],
-   "auc": 0.7446
+   "auc": 0.7437
+  },
+  "MutPred2": {
+   "labels": "HGMD, SwissVar",
+   "proteins": 61,
+   "spearman": 0.4024,
+   "ci": [
+    0.3651,
+    0.4377
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.0593,
+   "difference_ci": [
+    -0.0728,
+    -0.0455
+   ],
+   "auc": 0.7473
+  },
+  "ESM1b": {
+   "labels": "none",
+   "proteins": 61,
+   "spearman": 0.3998,
+   "ci": [
+    0.3573,
+    0.4389
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.0619,
+   "difference_ci": [
+    -0.0816,
+    -0.042
+   ],
+   "auc": 0.7402
   },
   "Eigen": {
    "labels": "none",
    "proteins": 58,
-   "spearman": 0.3941,
+   "spearman": 0.3862,
    "ci": [
-    0.3557,
-    0.4321
+    0.3453,
+    0.4229
    ],
-   "difference": -0.0767,
+   "ours_same_variants": 0.4624,
+   "difference": -0.0762,
    "difference_ci": [
-    -0.097,
-    -0.0581
+    -0.0956,
+    -0.0576
    ],
-   "auc": 0.7366
+   "auc": 0.7344
   },
   "MetaLR": {
    "labels": "UniProt",
    "proteins": 61,
-   "spearman": 0.373,
+   "spearman": 0.369,
    "ci": [
-    0.33,
-    0.4136
+    0.3276,
+    0.4097
    ],
-   "difference": -0.0961,
+   "ours_same_variants": 0.4618,
+   "difference": -0.0927,
    "difference_ci": [
-    -0.1225,
-    -0.0688
+    -0.1176,
+    -0.0659
    ],
-   "auc": 0.7255
+   "auc": 0.7233
   },
   "SIFT4G": {
    "labels": "none",
    "proteins": 59,
-   "spearman": 0.3722,
+   "spearman": 0.3689,
    "ci": [
-    0.3418,
-    0.4039
+    0.337,
+    0.4027
    ],
-   "difference": -0.0973,
+   "ours_same_variants": 0.464,
+   "difference": -0.0951,
    "difference_ci": [
-    -0.12,
-    -0.0723
+    -0.1164,
+    -0.0719
    ],
-   "auc": 0.7193
+   "auc": 0.718
   },
   "PROVEAN": {
    "labels": "none",
-   "proteins": 59,
-   "spearman": 0.3667,
+   "proteins": 60,
+   "spearman": 0.359,
    "ci": [
-    0.33,
-    0.402
+    0.3217,
+    0.3968
    ],
-   "difference": -0.1028,
+   "ours_same_variants": 0.4654,
+   "difference": -0.1064,
    "difference_ci": [
-    -0.1304,
-    -0.0742
+    -0.1341,
+    -0.0796
    ],
-   "auc": 0.7145
+   "auc": 0.7139
   },
   "MPC": {
    "labels": "ClinVar (402 variants)",
    "proteins": 58,
-   "spearman": 0.3587,
+   "spearman": 0.3518,
    "ci": [
-    0.3171,
-    0.4001
+    0.3099,
+    0.3922
    ],
-   "difference": -0.1165,
+   "ours_same_variants": 0.468,
+   "difference": -0.1162,
    "difference_ci": [
-    -0.1447,
-    -0.0897
+    -0.1428,
+    -0.0912
    ],
-   "auc": 0.7187
-  },
-  "CADD": {
-   "labels": "none (simulated)",
-   "proteins": 61,
-   "spearman": 0.3435,
-   "ci": [
-    0.3042,
-    0.3822
-   ],
-   "difference": -0.1256,
-   "difference_ci": [
-    -0.1543,
-    -0.0996
-   ],
-   "auc": 0.702
-  },
-  "MetaSVM": {
-   "labels": "UniProt",
-   "proteins": 61,
-   "spearman": 0.3422,
-   "ci": [
-    0.2915,
-    0.3906
-   ],
-   "difference": -0.1269,
-   "difference_ci": [
-    -0.1683,
-    -0.0879
-   ],
-   "auc": 0.7125
+   "auc": 0.7153
   },
   "MVP": {
    "labels": "ClinVar, HGMD, UniProt",
    "proteins": 61,
-   "spearman": 0.342,
+   "spearman": 0.34,
    "ci": [
-    0.2996,
-    0.3829
+    0.2985,
+    0.3815
    ],
-   "difference": -0.1271,
+   "ours_same_variants": 0.4618,
+   "difference": -0.1218,
    "difference_ci": [
-    -0.155,
-    -0.0992
+    -0.1473,
+    -0.0962
    ],
-   "auc": 0.7081
+   "auc": 0.7032
+  },
+  "MetaSVM": {
+   "labels": "UniProt",
+   "proteins": 61,
+   "spearman": 0.3389,
+   "ci": [
+    0.2895,
+    0.3867
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.1229,
+   "difference_ci": [
+    -0.164,
+    -0.0837
+   ],
+   "auc": 0.7103
+  },
+  "CADD": {
+   "labels": "none (simulated)",
+   "proteins": 61,
+   "spearman": 0.3366,
+   "ci": [
+    0.2977,
+    0.3734
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.1251,
+   "difference_ci": [
+    -0.1516,
+    -0.0995
+   ],
+   "auc": 0.6999
   },
   "MutationTaster2021": {
    "labels": "ClinVar, HGMD (+ look-up)",
-   "proteins": 55,
-   "spearman": 0.3341,
+   "proteins": 58,
+   "spearman": 0.3263,
    "ci": [
-    0.2969,
-    0.3703
+    0.285,
+    0.3658
    ],
-   "difference": -0.1332,
+   "ours_same_variants": 0.4619,
+   "difference": -0.1356,
    "difference_ci": [
-    -0.1596,
-    -0.1063
+    -0.1612,
+    -0.1092
    ],
-   "auc": 0.6998
+   "auc": 0.6952
   },
   "PolyPhen-2": {
    "labels": "UniProt",
    "proteins": 50,
-   "spearman": 0.33,
+   "spearman": 0.3245,
    "ci": [
-    0.2857,
-    0.3766
+    0.2804,
+    0.3705
    ],
-   "difference": -0.1351,
+   "ours_same_variants": 0.4548,
+   "difference": -0.1303,
    "difference_ci": [
-    -0.1761,
-    -0.098
+    -0.1671,
+    -0.0967
    ],
-   "auc": 0.6863
+   "auc": 0.6853
   },
   "SIFT": {
    "labels": "none",
    "proteins": 60,
-   "spearman": 0.323,
+   "spearman": 0.3195,
    "ci": [
-    0.2837,
-    0.363
+    0.2801,
+    0.3604
    ],
-   "difference": -0.1449,
+   "ours_same_variants": 0.4608,
+   "difference": -0.1413,
    "difference_ci": [
-    -0.1772,
-    -0.1157
+    -0.1719,
+    -0.1123
    ],
-   "auc": 0.6715
+   "auc": 0.6718
   },
   "FATHMM-XF": {
    "labels": "HGMD",
    "proteins": 58,
-   "spearman": 0.2861,
+   "spearman": 0.2824,
    "ci": [
-    0.2458,
-    0.3283
+    0.246,
+    0.321
    ],
-   "difference": -0.1847,
+   "ours_same_variants": 0.4628,
+   "difference": -0.1804,
    "difference_ci": [
-    -0.2125,
-    -0.1557
+    -0.2083,
+    -0.1523
    ],
-   "auc": 0.6741
-  },
-  "LIST-S2": {
-   "labels": "few parameters",
-   "proteins": 60,
-   "spearman": 0.2457,
-   "ci": [
-    0.204,
-    0.2851
-   ],
-   "difference": -0.2229,
-   "difference_ci": [
-    -0.2557,
-    -0.1889
-   ],
-   "auc": 0.6416
-  },
-  "phyloP (100 vertebrates)": {
-   "labels": "none",
-   "proteins": 61,
-   "spearman": 0.2374,
-   "ci": [
-    0.1968,
-    0.2759
-   ],
-   "difference": -0.2317,
-   "difference_ci": [
-    -0.2616,
-    -0.202
-   ],
-   "auc": 0.6444
+   "auc": 0.6731
   },
   "PrimateAI": {
    "labels": "none (population)",
    "proteins": 61,
-   "spearman": 0.2327,
+   "spearman": 0.237,
    "ci": [
-    0.195,
-    0.2681
+    0.2012,
+    0.2755
    ],
-   "difference": -0.2364,
+   "ours_same_variants": 0.4621,
+   "difference": -0.225,
    "difference_ci": [
-    -0.2662,
-    -0.2064
+    -0.2536,
+    -0.1973
    ],
-   "auc": 0.638
+   "auc": 0.6421
+  },
+  "LIST-S2": {
+   "labels": "few parameters",
+   "proteins": 60,
+   "spearman": 0.2357,
+   "ci": [
+    0.1982,
+    0.2711
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.2261,
+   "difference_ci": [
+    -0.2558,
+    -0.1946
+   ],
+   "auc": 0.6364
+  },
+  "phyloP (100 vertebrates)": {
+   "labels": "none",
+   "proteins": 61,
+   "spearman": 0.2341,
+   "ci": [
+    0.1976,
+    0.2709
+   ],
+   "ours_same_variants": 0.4618,
+   "difference": -0.2276,
+   "difference_ci": [
+    -0.256,
+    -0.1989
+   ],
+   "auc": 0.6424
   },
   "DANN": {
    "labels": "none (simulated)",
    "proteins": 61,
-   "spearman": 0.1968,
+   "spearman": 0.1927,
    "ci": [
-    0.1588,
-    0.2345
+    0.1565,
+    0.2302
    ],
-   "difference": -0.2724,
+   "ours_same_variants": 0.4618,
+   "difference": -0.2691,
    "difference_ci": [
-    -0.3105,
-    -0.2329
+    -0.3017,
+    -0.2337
    ],
-   "auc": 0.6095
+   "auc": 0.6101
+  }
+ },
+ "by_type": {
+  "Activity": {
+   "AlphaMissense": {
+    "labels": "none (population)",
+    "proteins": 14,
+    "spearman": 0.5315,
+    "ci": [
+     0.4821,
+     0.5859
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": 0.0088,
+    "difference_ci": [
+     -0.0101,
+     0.031
+    ],
+    "auc": 0.8183
+   },
+   "MissensExplorer v2.5": {
+    "labels": "ClinVar (other genes)",
+    "proteins": 14,
+    "spearman": 0.5228,
+    "ci": [
+     0.4673,
+     0.5799
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": 0.0,
+    "difference_ci": [
+     0.0,
+     0.0
+    ],
+    "auc": 0.8133
+   },
+   "popEVE": {
+    "labels": "none (population)",
+    "proteins": 14,
+    "spearman": 0.5124,
+    "ci": [
+     0.4635,
+     0.5664
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0104,
+    "difference_ci": [
+     -0.031,
+     0.0058
+    ],
+    "auc": 0.8035
+   },
+   "VARITY_R": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 14,
+    "spearman": 0.4908,
+    "ci": [
+     0.4369,
+     0.5481
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.032,
+    "difference_ci": [
+     -0.0435,
+     -0.0205
+    ],
+    "auc": 0.7878
+   },
+   "VARITY_R (leave-one-out)": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 14,
+    "spearman": 0.4904,
+    "ci": [
+     0.435,
+     0.5457
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0324,
+    "difference_ci": [
+     -0.0436,
+     -0.0214
+    ],
+    "auc": 0.7876
+   },
+   "MutFormer": {
+    "labels": "HGMD",
+    "proteins": 14,
+    "spearman": 0.481,
+    "ci": [
+     0.4309,
+     0.533
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0418,
+    "difference_ci": [
+     -0.0557,
+     -0.0271
+    ],
+    "auc": 0.7835
+   },
+   "ESM1b": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.4739,
+    "ci": [
+     0.412,
+     0.5405
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0488,
+    "difference_ci": [
+     -0.0679,
+     -0.0293
+    ],
+    "auc": 0.7748
+   },
+   "EVE": {
+    "labels": "none",
+    "proteins": 11,
+    "spearman": 0.4737,
+    "ci": [
+     0.4093,
+     0.5375
+    ],
+    "ours_same_variants": 0.5252,
+    "difference": -0.0516,
+    "difference_ci": [
+     -0.0961,
+     -0.0133
+    ],
+    "auc": 0.7827
+   },
+   "MetaRNN": {
+    "labels": "ClinVar",
+    "proteins": 14,
+    "spearman": 0.4702,
+    "ci": [
+     0.4021,
+     0.5354
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0526,
+    "difference_ci": [
+     -0.0824,
+     -0.0287
+    ],
+    "auc": 0.7792
+   },
+   "PHACTboost": {
+    "labels": "ClinVar",
+    "proteins": 14,
+    "spearman": 0.4651,
+    "ci": [
+     0.3994,
+     0.5313
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0577,
+    "difference_ci": [
+     -0.0912,
+     -0.0282
+    ],
+    "auc": 0.7695
+   },
+   "gMVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 14,
+    "spearman": 0.4644,
+    "ci": [
+     0.4165,
+     0.5115
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0583,
+    "difference_ci": [
+     -0.0851,
+     -0.0304
+    ],
+    "auc": 0.7769
+   },
+   "REVEL": {
+    "labels": "HGMD",
+    "proteins": 14,
+    "spearman": 0.4641,
+    "ci": [
+     0.4129,
+     0.5197
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0586,
+    "difference_ci": [
+     -0.0762,
+     -0.0412
+    ],
+    "auc": 0.7799
+   },
+   "MutationAssessor": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.461,
+    "ci": [
+     0.4123,
+     0.5191
+    ],
+    "ours_same_variants": 0.522,
+    "difference": -0.061,
+    "difference_ci": [
+     -0.0849,
+     -0.034
+    ],
+    "auc": 0.7734
+   },
+   "DEOGEN2": {
+    "labels": "UniProt",
+    "proteins": 14,
+    "spearman": 0.4571,
+    "ci": [
+     0.4009,
+     0.5221
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0657,
+    "difference_ci": [
+     -0.0972,
+     -0.0364
+    ],
+    "auc": 0.7748
+   },
+   "ClinPred": {
+    "labels": "ClinVar",
+    "proteins": 14,
+    "spearman": 0.4553,
+    "ci": [
+     0.3957,
+     0.5201
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0674,
+    "difference_ci": [
+     -0.0946,
+     -0.0426
+    ],
+    "auc": 0.7739
+   },
+   "MutPred2": {
+    "labels": "HGMD, SwissVar",
+    "proteins": 14,
+    "spearman": 0.4496,
+    "ci": [
+     0.3966,
+     0.5033
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0732,
+    "difference_ci": [
+     -0.0999,
+     -0.0491
+    ],
+    "auc": 0.7698
+   },
+   "BayesDel (with AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 14,
+    "spearman": 0.4455,
+    "ci": [
+     0.3979,
+     0.4966
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0772,
+    "difference_ci": [
+     -0.096,
+     -0.0585
+    ],
+    "auc": 0.7657
+   },
+   "BayesDel (no AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 14,
+    "spearman": 0.4432,
+    "ci": [
+     0.3929,
+     0.4938
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0796,
+    "difference_ci": [
+     -0.0976,
+     -0.0587
+    ],
+    "auc": 0.766
+   },
+   "Eigen": {
+    "labels": "none",
+    "proteins": 13,
+    "spearman": 0.4365,
+    "ci": [
+     0.3761,
+     0.5055
+    ],
+    "ours_same_variants": 0.5142,
+    "difference": -0.0776,
+    "difference_ci": [
+     -0.1018,
+     -0.054
+    ],
+    "auc": 0.7663
+   },
+   "CADD": {
+    "labels": "none (simulated)",
+    "proteins": 14,
+    "spearman": 0.4287,
+    "ci": [
+     0.3682,
+     0.496
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.0941,
+    "difference_ci": [
+     -0.1155,
+     -0.0732
+    ],
+    "auc": 0.7481
+   },
+   "MPC": {
+    "labels": "ClinVar (402 variants)",
+    "proteins": 13,
+    "spearman": 0.417,
+    "ci": [
+     0.3604,
+     0.4735
+    ],
+    "ours_same_variants": 0.5323,
+    "difference": -0.1153,
+    "difference_ci": [
+     -0.1522,
+     -0.0852
+    ],
+    "auc": 0.7485
+   },
+   "PROVEAN": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.4129,
+    "ci": [
+     0.3517,
+     0.4849
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.1098,
+    "difference_ci": [
+     -0.1389,
+     -0.0809
+    ],
+    "auc": 0.7405
+   },
+   "SIFT4G": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.4055,
+    "ci": [
+     0.3456,
+     0.4749
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.1172,
+    "difference_ci": [
+     -0.1504,
+     -0.0857
+    ],
+    "auc": 0.7316
+   },
+   "PolyPhen-2": {
+    "labels": "UniProt",
+    "proteins": 12,
+    "spearman": 0.398,
+    "ci": [
+     0.3149,
+     0.4835
+    ],
+    "ours_same_variants": 0.5371,
+    "difference": -0.1391,
+    "difference_ci": [
+     -0.1882,
+     -0.0885
+    ],
+    "auc": 0.7199
+   },
+   "MVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 14,
+    "spearman": 0.3886,
+    "ci": [
+     0.3317,
+     0.4512
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.1342,
+    "difference_ci": [
+     -0.1754,
+     -0.0932
+    ],
+    "auc": 0.7259
+   },
+   "MetaLR": {
+    "labels": "UniProt",
+    "proteins": 14,
+    "spearman": 0.3864,
+    "ci": [
+     0.3171,
+     0.4646
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.1364,
+    "difference_ci": [
+     -0.1881,
+     -0.0875
+    ],
+    "auc": 0.7257
+   },
+   "MutationTaster2021": {
+    "labels": "ClinVar, HGMD (+ look-up)",
+    "proteins": 14,
+    "spearman": 0.3568,
+    "ci": [
+     0.2937,
+     0.4159
+    ],
+    "ours_same_variants": 0.5145,
+    "difference": -0.1577,
+    "difference_ci": [
+     -0.1854,
+     -0.1308
+    ],
+    "auc": 0.7206
+   },
+   "SIFT": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.3564,
+    "ci": [
+     0.2694,
+     0.4428
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.1664,
+    "difference_ci": [
+     -0.2325,
+     -0.1161
+    ],
+    "auc": 0.6838
+   },
+   "MetaSVM": {
+    "labels": "UniProt",
+    "proteins": 14,
+    "spearman": 0.3483,
+    "ci": [
+     0.2519,
+     0.4437
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.1745,
+    "difference_ci": [
+     -0.246,
+     -0.1119
+    ],
+    "auc": 0.7126
+   },
+   "FATHMM-XF": {
+    "labels": "HGMD",
+    "proteins": 13,
+    "spearman": 0.328,
+    "ci": [
+     0.2551,
+     0.4037
+    ],
+    "ours_same_variants": 0.5142,
+    "difference": -0.1862,
+    "difference_ci": [
+     -0.2266,
+     -0.1475
+    ],
+    "auc": 0.6937
+   },
+   "PrimateAI": {
+    "labels": "none (population)",
+    "proteins": 14,
+    "spearman": 0.3135,
+    "ci": [
+     0.2647,
+     0.3609
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.2093,
+    "difference_ci": [
+     -0.264,
+     -0.1561
+    ],
+    "auc": 0.6807
+   },
+   "LIST-S2": {
+    "labels": "few parameters",
+    "proteins": 14,
+    "spearman": 0.309,
+    "ci": [
+     0.249,
+     0.3724
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.2138,
+    "difference_ci": [
+     -0.2643,
+     -0.1717
+    ],
+    "auc": 0.6851
+   },
+   "phyloP (100 vertebrates)": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.2827,
+    "ci": [
+     0.2016,
+     0.3576
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.2401,
+    "difference_ci": [
+     -0.2894,
+     -0.1948
+    ],
+    "auc": 0.6625
+   },
+   "DANN": {
+    "labels": "none (simulated)",
+    "proteins": 14,
+    "spearman": 0.2561,
+    "ci": [
+     0.1866,
+     0.3294
+    ],
+    "ours_same_variants": 0.5228,
+    "difference": -0.2667,
+    "difference_ci": [
+     -0.3098,
+     -0.225
+    ],
+    "auc": 0.6434
+   }
+  },
+  "Binding": {
+   "DEOGEN2": {
+    "labels": "UniProt",
+    "proteins": 6,
+    "spearman": 0.4579,
+    "ci": [
+     0.3175,
+     0.6051
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": 0.0022,
+    "difference_ci": [
+     -0.0401,
+     0.0478
+    ],
+    "auc": 0.7598
+   },
+   "MissensExplorer v2.5": {
+    "labels": "ClinVar (other genes)",
+    "proteins": 6,
+    "spearman": 0.4551,
+    "ci": [
+     0.3104,
+     0.5962
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": 0.0,
+    "difference_ci": [
+     0.0,
+     0.0
+    ],
+    "auc": 0.7599
+   },
+   "popEVE": {
+    "labels": "none (population)",
+    "proteins": 6,
+    "spearman": 0.4433,
+    "ci": [
+     0.2816,
+     0.5878
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0118,
+    "difference_ci": [
+     -0.0282,
+     0.0076
+    ],
+    "auc": 0.7324
+   },
+   "VARITY_R": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 6,
+    "spearman": 0.4383,
+    "ci": [
+     0.3064,
+     0.5742
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.0174,
+    "difference_ci": [
+     -0.0716,
+     0.0266
+    ],
+    "auc": 0.7526
+   },
+   "VARITY_R (leave-one-out)": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 6,
+    "spearman": 0.4379,
+    "ci": [
+     0.3053,
+     0.5747
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.0178,
+    "difference_ci": [
+     -0.0742,
+     0.0277
+    ],
+    "auc": 0.7523
+   },
+   "AlphaMissense": {
+    "labels": "none (population)",
+    "proteins": 6,
+    "spearman": 0.4356,
+    "ci": [
+     0.2998,
+     0.5654
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.0201,
+    "difference_ci": [
+     -0.062,
+     0.0082
+    ],
+    "auc": 0.7504
+   },
+   "MutationAssessor": {
+    "labels": "none",
+    "proteins": 5,
+    "spearman": 0.4317,
+    "ci": [
+     0.2578,
+     0.6048
+    ],
+    "ours_same_variants": 0.4394,
+    "difference": -0.0077,
+    "difference_ci": [
+     -0.0277,
+     0.0098
+    ],
+    "auc": 0.7453
+   },
+   "BayesDel (no AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 6,
+    "spearman": 0.4316,
+    "ci": [
+     0.3135,
+     0.5452
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0235,
+    "difference_ci": [
+     -0.0584,
+     0.0149
+    ],
+    "auc": 0.7331
+   },
+   "gMVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 6,
+    "spearman": 0.4255,
+    "ci": [
+     0.2922,
+     0.5587
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.0302,
+    "difference_ci": [
+     -0.0914,
+     0.0218
+    ],
+    "auc": 0.7546
+   },
+   "ClinPred": {
+    "labels": "ClinVar",
+    "proteins": 6,
+    "spearman": 0.4195,
+    "ci": [
+     0.2899,
+     0.547
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0356,
+    "difference_ci": [
+     -0.0673,
+     -0.0112
+    ],
+    "auc": 0.7527
+   },
+   "REVEL": {
+    "labels": "HGMD",
+    "proteins": 6,
+    "spearman": 0.4186,
+    "ci": [
+     0.2892,
+     0.5461
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0365,
+    "difference_ci": [
+     -0.0775,
+     -0.0021
+    ],
+    "auc": 0.7416
+   },
+   "BayesDel (with AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 6,
+    "spearman": 0.4155,
+    "ci": [
+     0.2999,
+     0.5285
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0396,
+    "difference_ci": [
+     -0.0825,
+     0.0077
+    ],
+    "auc": 0.7246
+   },
+   "MutPred2": {
+    "labels": "HGMD, SwissVar",
+    "proteins": 6,
+    "spearman": 0.4126,
+    "ci": [
+     0.3107,
+     0.5178
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0425,
+    "difference_ci": [
+     -0.116,
+     0.0211
+    ],
+    "auc": 0.7412
+   },
+   "PROVEAN": {
+    "labels": "none",
+    "proteins": 6,
+    "spearman": 0.4068,
+    "ci": [
+     0.2903,
+     0.5203
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0483,
+    "difference_ci": [
+     -0.0813,
+     -0.0198
+    ],
+    "auc": 0.7379
+   },
+   "MetaSVM": {
+    "labels": "UniProt",
+    "proteins": 6,
+    "spearman": 0.3991,
+    "ci": [
+     0.242,
+     0.5501
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.056,
+    "difference_ci": [
+     -0.1342,
+     0.0176
+    ],
+    "auc": 0.7318
+   },
+   "MutFormer": {
+    "labels": "HGMD",
+    "proteins": 6,
+    "spearman": 0.3967,
+    "ci": [
+     0.2945,
+     0.5118
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0584,
+    "difference_ci": [
+     -0.1203,
+     0.0024
+    ],
+    "auc": 0.7338
+   },
+   "MetaRNN": {
+    "labels": "ClinVar",
+    "proteins": 6,
+    "spearman": 0.3878,
+    "ci": [
+     0.2388,
+     0.5511
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.0673,
+    "difference_ci": [
+     -0.1937,
+     0.0193
+    ],
+    "auc": 0.7277
+   },
+   "Eigen": {
+    "labels": "none",
+    "proteins": 5,
+    "spearman": 0.3774,
+    "ci": [
+     0.225,
+     0.5343
+    ],
+    "ours_same_variants": 0.5005,
+    "difference": -0.1231,
+    "difference_ci": [
+     -0.2579,
+     -0.0377
+    ],
+    "auc": 0.7382
+   },
+   "PHACTboost": {
+    "labels": "ClinVar",
+    "proteins": 6,
+    "spearman": 0.377,
+    "ci": [
+     0.2773,
+     0.4774
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.0787,
+    "difference_ci": [
+     -0.1399,
+     -0.0163
+    ],
+    "auc": 0.71
+   },
+   "MPC": {
+    "labels": "ClinVar (402 variants)",
+    "proteins": 6,
+    "spearman": 0.3629,
+    "ci": [
+     0.2386,
+     0.4989
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.0927,
+    "difference_ci": [
+     -0.1706,
+     -0.005
+    ],
+    "auc": 0.7156
+   },
+   "SIFT4G": {
+    "labels": "none",
+    "proteins": 6,
+    "spearman": 0.3459,
+    "ci": [
+     0.2202,
+     0.4747
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1091,
+    "difference_ci": [
+     -0.1944,
+     -0.0513
+    ],
+    "auc": 0.6975
+   },
+   "MetaLR": {
+    "labels": "UniProt",
+    "proteins": 6,
+    "spearman": 0.341,
+    "ci": [
+     0.2073,
+     0.5148
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1141,
+    "difference_ci": [
+     -0.2412,
+     0.0156
+    ],
+    "auc": 0.6977
+   },
+   "SIFT": {
+    "labels": "none",
+    "proteins": 6,
+    "spearman": 0.3389,
+    "ci": [
+     0.2467,
+     0.4544
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1162,
+    "difference_ci": [
+     -0.2061,
+     -0.0313
+    ],
+    "auc": 0.6579
+   },
+   "ESM1b": {
+    "labels": "none",
+    "proteins": 6,
+    "spearman": 0.3287,
+    "ci": [
+     0.1743,
+     0.4917
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1264,
+    "difference_ci": [
+     -0.2419,
+     -0.0388
+    ],
+    "auc": 0.6851
+   },
+   "CADD": {
+    "labels": "none (simulated)",
+    "proteins": 6,
+    "spearman": 0.3183,
+    "ci": [
+     0.2134,
+     0.4356
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1368,
+    "difference_ci": [
+     -0.2318,
+     -0.0484
+    ],
+    "auc": 0.6763
+   },
+   "PolyPhen-2": {
+    "labels": "UniProt",
+    "proteins": 5,
+    "spearman": 0.3162,
+    "ci": [
+     0.1385,
+     0.5072
+    ],
+    "ours_same_variants": 0.4504,
+    "difference": -0.1342,
+    "difference_ci": [
+     -0.3489,
+     -0.0052
+    ],
+    "auc": 0.667
+   },
+   "MVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 6,
+    "spearman": 0.3093,
+    "ci": [
+     0.1802,
+     0.4591
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1458,
+    "difference_ci": [
+     -0.2482,
+     -0.057
+    ],
+    "auc": 0.6735
+   },
+   "MutationTaster2021": {
+    "labels": "ClinVar, HGMD (+ look-up)",
+    "proteins": 6,
+    "spearman": 0.2931,
+    "ci": [
+     0.173,
+     0.4092
+    ],
+    "ours_same_variants": 0.46,
+    "difference": -0.1669,
+    "difference_ci": [
+     -0.2505,
+     -0.0798
+    ],
+    "auc": 0.6687
+   },
+   "FATHMM-XF": {
+    "labels": "HGMD",
+    "proteins": 5,
+    "spearman": 0.293,
+    "ci": [
+     0.185,
+     0.4169
+    ],
+    "ours_same_variants": 0.5005,
+    "difference": -0.2076,
+    "difference_ci": [
+     -0.319,
+     -0.0965
+    ],
+    "auc": 0.6768
+   },
+   "phyloP (100 vertebrates)": {
+    "labels": "none",
+    "proteins": 6,
+    "spearman": 0.2738,
+    "ci": [
+     0.22,
+     0.348
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1813,
+    "difference_ci": [
+     -0.2822,
+     -0.0804
+    ],
+    "auc": 0.6521
+   },
+   "LIST-S2": {
+    "labels": "few parameters",
+    "proteins": 6,
+    "spearman": 0.2656,
+    "ci": [
+     0.133,
+     0.3953
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.1895,
+    "difference_ci": [
+     -0.2858,
+     -0.1038
+    ],
+    "auc": 0.6328
+   },
+   "PrimateAI": {
+    "labels": "none (population)",
+    "proteins": 6,
+    "spearman": 0.1863,
+    "ci": [
+     0.1108,
+     0.286
+    ],
+    "ours_same_variants": 0.4557,
+    "difference": -0.2694,
+    "difference_ci": [
+     -0.3737,
+     -0.1558
+    ],
+    "auc": 0.5944
+   },
+   "DANN": {
+    "labels": "none (simulated)",
+    "proteins": 6,
+    "spearman": 0.164,
+    "ci": [
+     0.026,
+     0.3212
+    ],
+    "ours_same_variants": 0.4551,
+    "difference": -0.2911,
+    "difference_ci": [
+     -0.4774,
+     -0.1244
+    ],
+    "auc": 0.5943
+   }
+  },
+  "Expression": {
+   "popEVE": {
+    "labels": "none (population)",
+    "proteins": 12,
+    "spearman": 0.4746,
+    "ci": [
+     0.3613,
+     0.5767
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": 0.0077,
+    "difference_ci": [
+     -0.0147,
+     0.0289
+    ],
+    "auc": 0.7734
+   },
+   "MissensExplorer v2.5": {
+    "labels": "ClinVar (other genes)",
+    "proteins": 12,
+    "spearman": 0.4669,
+    "ci": [
+     0.3523,
+     0.5724
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": 0.0,
+    "difference_ci": [
+     0.0,
+     0.0
+    ],
+    "auc": 0.7716
+   },
+   "AlphaMissense": {
+    "labels": "none (population)",
+    "proteins": 12,
+    "spearman": 0.4593,
+    "ci": [
+     0.3346,
+     0.5713
+    ],
+    "ours_same_variants": 0.471,
+    "difference": -0.0117,
+    "difference_ci": [
+     -0.0358,
+     0.0087
+    ],
+    "auc": 0.7722
+   },
+   "MetaRNN": {
+    "labels": "ClinVar",
+    "proteins": 11,
+    "spearman": 0.4574,
+    "ci": [
+     0.3432,
+     0.556
+    ],
+    "ours_same_variants": 0.4857,
+    "difference": -0.0283,
+    "difference_ci": [
+     -0.0538,
+     -0.0006
+    ],
+    "auc": 0.7713
+   },
+   "VARITY_R": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 11,
+    "spearman": 0.442,
+    "ci": [
+     0.2888,
+     0.564
+    ],
+    "ours_same_variants": 0.4902,
+    "difference": -0.0482,
+    "difference_ci": [
+     -0.1156,
+     -0.001
+    ],
+    "auc": 0.7664
+   },
+   "ESM1b": {
+    "labels": "none",
+    "proteins": 12,
+    "spearman": 0.4375,
+    "ci": [
+     0.3259,
+     0.5284
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.0294,
+    "difference_ci": [
+     -0.0643,
+     0.0103
+    ],
+    "auc": 0.7515
+   },
+   "PHACTboost": {
+    "labels": "ClinVar",
+    "proteins": 12,
+    "spearman": 0.4371,
+    "ci": [
+     0.3212,
+     0.5414
+    ],
+    "ours_same_variants": 0.471,
+    "difference": -0.0339,
+    "difference_ci": [
+     -0.0578,
+     -0.0096
+    ],
+    "auc": 0.7558
+   },
+   "VARITY_R (leave-one-out)": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 11,
+    "spearman": 0.4268,
+    "ci": [
+     0.2803,
+     0.5502
+    ],
+    "ours_same_variants": 0.4902,
+    "difference": -0.0634,
+    "difference_ci": [
+     -0.1337,
+     -0.0091
+    ],
+    "auc": 0.7595
+   },
+   "DEOGEN2": {
+    "labels": "UniProt",
+    "proteins": 12,
+    "spearman": 0.4255,
+    "ci": [
+     0.3169,
+     0.5255
+    ],
+    "ours_same_variants": 0.471,
+    "difference": -0.0455,
+    "difference_ci": [
+     -0.0917,
+     -0.0024
+    ],
+    "auc": 0.7473
+   },
+   "BayesDel (with AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 12,
+    "spearman": 0.4198,
+    "ci": [
+     0.3319,
+     0.5035
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.0471,
+    "difference_ci": [
+     -0.0752,
+     -0.0069
+    ],
+    "auc": 0.7476
+   },
+   "BayesDel (no AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 12,
+    "spearman": 0.4178,
+    "ci": [
+     0.3231,
+     0.5052
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.0491,
+    "difference_ci": [
+     -0.0761,
+     -0.0119
+    ],
+    "auc": 0.7461
+   },
+   "EVE": {
+    "labels": "none",
+    "proteins": 6,
+    "spearman": 0.416,
+    "ci": [
+     0.2831,
+     0.5336
+    ],
+    "ours_same_variants": 0.408,
+    "difference": 0.008,
+    "difference_ci": [
+     -0.049,
+     0.0622
+    ],
+    "auc": 0.7565
+   },
+   "REVEL": {
+    "labels": "HGMD",
+    "proteins": 12,
+    "spearman": 0.4128,
+    "ci": [
+     0.3137,
+     0.5087
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.0541,
+    "difference_ci": [
+     -0.0709,
+     -0.0339
+    ],
+    "auc": 0.7437
+   },
+   "MutPred2": {
+    "labels": "HGMD, SwissVar",
+    "proteins": 12,
+    "spearman": 0.408,
+    "ci": [
+     0.2984,
+     0.5142
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.0588,
+    "difference_ci": [
+     -0.0779,
+     -0.0377
+    ],
+    "auc": 0.743
+   },
+   "PROVEAN": {
+    "labels": "none",
+    "proteins": 11,
+    "spearman": 0.4076,
+    "ci": [
+     0.2962,
+     0.5056
+    ],
+    "ours_same_variants": 0.4857,
+    "difference": -0.0781,
+    "difference_ci": [
+     -0.115,
+     -0.0411
+    ],
+    "auc": 0.7353
+   },
+   "MutFormer": {
+    "labels": "HGMD",
+    "proteins": 12,
+    "spearman": 0.4055,
+    "ci": [
+     0.2788,
+     0.5183
+    ],
+    "ours_same_variants": 0.4664,
+    "difference": -0.0609,
+    "difference_ci": [
+     -0.097,
+     -0.0267
+    ],
+    "auc": 0.7412
+   },
+   "gMVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 12,
+    "spearman": 0.3911,
+    "ci": [
+     0.2504,
+     0.5024
+    ],
+    "ours_same_variants": 0.4702,
+    "difference": -0.0792,
+    "difference_ci": [
+     -0.1401,
+     -0.0322
+    ],
+    "auc": 0.7424
+   },
+   "ClinPred": {
+    "labels": "ClinVar",
+    "proteins": 12,
+    "spearman": 0.3825,
+    "ci": [
+     0.2685,
+     0.4893
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.0843,
+    "difference_ci": [
+     -0.1081,
+     -0.0609
+    ],
+    "auc": 0.7222
+   },
+   "SIFT4G": {
+    "labels": "none",
+    "proteins": 11,
+    "spearman": 0.3774,
+    "ci": [
+     0.2864,
+     0.465
+    ],
+    "ours_same_variants": 0.4857,
+    "difference": -0.1084,
+    "difference_ci": [
+     -0.1468,
+     -0.0675
+    ],
+    "auc": 0.7245
+   },
+   "MutationAssessor": {
+    "labels": "none",
+    "proteins": 11,
+    "spearman": 0.377,
+    "ci": [
+     0.2571,
+     0.486
+    ],
+    "ours_same_variants": 0.4554,
+    "difference": -0.0784,
+    "difference_ci": [
+     -0.1408,
+     -0.0227
+    ],
+    "auc": 0.7247
+   },
+   "SIFT": {
+    "labels": "none",
+    "proteins": 12,
+    "spearman": 0.3599,
+    "ci": [
+     0.2541,
+     0.4659
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.107,
+    "difference_ci": [
+     -0.1306,
+     -0.085
+    ],
+    "auc": 0.6906
+   },
+   "CADD": {
+    "labels": "none (simulated)",
+    "proteins": 12,
+    "spearman": 0.3537,
+    "ci": [
+     0.2456,
+     0.4543
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.1132,
+    "difference_ci": [
+     -0.1635,
+     -0.0694
+    ],
+    "auc": 0.7028
+   },
+   "MetaLR": {
+    "labels": "UniProt",
+    "proteins": 12,
+    "spearman": 0.3536,
+    "ci": [
+     0.2678,
+     0.4345
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.1133,
+    "difference_ci": [
+     -0.1573,
+     -0.0611
+    ],
+    "auc": 0.705
+   },
+   "PolyPhen-2": {
+    "labels": "UniProt",
+    "proteins": 11,
+    "spearman": 0.3521,
+    "ci": [
+     0.2434,
+     0.4523
+    ],
+    "ours_same_variants": 0.5037,
+    "difference": -0.1517,
+    "difference_ci": [
+     -0.1764,
+     -0.1268
+    ],
+    "auc": 0.6909
+   },
+   "Eigen": {
+    "labels": "none",
+    "proteins": 12,
+    "spearman": 0.3498,
+    "ci": [
+     0.2413,
+     0.4577
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.1171,
+    "difference_ci": [
+     -0.1579,
+     -0.0749
+    ],
+    "auc": 0.703
+   },
+   "MPC": {
+    "labels": "ClinVar (402 variants)",
+    "proteins": 12,
+    "spearman": 0.3463,
+    "ci": [
+     0.2147,
+     0.4581
+    ],
+    "ours_same_variants": 0.4702,
+    "difference": -0.1239,
+    "difference_ci": [
+     -0.1687,
+     -0.079
+    ],
+    "auc": 0.7038
+   },
+   "MutationTaster2021": {
+    "labels": "ClinVar, HGMD (+ look-up)",
+    "proteins": 11,
+    "spearman": 0.3293,
+    "ci": [
+     0.2333,
+     0.4109
+    ],
+    "ours_same_variants": 0.4812,
+    "difference": -0.1519,
+    "difference_ci": [
+     -0.2192,
+     -0.0908
+    ],
+    "auc": 0.6882
+   },
+   "FATHMM-XF": {
+    "labels": "HGMD",
+    "proteins": 12,
+    "spearman": 0.3212,
+    "ci": [
+     0.2242,
+     0.4142
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.1458,
+    "difference_ci": [
+     -0.1987,
+     -0.096
+    ],
+    "auc": 0.6866
+   },
+   "MetaSVM": {
+    "labels": "UniProt",
+    "proteins": 12,
+    "spearman": 0.3209,
+    "ci": [
+     0.2109,
+     0.4209
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.1459,
+    "difference_ci": [
+     -0.2297,
+     -0.0712
+    ],
+    "auc": 0.6944
+   },
+   "MVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 12,
+    "spearman": 0.3159,
+    "ci": [
+     0.2263,
+     0.3952
+    ],
+    "ours_same_variants": 0.467,
+    "difference": -0.1511,
+    "difference_ci": [
+     -0.2072,
+     -0.0855
+    ],
+    "auc": 0.6794
+   },
+   "phyloP (100 vertebrates)": {
+    "labels": "none",
+    "proteins": 12,
+    "spearman": 0.2398,
+    "ci": [
+     0.1325,
+     0.345
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.2271,
+    "difference_ci": [
+     -0.2821,
+     -0.1765
+    ],
+    "auc": 0.6435
+   },
+   "LIST-S2": {
+    "labels": "few parameters",
+    "proteins": 12,
+    "spearman": 0.2381,
+    "ci": [
+     0.1265,
+     0.3437
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.2288,
+    "difference_ci": [
+     -0.2977,
+     -0.1614
+    ],
+    "auc": 0.6303
+   },
+   "PrimateAI": {
+    "labels": "none (population)",
+    "proteins": 12,
+    "spearman": 0.2308,
+    "ci": [
+     0.1283,
+     0.3258
+    ],
+    "ours_same_variants": 0.4702,
+    "difference": -0.2394,
+    "difference_ci": [
+     -0.2827,
+     -0.195
+    ],
+    "auc": 0.6331
+   },
+   "DANN": {
+    "labels": "none (simulated)",
+    "proteins": 12,
+    "spearman": 0.2016,
+    "ci": [
+     0.0898,
+     0.3146
+    ],
+    "ours_same_variants": 0.4669,
+    "difference": -0.2653,
+    "difference_ci": [
+     -0.3481,
+     -0.198
+    ],
+    "auc": 0.6084
+   }
+  },
+  "OrganismalFitness": {
+   "MissensExplorer v2.5": {
+    "labels": "ClinVar (other genes)",
+    "proteins": 22,
+    "spearman": 0.4161,
+    "ci": [
+     0.3322,
+     0.4827
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": 0.0,
+    "difference_ci": [
+     0.0,
+     0.0
+    ],
+    "auc": 0.7535
+   },
+   "AlphaMissense": {
+    "labels": "none (population)",
+    "proteins": 21,
+    "spearman": 0.4129,
+    "ci": [
+     0.3254,
+     0.4859
+    ],
+    "ours_same_variants": 0.4269,
+    "difference": -0.014,
+    "difference_ci": [
+     -0.0347,
+     0.0067
+    ],
+    "auc": 0.754
+   },
+   "VARITY_R": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 21,
+    "spearman": 0.3953,
+    "ci": [
+     0.3155,
+     0.4618
+    ],
+    "ours_same_variants": 0.4122,
+    "difference": -0.0169,
+    "difference_ci": [
+     -0.0452,
+     0.0142
+    ],
+    "auc": 0.7364
+   },
+   "gMVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 21,
+    "spearman": 0.3943,
+    "ci": [
+     0.314,
+     0.4636
+    ],
+    "ours_same_variants": 0.4267,
+    "difference": -0.0324,
+    "difference_ci": [
+     -0.0617,
+     -0.0015
+    ],
+    "auc": 0.7418
+   },
+   "popEVE": {
+    "labels": "none (population)",
+    "proteins": 21,
+    "spearman": 0.3941,
+    "ci": [
+     0.3156,
+     0.4665
+    ],
+    "ours_same_variants": 0.4122,
+    "difference": -0.0181,
+    "difference_ci": [
+     -0.0559,
+     0.0115
+    ],
+    "auc": 0.728
+   },
+   "VARITY_R (leave-one-out)": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 21,
+    "spearman": 0.3879,
+    "ci": [
+     0.3136,
+     0.4543
+    ],
+    "ours_same_variants": 0.4122,
+    "difference": -0.0243,
+    "difference_ci": [
+     -0.054,
+     0.0057
+    ],
+    "auc": 0.7315
+   },
+   "MetaRNN": {
+    "labels": "ClinVar",
+    "proteins": 22,
+    "spearman": 0.386,
+    "ci": [
+     0.3165,
+     0.4506
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0301,
+    "difference_ci": [
+     -0.0469,
+     -0.0098
+    ],
+    "auc": 0.7354
+   },
+   "ClinPred": {
+    "labels": "ClinVar",
+    "proteins": 22,
+    "spearman": 0.3784,
+    "ci": [
+     0.3227,
+     0.4316
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0377,
+    "difference_ci": [
+     -0.0625,
+     -0.0073
+    ],
+    "auc": 0.7243
+   },
+   "REVEL": {
+    "labels": "HGMD",
+    "proteins": 22,
+    "spearman": 0.3756,
+    "ci": [
+     0.3002,
+     0.4429
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0405,
+    "difference_ci": [
+     -0.062,
+     -0.0187
+    ],
+    "auc": 0.7302
+   },
+   "ESM1b": {
+    "labels": "none",
+    "proteins": 22,
+    "spearman": 0.3728,
+    "ci": [
+     0.2979,
+     0.4371
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0434,
+    "difference_ci": [
+     -0.0609,
+     -0.0253
+    ],
+    "auc": 0.7235
+   },
+   "MutPred2": {
+    "labels": "HGMD, SwissVar",
+    "proteins": 22,
+    "spearman": 0.3715,
+    "ci": [
+     0.2982,
+     0.44
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0446,
+    "difference_ci": [
+     -0.0644,
+     -0.0259
+    ],
+    "auc": 0.7264
+   },
+   "EVE": {
+    "labels": "none",
+    "proteins": 12,
+    "spearman": 0.3701,
+    "ci": [
+     0.2761,
+     0.4597
+    ],
+    "ours_same_variants": 0.4014,
+    "difference": -0.0313,
+    "difference_ci": [
+     -0.0965,
+     0.0404
+    ],
+    "auc": 0.7195
+   },
+   "PHACTboost": {
+    "labels": "ClinVar",
+    "proteins": 21,
+    "spearman": 0.3671,
+    "ci": [
+     0.2924,
+     0.4361
+    ],
+    "ours_same_variants": 0.4122,
+    "difference": -0.0451,
+    "difference_ci": [
+     -0.0782,
+     -0.0136
+    ],
+    "auc": 0.7154
+   },
+   "MutationAssessor": {
+    "labels": "none",
+    "proteins": 21,
+    "spearman": 0.3665,
+    "ci": [
+     0.2921,
+     0.4298
+    ],
+    "ours_same_variants": 0.4278,
+    "difference": -0.0613,
+    "difference_ci": [
+     -0.0929,
+     -0.0259
+    ],
+    "auc": 0.7191
+   },
+   "Eigen": {
+    "labels": "none",
+    "proteins": 21,
+    "spearman": 0.3619,
+    "ci": [
+     0.2948,
+     0.4278
+    ],
+    "ours_same_variants": 0.4127,
+    "difference": -0.0509,
+    "difference_ci": [
+     -0.0754,
+     -0.0258
+    ],
+    "auc": 0.7213
+   },
+   "BayesDel (with AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 22,
+    "spearman": 0.361,
+    "ci": [
+     0.29,
+     0.4295
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0552,
+    "difference_ci": [
+     -0.0773,
+     -0.0343
+    ],
+    "auc": 0.7215
+   },
+   "BayesDel (no AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 22,
+    "spearman": 0.3605,
+    "ci": [
+     0.2885,
+     0.4275
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0557,
+    "difference_ci": [
+     -0.0779,
+     -0.0339
+    ],
+    "auc": 0.7205
+   },
+   "SIFT4G": {
+    "labels": "none",
+    "proteins": 22,
+    "spearman": 0.3566,
+    "ci": [
+     0.3078,
+     0.4051
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0595,
+    "difference_ci": [
+     -0.0967,
+     -0.0138
+    ],
+    "auc": 0.7141
+   },
+   "MutFormer": {
+    "labels": "HGMD",
+    "proteins": 22,
+    "spearman": 0.3491,
+    "ci": [
+     0.265,
+     0.4267
+    ],
+    "ours_same_variants": 0.4156,
+    "difference": -0.0665,
+    "difference_ci": [
+     -0.1039,
+     -0.0315
+    ],
+    "auc": 0.7075
+   },
+   "DEOGEN2": {
+    "labels": "UniProt",
+    "proteins": 21,
+    "spearman": 0.338,
+    "ci": [
+     0.2579,
+     0.4049
+    ],
+    "ours_same_variants": 0.4269,
+    "difference": -0.089,
+    "difference_ci": [
+     -0.1356,
+     -0.042
+    ],
+    "auc": 0.7079
+   },
+   "MutationTaster2021": {
+    "labels": "ClinVar, HGMD (+ look-up)",
+    "proteins": 21,
+    "spearman": 0.3302,
+    "ci": [
+     0.2523,
+     0.4054
+    ],
+    "ours_same_variants": 0.3997,
+    "difference": -0.0695,
+    "difference_ci": [
+     -0.1124,
+     -0.025
+    ],
+    "auc": 0.6868
+   },
+   "MetaLR": {
+    "labels": "UniProt",
+    "proteins": 22,
+    "spearman": 0.3266,
+    "ci": [
+     0.2468,
+     0.401
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0895,
+    "difference_ci": [
+     -0.1267,
+     -0.054
+    ],
+    "auc": 0.7048
+   },
+   "CADD": {
+    "labels": "none (simulated)",
+    "proteins": 22,
+    "spearman": 0.3224,
+    "ci": [
+     0.2659,
+     0.3748
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0937,
+    "difference_ci": [
+     -0.1397,
+     -0.0521
+    ],
+    "auc": 0.694
+   },
+   "MVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 22,
+    "spearman": 0.3208,
+    "ci": [
+     0.2511,
+     0.3856
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.0954,
+    "difference_ci": [
+     -0.1313,
+     -0.0583
+    ],
+    "auc": 0.6949
+   },
+   "PROVEAN": {
+    "labels": "none",
+    "proteins": 22,
+    "spearman": 0.3154,
+    "ci": [
+     0.253,
+     0.3739
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.1008,
+    "difference_ci": [
+     -0.1595,
+     -0.0424
+    ],
+    "auc": 0.6836
+   },
+   "MPC": {
+    "labels": "ClinVar (402 variants)",
+    "proteins": 22,
+    "spearman": 0.2993,
+    "ci": [
+     0.2292,
+     0.3687
+    ],
+    "ours_same_variants": 0.4159,
+    "difference": -0.1166,
+    "difference_ci": [
+     -0.1815,
+     -0.0674
+    ],
+    "auc": 0.6846
+   },
+   "PolyPhen-2": {
+    "labels": "UniProt",
+    "proteins": 17,
+    "spearman": 0.2952,
+    "ci": [
+     0.2309,
+     0.3562
+    ],
+    "ours_same_variants": 0.3872,
+    "difference": -0.092,
+    "difference_ci": [
+     -0.1502,
+     -0.0473
+    ],
+    "auc": 0.6789
+   },
+   "SIFT": {
+    "labels": "none",
+    "proteins": 22,
+    "spearman": 0.2901,
+    "ci": [
+     0.2362,
+     0.346
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.126,
+    "difference_ci": [
+     -0.1684,
+     -0.0846
+    ],
+    "auc": 0.658
+   },
+   "MetaSVM": {
+    "labels": "UniProt",
+    "proteins": 22,
+    "spearman": 0.2845,
+    "ci": [
+     0.1991,
+     0.3653
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.1316,
+    "difference_ci": [
+     -0.2222,
+     -0.063
+    ],
+    "auc": 0.6804
+   },
+   "FATHMM-XF": {
+    "labels": "HGMD",
+    "proteins": 21,
+    "spearman": 0.2462,
+    "ci": [
+     0.1754,
+     0.3127
+    ],
+    "ours_same_variants": 0.4138,
+    "difference": -0.1676,
+    "difference_ci": [
+     -0.2141,
+     -0.1213
+    ],
+    "auc": 0.6539
+   },
+   "LIST-S2": {
+    "labels": "few parameters",
+    "proteins": 21,
+    "spearman": 0.2319,
+    "ci": [
+     0.1814,
+     0.2794
+    ],
+    "ours_same_variants": 0.4141,
+    "difference": -0.1822,
+    "difference_ci": [
+     -0.2379,
+     -0.1236
+    ],
+    "auc": 0.6316
+   },
+   "PrimateAI": {
+    "labels": "none (population)",
+    "proteins": 22,
+    "spearman": 0.2263,
+    "ci": [
+     0.1559,
+     0.291
+    ],
+    "ours_same_variants": 0.4159,
+    "difference": -0.1896,
+    "difference_ci": [
+     -0.2459,
+     -0.1393
+    ],
+    "auc": 0.6386
+   },
+   "phyloP (100 vertebrates)": {
+    "labels": "none",
+    "proteins": 22,
+    "spearman": 0.2093,
+    "ci": [
+     0.1515,
+     0.2682
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.2068,
+    "difference_ci": [
+     -0.2596,
+     -0.1535
+    ],
+    "auc": 0.631
+   },
+   "DANN": {
+    "labels": "none (simulated)",
+    "proteins": 22,
+    "spearman": 0.184,
+    "ci": [
+     0.1404,
+     0.2331
+    ],
+    "ours_same_variants": 0.4161,
+    "difference": -0.2321,
+    "difference_ci": [
+     -0.2846,
+     -0.172
+    ],
+    "auc": 0.6079
+   }
+  },
+  "Stability": {
+   "popEVE": {
+    "labels": "none (population)",
+    "proteins": 12,
+    "spearman": 0.4878,
+    "ci": [
+     0.4171,
+     0.5577
+    ],
+    "ours_same_variants": 0.4835,
+    "difference": 0.0043,
+    "difference_ci": [
+     -0.0236,
+     0.0296
+    ],
+    "auc": 0.8171
+   },
+   "MissensExplorer v2.5": {
+    "labels": "ClinVar (other genes)",
+    "proteins": 14,
+    "spearman": 0.4805,
+    "ci": [
+     0.4247,
+     0.5386
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": 0.0,
+    "difference_ci": [
+     0.0,
+     0.0
+    ],
+    "auc": 0.8103
+   },
+   "gMVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 13,
+    "spearman": 0.4767,
+    "ci": [
+     0.4185,
+     0.5349
+    ],
+    "ours_same_variants": 0.4767,
+    "difference": -0.0001,
+    "difference_ci": [
+     -0.021,
+     0.0226
+    ],
+    "auc": 0.8017
+   },
+   "MetaRNN": {
+    "labels": "ClinVar",
+    "proteins": 14,
+    "spearman": 0.4635,
+    "ci": [
+     0.3917,
+     0.5306
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.017,
+    "difference_ci": [
+     -0.0532,
+     0.012
+    ],
+    "auc": 0.7967
+   },
+   "MutationAssessor": {
+    "labels": "none",
+    "proteins": 13,
+    "spearman": 0.4548,
+    "ci": [
+     0.3532,
+     0.5514
+    ],
+    "ours_same_variants": 0.4776,
+    "difference": -0.0228,
+    "difference_ci": [
+     -0.0912,
+     0.0406
+    ],
+    "auc": 0.779
+   },
+   "AlphaMissense": {
+    "labels": "none (population)",
+    "proteins": 13,
+    "spearman": 0.4491,
+    "ci": [
+     0.3853,
+     0.5121
+    ],
+    "ours_same_variants": 0.4767,
+    "difference": -0.0277,
+    "difference_ci": [
+     -0.0486,
+     -0.0068
+    ],
+    "auc": 0.7931
+   },
+   "MutFormer": {
+    "labels": "HGMD",
+    "proteins": 14,
+    "spearman": 0.4475,
+    "ci": [
+     0.3926,
+     0.5058
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.033,
+    "difference_ci": [
+     -0.05,
+     -0.0167
+    ],
+    "auc": 0.7818
+   },
+   "REVEL": {
+    "labels": "HGMD",
+    "proteins": 14,
+    "spearman": 0.4443,
+    "ci": [
+     0.3852,
+     0.5074
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.0362,
+    "difference_ci": [
+     -0.0577,
+     -0.0163
+    ],
+    "auc": 0.7822
+   },
+   "BayesDel (no AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 14,
+    "spearman": 0.4439,
+    "ci": [
+     0.3944,
+     0.4927
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.0367,
+    "difference_ci": [
+     -0.0642,
+     -0.0083
+    ],
+    "auc": 0.7753
+   },
+   "BayesDel (with AF)": {
+    "labels": "ClinVar, UniProt",
+    "proteins": 14,
+    "spearman": 0.4435,
+    "ci": [
+     0.3948,
+     0.4914
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.037,
+    "difference_ci": [
+     -0.0637,
+     -0.0056
+    ],
+    "auc": 0.7768
+   },
+   "DEOGEN2": {
+    "labels": "UniProt",
+    "proteins": 13,
+    "spearman": 0.4405,
+    "ci": [
+     0.3749,
+     0.5052
+    ],
+    "ours_same_variants": 0.4776,
+    "difference": -0.0372,
+    "difference_ci": [
+     -0.0917,
+     0.0157
+    ],
+    "auc": 0.7751
+   },
+   "MetaLR": {
+    "labels": "UniProt",
+    "proteins": 14,
+    "spearman": 0.4295,
+    "ci": [
+     0.3625,
+     0.5024
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.051,
+    "difference_ci": [
+     -0.1028,
+     -0.0037
+    ],
+    "auc": 0.7668
+   },
+   "Eigen": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.4196,
+    "ci": [
+     0.3607,
+     0.475
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.061,
+    "difference_ci": [
+     -0.0843,
+     -0.0352
+    ],
+    "auc": 0.7562
+   },
+   "VARITY_R (leave-one-out)": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 12,
+    "spearman": 0.4141,
+    "ci": [
+     0.3569,
+     0.4762
+    ],
+    "ours_same_variants": 0.4733,
+    "difference": -0.0592,
+    "difference_ci": [
+     -0.0952,
+     -0.0201
+    ],
+    "auc": 0.77
+   },
+   "VARITY_R": {
+    "labels": "ClinVar, HGMD",
+    "proteins": 12,
+    "spearman": 0.4132,
+    "ci": [
+     0.3533,
+     0.4742
+    ],
+    "ours_same_variants": 0.4733,
+    "difference": -0.06,
+    "difference_ci": [
+     -0.0995,
+     -0.0223
+    ],
+    "auc": 0.7699
+   },
+   "PHACTboost": {
+    "labels": "ClinVar",
+    "proteins": 13,
+    "spearman": 0.4128,
+    "ci": [
+     0.3495,
+     0.4759
+    ],
+    "ours_same_variants": 0.4766,
+    "difference": -0.0637,
+    "difference_ci": [
+     -0.11,
+     -0.0253
+    ],
+    "auc": 0.7644
+   },
+   "MutPred2": {
+    "labels": "HGMD, SwissVar",
+    "proteins": 14,
+    "spearman": 0.4053,
+    "ci": [
+     0.3576,
+     0.4471
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.0753,
+    "difference_ci": [
+     -0.1128,
+     -0.0371
+    ],
+    "auc": 0.7707
+   },
+   "MetaSVM": {
+    "labels": "UniProt",
+    "proteins": 14,
+    "spearman": 0.4024,
+    "ci": [
+     0.3214,
+     0.4855
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.0782,
+    "difference_ci": [
+     -0.1307,
+     -0.0264
+    ],
+    "auc": 0.756
+   },
+   "ClinPred": {
+    "labels": "ClinVar",
+    "proteins": 14,
+    "spearman": 0.4003,
+    "ci": [
+     0.3394,
+     0.4568
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.0802,
+    "difference_ci": [
+     -0.1024,
+     -0.0587
+    ],
+    "auc": 0.7609
+   },
+   "ESM1b": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.3829,
+    "ci": [
+     0.3078,
+     0.463
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.0976,
+    "difference_ci": [
+     -0.1464,
+     -0.0477
+    ],
+    "auc": 0.7562
+   },
+   "MPC": {
+    "labels": "ClinVar (402 variants)",
+    "proteins": 12,
+    "spearman": 0.3637,
+    "ci": [
+     0.2948,
+     0.4297
+    ],
+    "ours_same_variants": 0.5069,
+    "difference": -0.1432,
+    "difference_ci": [
+     -0.1893,
+     -0.1054
+    ],
+    "auc": 0.742
+   },
+   "SIFT4G": {
+    "labels": "none",
+    "proteins": 13,
+    "spearman": 0.361,
+    "ci": [
+     0.3027,
+     0.4192
+    ],
+    "ours_same_variants": 0.4767,
+    "difference": -0.1158,
+    "difference_ci": [
+     -0.1518,
+     -0.0781
+    ],
+    "auc": 0.7218
+   },
+   "MVP": {
+    "labels": "ClinVar, HGMD, UniProt",
+    "proteins": 14,
+    "spearman": 0.3525,
+    "ci": [
+     0.2618,
+     0.4457
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.1281,
+    "difference_ci": [
+     -0.1921,
+     -0.0703
+    ],
+    "auc": 0.7248
+   },
+   "PROVEAN": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.3258,
+    "ci": [
+     0.2582,
+     0.3947
+    ],
+    "ours_same_variants": 0.4819,
+    "difference": -0.1561,
+    "difference_ci": [
+     -0.203,
+     -0.1125
+    ],
+    "auc": 0.7135
+   },
+   "SIFT": {
+    "labels": "none",
+    "proteins": 13,
+    "spearman": 0.2973,
+    "ci": [
+     0.2072,
+     0.3911
+    ],
+    "ours_same_variants": 0.4776,
+    "difference": -0.1804,
+    "difference_ci": [
+     -0.2629,
+     -0.095
+    ],
+    "auc": 0.675
+   },
+   "CADD": {
+    "labels": "none (simulated)",
+    "proteins": 14,
+    "spearman": 0.2851,
+    "ci": [
+     0.2159,
+     0.3463
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.1955,
+    "difference_ci": [
+     -0.2496,
+     -0.1374
+    ],
+    "auc": 0.6837
+   },
+   "MutationTaster2021": {
+    "labels": "ClinVar, HGMD (+ look-up)",
+    "proteins": 13,
+    "spearman": 0.2787,
+    "ci": [
+     0.2243,
+     0.3392
+    ],
+    "ours_same_variants": 0.4962,
+    "difference": -0.2175,
+    "difference_ci": [
+     -0.2569,
+     -0.1785
+    ],
+    "auc": 0.6881
+   },
+   "PolyPhen-2": {
+    "labels": "UniProt",
+    "proteins": 11,
+    "spearman": 0.2759,
+    "ci": [
+     0.1927,
+     0.3543
+    ],
+    "ours_same_variants": 0.4561,
+    "difference": -0.1802,
+    "difference_ci": [
+     -0.2788,
+     -0.0933
+    ],
+    "auc": 0.6674
+   },
+   "FATHMM-XF": {
+    "labels": "HGMD",
+    "proteins": 14,
+    "spearman": 0.2707,
+    "ci": [
+     0.2222,
+     0.3188
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.2099,
+    "difference_ci": [
+     -0.272,
+     -0.1489
+    ],
+    "auc": 0.6749
+   },
+   "PrimateAI": {
+    "labels": "none (population)",
+    "proteins": 14,
+    "spearman": 0.2217,
+    "ci": [
+     0.1684,
+     0.2752
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.2588,
+    "difference_ci": [
+     -0.3112,
+     -0.1992
+    ],
+    "auc": 0.6478
+   },
+   "phyloP (100 vertebrates)": {
+    "labels": "none",
+    "proteins": 14,
+    "spearman": 0.2123,
+    "ci": [
+     0.166,
+     0.2632
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.2683,
+    "difference_ci": [
+     -0.3261,
+     -0.2115
+    ],
+    "auc": 0.6401
+   },
+   "LIST-S2": {
+    "labels": "few parameters",
+    "proteins": 14,
+    "spearman": 0.1819,
+    "ci": [
+     0.1195,
+     0.2416
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.2987,
+    "difference_ci": [
+     -0.3518,
+     -0.2472
+    ],
+    "auc": 0.6186
+   },
+   "DANN": {
+    "labels": "none (simulated)",
+    "proteins": 14,
+    "spearman": 0.176,
+    "ci": [
+     0.1194,
+     0.2396
+    ],
+    "ours_same_variants": 0.4805,
+    "difference": -0.3046,
+    "difference_ci": [
+     -0.3526,
+     -0.2496
+    ],
+    "auc": 0.5994
+   }
   }
  },
  "proteingym": "https://marks.hms.harvard.edu/proteingym/ProteinGym_v1.3/DMS_ProteinGym_substitutions.zip",
- "per_assay": 200,
+ "per_assay": 500,
  "assays": 71,
  "proteins": 61,
- "variants": 13408,
+ "variants": 28701,
  "skipped": [
   [
    "AMFR_HUMAN_Tsuboyama_2023_4G3O",
@@ -619,9 +3353,9 @@
   ]
  ],
  "run": {
-  "tool": "MissensExplorer 2.3.0",
-  "started_utc": "2026-11-23T11:44:43+00:00",
-  "seconds": 5.0,
+  "tool": "MissensExplorer 2.5.0",
+  "started_utc": "2026-11-25T23:37:57+00:00",
+  "seconds": 8.8,
   "assembly": "GRCh38",
   "annotation": "Ensembl VEP REST, release 116",
   "ensembl_release": 116,
@@ -641,11 +3375,14 @@
    "vep_args": null,
    "offline": false,
    "common_af": 0.05,
+   "acmg_source": "model",
+   "gnomad_check": false,
+   "oncogenicity": false,
    "workers": 6,
    "cache": true
   },
   "inputs": {
-   "text_lines": 13088,
+   "text_lines": 27012,
    "files": []
   },
   "sources": {
@@ -653,9 +3390,9 @@
    "VEP predictor plugins": "ok"
   },
   "missense_model": {
-   "version": "2.3",
-   "trained": "2026-11-23",
-   "training_variants": 9218,
+   "version": "2.5",
+   "trained": "2026-11-26",
+   "training_variants": 9086,
    "cut_offs": [
     0.3,
     0.76

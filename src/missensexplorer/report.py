@@ -66,6 +66,8 @@ DETAIL_FIELDS = (
     ("ACMG PS1/PM5", "acmg_ps1_pm5"),
     ("ACMG PM2", "acmg_pm2"),
     ("Population frequency", "population_frequency"),
+    ("ClinGen expert panel specification", "vcep_specification"),
+    ("Notes on the ACMG criteria", "acmg_notes"),
     ("Somatic oncogenicity", "oncogenicity"),
     ("Oncogenicity criteria", "oncogenicity_codes"),
     ("Oncogenicity evidence", "oncogenicity_evidence"),

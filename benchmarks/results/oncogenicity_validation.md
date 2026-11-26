@@ -1,6 +1,6 @@
 # Somatic oncogenicity points on laboratory data (EGFR and TP53)
 
-Produced by `benchmarks/validate_oncogenicity.py`. The points follow the ClinGen/CGC/VICC standard (Horak et al., Genet Med 2022) with the criteria computed automatically (see `src/missensexplorer/oncogenicity.py`): hotspots from cancerhotspots.org, gene roles from IntOGen (IntOGen-Drivers-20240920), ClinVar oncogenicity classifications of other variants at the residue, functional evidence curated in CIViC (OS2/SBS2), gnomAD, and the model's call (only in genes IntOGen does not call activating).
+Produced by `benchmarks/validate_oncogenicity.py`. The points follow the ClinGen/CGC/VICC standard (Horak et al., Genet Med 2022) with the criteria computed automatically (see `src/missensexplorer/oncogenicity.py`): hotspots from cancerhotspots.org, gene roles from IntOGen (IntOGen-Drivers-20240920) or UniProt keywords, ClinVar oncogenicity classifications of other variants at the residue, functional evidence curated in CIViC (OS2/SBS2), gnomAD (OP4 only when gnomAD itself confirms the absence), and the calibrated computational evidence (OP1/SBP1, in every gene).
 
 - **EGFR** (oncogene): Ikeuchi et al., Oncogene 2022 (CC BY 4.0): NIH-3T3 transformation (3-4 vs 1) and Ba/F3 transformation.
 - **TP53** (tumour suppressor): NCI TP53 Database r21: Kato et al. 2003 yeast transactivation (non-functional vs functional/supertrans) and Giacomelli et al. 2018 loss of function.
@@ -11,12 +11,12 @@ Produced by `benchmarks/validate_oncogenicity.py`. The points follow the ClinGen
 
 | Gene | Assay | Variants | Positives | Model alone | Points | Points without ClinVar |
 |---|---|---|---|---|---|---|
-| EGFR | 3T3 (missense) | 225 | 38 | 0.543 | **0.729** (0.62–0.823) | 0.732 |
-| EGFR | 3T3 (all) | 243 | 46 | 0.543 | **0.743** (0.658–0.834) | 0.745 |
-| EGFR | Ba/F3 (missense) | 258 | 200 | 0.215 | **0.557** (0.507–0.608) | 0.555 |
-| EGFR | Ba/F3 (all) | 279 | 212 | 0.215 | **0.513** (0.447–0.574) | 0.511 |
-| TP53 | Kato (missense) | 1724 | 493 | 0.928 | **0.932** (0.917–0.946) | 0.928 |
-| TP53 | Giacomelli (missense) | 2158 | 570 | 0.841 | **0.842** (0.82–0.864) | 0.839 |
+| EGFR | 3T3 (missense) | 225 | 38 | 0.542 | **0.693** (0.581–0.797) | 0.697 |
+| EGFR | 3T3 (all) | 243 | 46 | 0.542 | **0.723** (0.619–0.813) | 0.726 |
+| EGFR | Ba/F3 (missense) | 258 | 200 | 0.214 | **0.396** (0.341–0.45) | 0.395 |
+| EGFR | Ba/F3 (all) | 279 | 212 | 0.214 | **0.393** (0.335–0.454) | 0.39 |
+| TP53 | Kato (missense) | 1724 | 493 | 0.927 | **0.931** (0.916–0.947) | 0.928 |
+| TP53 | Giacomelli (missense) | 2158 | 570 | 0.84 | **0.847** (0.826–0.868) | 0.845 |
 
 ## CIViC
 
@@ -33,34 +33,34 @@ Items that cite the validation assays or yeast assays like Kato's are left out h
 
 | 3T3 score | Oncogenic | Likely oncogenic | VUS | Likely benign | Benign | mixed | not assessed |
 |---|---|---|---|---|---|---|---|
-| 4 | 0 | 0 | 19 | 0 | 0 | 0 | 38 |
-| 3 | 0 | 2 | 25 | 0 | 0 | 0 | 22 |
-| 2 | 0 | 0 | 35 | 0 | 1 | 0 | 3 |
-| 1 | 0 | 1 | 196 | 0 | 0 | 0 | 3 |
+| 4 | 0 | 1 | 17 | 1 | 0 | 0 | 38 |
+| 3 | 0 | 2 | 24 | 1 | 0 | 0 | 22 |
+| 2 | 0 | 0 | 34 | 1 | 1 | 0 | 3 |
+| 1 | 0 | 3 | 187 | 7 | 0 | 0 | 3 |
 
 **TP53**, by Kato class:
 
 | Kato class | Oncogenic | Likely oncogenic | VUS | Likely benign | Benign | mixed | not assessed |
 |---|---|---|---|---|---|---|---|
-| non-functional | 1 | 90 | 398 | 1 | 0 | 3 | 0 |
+| non-functional | 2 | 90 | 399 | 1 | 0 | 1 | 0 |
 | partially functional | 0 | 5 | 571 | 5 | 0 | 1 | 0 |
-| functional | 0 | 0 | 1121 | 22 | 0 | 4 | 0 |
+| functional | 0 | 0 | 1123 | 21 | 0 | 3 | 0 |
 | supertrans | 0 | 0 | 80 | 4 | 0 | 0 | 0 |
 
 ## Examples
 
 | Gene | Variant | Assay | Class | Points | Criteria |
 |---|---|---|---|---|---|
-| EGFR | L858R | 3T3 4 | VUS | 5 | OS3 +4, OP4 +1 |
-| EGFR | G719A | 3T3 3 | VUS | 3 | OM3 +2, OP4 +1 |
-| EGFR | G719C | 3T3 4 | VUS | 4 | OM4 +2, OP3 +1, OP4 +1 |
-| EGFR | G719S | 3T3 3 | VUS | 4 | OM4 +2, OP3 +1, OP4 +1 |
-| EGFR | L861Q | 3T3 3 | VUS | 3 | OM3 +2, OP4 +1 |
-| EGFR | S768I | 3T3 4 | VUS | 3 | OM3 +2, OP4 +1 |
-| EGFR | E709K | 3T3 4 | VUS | 3 | OM3 +2, OP4 +1 |
-| EGFR | T790M | 3T3 3 | Likely oncogenic | 8 | OS3 +4, OS2 +4 |
+| EGFR | L858R | 3T3 4 | Likely oncogenic | 6 | OS3 +4, OP1 +1, OP4 +1 |
+| EGFR | G719A | 3T3 3 | VUS | 4 | OM3 +2, OP1 +1, OP4 +1 |
+| EGFR | G719C | 3T3 4 | VUS | 5 | OM4 +2, OP3 +1, OP1 +1, OP4 +1 |
+| EGFR | G719S | 3T3 3 | VUS | 5 | OM4 +2, OP3 +1, OP1 +1, OP4 +1 |
+| EGFR | L861Q | 3T3 3 | VUS | 4 | OM3 +2, OP1 +1, OP4 +1 |
+| EGFR | S768I | 3T3 4 | VUS | 4 | OM3 +2, OP1 +1, OP4 +1 |
+| EGFR | E709K | 3T3 4 | VUS | 4 | OM3 +2, OP1 +1, OP4 +1 |
+| EGFR | T790M | 3T3 3 | Likely oncogenic | 9 | OS3 +4, OS2 +4, OP1 +1 |
 | EGFR | L747P | 3T3 4 | VUS | 2 | OP3 +1, OP4 +1 |
-| EGFR | E746_A750del | 3T3 3 | Likely oncogenic | 7 | OS3 +4, OM2 +2, OP4 +1 |
+| EGFR | E746_A750del | 3T3 3 | Likely oncogenic | 6 | OS3 +4, OM2 +2 |
 | TP53 | R175H | non-functional | Likely oncogenic | 6 | OS3 +4, OP1 +1, OP4 +1 |
 | TP53 | R248Q | non-functional | Likely oncogenic | 9 | OS3 +4, OS2 +4, OP1 +1 |
 | TP53 | R248W | non-functional | Likely oncogenic | 6 | OS3 +4, OP1 +1, OP4 +1 |

@@ -27,7 +27,7 @@ HOTSPOTS = [
     {"hugoSymbol": "EGFR", "residue": "745-759", "type": "in-frame indel", "tumorCount": 155,
      "variantAminoAcid": {"E746_A750del": 123}, "transcriptId": "ENST00000275493"},
 ]  # fmt: skip
-ROLES = {"TP53": onco.Role("LoF", 161, 212), "EGFR": onco.Role("Act", 22, 22)}
+ROLES = {"TP53": onco.Role("LoF", "UniProt", 0.96, 212), "EGFR": onco.Role("Act", "UniProt", 0.0, 22)}
 
 
 def data(**kw):
@@ -45,8 +45,8 @@ def row(gene="TP53", change="R175H", pos=175, ref="R", alt="H", tx="ENST00000269
         "transcript": f"{tx}.9",
         "canonical": True,
         "mane_select": "NM_000546.6",
-        "gnomad_af": None,
-        "gnomad_popmax_af": None,
+        "gnomad_af": 2e-6,  # rare in gnomAD: OP4 by frequency
+        "gnomad_popmax_af": 4e-6,
         **kw,
     }
 
@@ -75,16 +75,16 @@ def test_tumour_suppressor_missense_hotspot_with_damaging_model_call():
     assert codes(a) == ["OS3", "OP1", "OP4"]  # 416 tumours at R175, 386 with H; absent from gnomAD
     assert a.points == 6
     assert onco.tier(a.points) == "Likely oncogenic"
-    assert "loss-of-function in 161 of 212 IntOGen cohorts" in a.evidence()
+    assert "loss-of-function (UniProt: tumour suppressor)" in a.evidence()
 
 
-def test_in_an_activating_gene_the_model_call_does_not_count():
+def test_the_computational_evidence_counts_in_every_gene_with_a_note_in_activating_genes():
     r = row("EGFR", "L858R", 858, "L", "R", "ENST00000275493")
     a = onco.assess(r, {"missense_variant"}, "damaging", data(), [])
-    assert codes(a) == ["OS3", "OP4"]
-    assert "OP1/SBP1 not applied (activating gene" in a.evidence()
+    assert codes(a) == ["OS3", "OP1", "OP4"]  # 6 points: likely oncogenic, as the standard has it
+    assert "does not tell activation from inactivation" in a.evidence()
     b = onco.assess(r, {"missense_variant"}, "benign", data(), [])
-    assert "SBP1" not in codes(b)
+    assert "SBP1" in codes(b)
 
 
 def test_hotspot_counts_set_its_strength():
@@ -102,10 +102,17 @@ def test_a_hotspot_on_another_transcript_is_not_used():
 def test_same_change_in_clinvar_gives_os1_and_removes_the_hotspot():
     refs = [ref("p.Arg175His", "H", same=True, cdna="c.524_525delinsAT")]
     a = onco.assess(row(), {"missense_variant"}, "damaging", data(), refs)
-    assert codes(a) == ["OS1", "OP1", "OP4"]
-    assert "hotspot not counted" in a.evidence()
-    refs = [ref("p.Arg175His", "H", level="LO", same=True)]
-    assert codes(onco.assess(row(), {"missense_variant"}, None, data(), refs))[0] == "OS1_Moderate"
+    assert codes(a) == ["OS1", "OP1", "OP4"]  # OS1 (4) against OS3 (4): the standard keeps OS1
+    assert "OS3 not counted (OS1 uses this amino-acid change)" in a.evidence()
+    # a likely oncogenic reference (2 points) never replaces a stronger hotspot (4 points)
+    lo = [ref("p.Arg175His", "H", level="LO", same=True)]
+    b = onco.assess(row(), {"missense_variant"}, "damaging", data(), lo)
+    assert codes(b) == ["OS3", "OP1", "OP4"]
+    assert "OS1_Moderate not counted" in b.evidence()
+    # without a hotspot, the likely oncogenic reference gives OS1_Moderate
+    c = onco.assess(row(pos=176, change="C176F", ref="C", alt="F"), {"missense_variant"}, None, data(),
+                    [ref("p.Cys176Phe", "F", level="LO", same=True)])  # fmt: skip
+    assert codes(c)[0] == "OS1_Moderate"
 
 
 def test_om4_needs_a_change_at_least_as_different_and_replaces_om3():
@@ -128,15 +135,43 @@ def test_clinvar_not_searched_is_said():
     assert "OS1/OM4 not checked" in a.evidence()
 
 
-def test_null_variant_in_a_loss_of_function_gene_unless_decay_is_escaped():
+def test_ovs1_is_graded_like_pvs1_by_decay_and_the_share_of_protein_removed():
     r = row(change="R213*", pos=213, alt="*", nmd="NMD likely (premature stop upstream of last exon)")
     assert codes(onco.assess(r, {"stop_gained"}, None, data(), None)) == ["OVS1", "OP4"]
-    last = {**r, "nmd": "NMD escape likely (last exon)"}
+    last = {**r, "nmd": "NMD escape likely (last exon)", "protein_position": 300, "protein_length": 393}
     a = onco.assess(last, {"stop_gained"}, None, data(), None)
-    assert "OVS1" not in codes(a)
-    assert "OVS1 not applied (NMD escape likely (last exon)" in a.evidence()
+    assert codes(a) == ["OVS1_Strong", "OP4"]  # 24% of the protein removed
+    assert "removes 24% of the protein" in a.evidence()
+    tail = {**last, "protein_position": 380}
+    assert codes(onco.assess(tail, {"stop_gained"}, None, data(), None))[0] == "OVS1_Moderate"  # 4%: extreme 3' end
+    unknown = {**last, "protein_length": None}
+    assert codes(onco.assess(unknown, {"stop_gained"}, None, data(), None))[0] == "OVS1_Moderate"
+    structure = {"exons": [], "cds": [1, 1], "length": 393}
+    assert codes(
+        onco.assess({**last, "protein_length": None}, {"stop_gained"}, None, data(), None, structure=structure)
+    )[0] == ("OVS1_Strong")
+    start = row(change="M1?", pos=1, alt=None)
+    assert codes(onco.assess(start, {"start_lost"}, None, data(), None))[0] == "OVS1_Moderate"
     egfr = row("EGFR", "W731*", 731, "W", "*")
-    assert "OVS1" not in codes(onco.assess(egfr, {"stop_gained"}, None, data(), None))
+    b = onco.assess(egfr, {"stop_gained"}, None, data(), None)
+    assert not {"OVS1", "OVS1_Strong", "OVS1_Moderate"} & set(codes(b))
+    assert "OVS1 not applied (not a loss-of-function gene" in b.evidence()
+
+
+def test_splice_site_ovs1_depends_on_whether_skipping_the_exon_keeps_the_frame():
+    # exons in transcript order (plus strand); the CDS runs from 105 to 400
+    structure = {"exons": [[1, 110], [201, 260], [301, 400]], "cds": [105, 400], "length": 100}
+    donor = row(change=None, pos=None, alt=None, intron="2/2")  # donor of intron 2: exon 2 (60 coding bases)
+    a = onco.assess(donor, {"splice_donor_variant"}, None, data(), None, structure=structure)
+    assert codes(a)[0] == "OVS1_Strong"  # in frame (60 % 3 == 0), 60 of 166 coding bases
+    acceptor = row(change=None, pos=None, alt=None, intron="1/2")  # acceptor of intron 1: exon 2 too
+    assert (
+        codes(onco.assess(acceptor, {"splice_acceptor_variant"}, None, data(), None, structure=structure))[0]
+        == "OVS1_Strong"
+    )
+    shifted = {"exons": [[1, 110], [201, 261], [301, 400]], "cds": [105, 400], "length": 100}
+    assert codes(onco.assess(donor, {"splice_donor_variant"}, None, data(), None, structure=shifted))[0] == "OVS1"
+    assert codes(onco.assess(donor, {"splice_donor_variant"}, None, data(), None, structure=None))[0] == "OVS1_Strong"
 
 
 def test_inframe_deletion_in_a_cancer_gene_with_an_indel_hotspot():
@@ -146,25 +181,28 @@ def test_inframe_deletion_in_a_cancer_gene_with_an_indel_hotspot():
     assert a.points == 7
     other = onco.assess({**r, "gene": "ABC1"}, {"inframe_deletion"}, None, data(), None)
     assert codes(other) == ["OP4"]
-    assert "OM2 not applied" in other.evidence()
+    assert "OM2 not applied (not a known cancer gene" in other.evidence()
 
 
 @pytest.mark.parametrize(
     ("af", "grpmax", "info", "code"),
     [
-        (None, None, None, "OP4"),
+        (None, None, None, None),  # absence not confirmed by gnomAD itself: no OP4
         (9e-7, 2e-5, None, "OP4"),  # overall frequency below 1e-5
         (3e-5, 4e-5, None, None),
         (0.004, 0.02, None, "SBS1"),
         (0.3, 0.75, None, "SBVS1"),
         (None, None, {"found": True, "af": 2e-4}, None),  # gnomAD's own answer counts
-        (None, None, {"found": False}, "OP4"),
+        (None, None, {"found": False, "dataset": "gnomAD v4", "over_20": {"exome": 0.95}}, "OP4"),
+        (None, None, {"found": False, "dataset": "gnomAD v4", "over_20": {"exome": 0.1}}, None),  # few reads
     ],
 )
 def test_frequency_criteria(af, grpmax, info, code):
     a = onco.assess(row(gnomad_af=af, gnomad_popmax_af=grpmax), {"missense_variant"}, None, data(), [], info)
     got = set(codes(a)) & {"OP4", "SBS1", "SBVS1"}
     assert got == ({code} if code else set())
+    if af is None and info is None:
+        assert "OP4 not checked (absence from gnomAD not confirmed)" in a.evidence()
 
 
 def test_codes_summary_is_strongest_first():
@@ -249,10 +287,11 @@ def test_sbs2_conflicts_low_ratings_and_os1():
     assert "CIViC functional evidence conflicts" in a.evidence()
     weak = with_civic("TP53", "R175H", item(sig="Loss of Function", rating=2))
     assert "rated below 3 stars not used" in onco.assess(r, {"missense_variant"}, None, weak, []).evidence()
+    # a same-change ClinVar reference never lowers the points: the hotspot + CIViC path (OS3 + OS2) is stronger
     refs = [ref("p.Arg175His", "H", same=True)]
     b = onco.assess(r, {"missense_variant"}, None, with_civic("TP53", "R175H", item(sig="Loss of Function")), refs)
-    assert "OS2" not in codes(b)
-    assert "OS2 not applied (OS1 already uses" in b.evidence()
+    assert codes(b) == ["OS3", "OS2", "OP4"]
+    assert "OS1 not counted" in b.evidence()
     assert (
         "OS2/SBS2 not checked (CIViC unavailable)" in onco.assess(r, {"missense_variant"}, None, data(), []).evidence()
     )
@@ -335,15 +374,49 @@ def test_oncogenicity_window_search_uses_its_own_filter_and_cache(tmp_path, monk
 def intogen_zip(rows):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
-        text = "SYMBOL\tCOHORT\tROLE\n" + "".join(f"{g}\tC{i}\t{r}\n" for i, (g, r) in enumerate(rows))
+        rows = [(g, r, *rest) for g, r, *rest in rows]
+        text = "SYMBOL\tCOHORT\tROLE\tSAMPLES\n" + "".join(
+            f"{g}\tC{i}\t{r}\t{(rest or [10])[0]}.0\n" for i, (g, r, *rest) in enumerate(rows)
+        )
         z.writestr("2024-06-18_IntOGen-Drivers/Compendium_Cancer_Genes.tsv", text)
     return buf.getvalue()
 
 
-def test_intogen_roles_are_the_majority_across_cohorts():
-    roles = onco.parse_intogen(intogen_zip([("TP53", "LoF"), ("TP53", "LoF"), ("TP53", "Act"), ("EGFR", "Act")]))
-    assert roles["TP53"] == onco.Role("LoF", 2, 3)
-    assert roles["EGFR"].text() == "activating in 1 of 1 IntOGen cohorts"
+def test_gene_roles_come_from_uniprot_keywords_then_intogen_weighted_by_samples():
+    counts = onco.parse_intogen(
+        intogen_zip([("SMARCA4", "Act", 10), ("SMARCA4", "Act", 10), ("SMARCA4", "LoF", 80), ("EGFR", "Act", 50),
+                     ("MIXED", "LoF", 50), ("MIXED", "Act", 50), ("ETV6", "LoF", 80), ("ETV6", "LoF", 10),
+                     ("ETV6", "Act", 10), ("THIN", "Act", 5), ("FUSION", "Act", 3), ("PMS2", "ambiguous", 26),
+                     ("SMB1", "LoF", 5), ("SMB1", "Act", 4), ("SMB1", "Act", 4), ("AMBX", "LoF", 4),
+                     ("AMBX", "ambiguous", 10)])
+    )  # fmt: skip
+    assert counts["SMARCA4"] == [80.0, 20.0, 0.0, 3]
+    roles = onco.combine_roles(counts, suppressors={"MLH1", "PMS2", "SMB1"}, oncogenes={"ETV6", "FUSION", "MIXED"})
+    assert roles["SMARCA4"].role == "LoF"  # most cohorts say Act, but 80% of the mutated samples say LoF
+    assert (
+        roles["SMARCA4"].text()
+        == "loss-of-function (IntOGen: 80% loss-of-function in 100 samples of cohorts with a role, 3 cohorts)"
+    )
+    # samples in cohorts of ambiguous role do not count against loss of function (PMS2 was "activating")
+    assert (roles["PMS2"].role, roles["PMS2"].source) == ("LoF", "UniProt")
+    assert roles["AMBX"].role == "ambiguous"
+    assert "in cohorts of ambiguous role" in roles["AMBX"].text()
+    # a few IntOGen samples do not override UniProt's keyword (SMARCB1 was "activating" on 13 samples)
+    assert roles["SMB1"].role == "ambiguous"
+    assert "they disagree" in roles["SMB1"].text()
+    assert roles["EGFR"].role == "Act"
+    assert roles["MLH1"].role == "LoF"  # UniProt only
+    # strong IntOGen evidence (>= 3 cohorts, >= 50 samples) wins over UniProt's Proto-oncogene keyword
+    assert (roles["ETV6"].role, roles["ETV6"].source) == ("LoF", "IntOGen")
+    # an ambiguous IntOGen role, or one from a single small cohort, gives way to UniProt's keyword
+    assert (roles["MIXED"].role, roles["MIXED"].source) == ("Act", "UniProt")
+    assert (roles["FUSION"].role, roles["FUSION"].source) == ("Act", "UniProt")
+    # a single small cohort and no UniProt keyword: the role is left undecided
+    assert roles["THIN"].role == "ambiguous"
+    assert not roles["THIN"].decisive
+    assert "too few to decide" in roles["THIN"].text()
+    assert "1 cohort," in roles["THIN"].text()
+    assert onco.parse_uniprot("Entry\tGene Names (primary)\nP1\tTP53\nP2\t\n") == {"TP53"}
 
 
 def test_load_downloads_once_then_uses_the_cache(tmp_path, request):
@@ -357,6 +430,9 @@ def test_load_downloads_once_then_uses_the_cache(tmp_path, request):
             return httpx.Response(
                 200, text=civic_tsv(["TP53 R175H", "Functional", "Supports", "D", "Dominant Negative", 3])
             )
+        if "uniprot" in str(request.url):
+            gene = "TP53" if "KW-0043" in str(request.url) else "KRAS"
+            return httpx.Response(200, text=f"Entry\tGene Names (primary)\nP1\t{gene}\n")
         return httpx.Response(200, content=intogen_zip([("TP53", "LoF")]))
 
     http = Http()
@@ -370,9 +446,10 @@ def test_load_downloads_once_then_uses_the_cache(tmp_path, request):
     assert d.residues["TP53"]["R175"].tumours == 416
     assert d.roles["TP53"].role == "LoF"
     assert d.civic["TP53"]["R175H"][0]["significance"] == "Dominant Negative"
-    assert st.summary() == {"CIViC": "ok", "IntOGen": "ok", "cancerhotspots.org": "ok"}
+    assert d.roles["KRAS"].role == "Act"
+    assert st.summary() == {"CIViC": "ok", "IntOGen": "ok", "UniProt": "ok", "cancerhotspots.org": "ok"}
     onco.load(http, cache, SourceStatus())
-    assert len(calls) == 3
+    assert len(calls) == 5
 
 
 def test_load_records_a_failed_download():
@@ -424,7 +501,7 @@ def braf_pipeline(monkeypatch):
     loaded = onco.Data(
         residues=residues,
         indels=indels,
-        roles={"BRAF": onco.Role("Act", 54, 57)},
+        roles={"BRAF": onco.Role("Act", "UniProt", 0.01, 57)},
         civic=civic,
         hotspots_ok=True,
         roles_ok=True,
@@ -440,7 +517,10 @@ def test_pipeline_adds_the_oncogenicity_columns_only_when_asked(braf_pipeline):
     r = res.table.iloc[0]
     assert r["oncogenicity_codes"].startswith("OS3 +4")
     assert "hotspot V600: 897 tumours, 833 with E" in r["oncogenicity_evidence"]
-    assert "OP1/SBP1 not applied" in r["oncogenicity_evidence"]
+    assert (
+        "does not tell activation from inactivation" in r["oncogenicity_evidence"]
+        or "OP1" not in r["oncogenicity_codes"]
+    )
     assert r["oncogenicity"] in ("VUS", "Likely oncogenic")
     assert r["clinical_evidence_level"] == "A"
     assert "best: level A predictive, Sensitivity/Response: Vemurafenib in Skin Melanoma" in r["clinical_evidence"]
@@ -456,3 +536,70 @@ def test_pipeline_says_when_the_oncogenicity_data_are_missing(braf_pipeline, mon
         options=P.PredictOptions(oncogenicity=True, cache=False, protein_context=False, sequences=False),
     )
     assert res.table.iloc[0]["oncogenicity"] == "not assessed (cancerhotspots.org or IntOGen unavailable)"
+
+
+def test_hotspot_gene_symbols_are_updated_to_current_hgnc_symbols():
+    residues, _ = onco.parse_hotspots(
+        [{"hugoSymbol": "H3F3A", "residue": "K28", "type": "single residue", "tumorCount": 33,
+          "variantAminoAcid": {"M": 33}, "transcriptId": "ENST00000366696"}]
+    )  # fmt: skip
+    assert "H3-3A" in residues
+    assert "H3F3A" not in residues
+
+
+def test_os2_needs_preclinical_civic_evidence():
+    r = row()
+    clinical = with_civic("TP53", "R175H", item(typ="Oncogenic", sig="Oncogenicity", level="B"))
+    a = onco.assess(r, {"missense_variant"}, None, clinical, [])
+    assert "OS2" not in codes(a)
+    assert "from clinical observations (not functional studies) not used" in a.evidence()
+
+
+def test_adding_a_clinvar_reference_never_lowers_the_points():
+    """For every combination of references (same change or other change, oncogenic or likely oncogenic),
+    with or without a hotspot and CIViC evidence, adding references never lowers the points."""
+    refs = {
+        "same O": ref("p.Arg175His", "H", level="O", same=True, cdna="c.524_525delinsAT"),
+        "same LO": ref("p.Arg175His", "H", level="LO", same=True, cdna="c.524_525delinsAC"),
+        "other O": ref("p.Arg175Leu", "L", level="O"),
+        "other LO": ref("p.Arg175Cys", "C", level="LO"),
+    }
+    civic = with_civic("TP53", "R175H", item(sig="Loss of Function"))
+    for d in (data(), civic, onco.Data(roles=ROLES, roles_ok=True, hotspots_ok=True)):
+        for pos in (175, 176):  # with and without a hotspot at the residue
+            r = row(pos=pos, change=f"R{pos}H")
+            names = list(refs)
+            for k in range(1 << len(names)):
+                chosen = [refs[n] for i, n in enumerate(names) if k >> i & 1]
+                base = onco.assess(r, {"missense_variant"}, "damaging", d, chosen).points
+                for extra in names:
+                    if refs[extra] in chosen:
+                        continue
+                    more = onco.assess(r, {"missense_variant"}, "damaging", d, [*chosen, refs[extra]]).points
+                    assert more >= base, (pos, [x.level for x in chosen], extra)
+
+
+def test_the_standards_rule_for_os1_is_reported_when_it_differs():
+    refs = [ref("p.Arg175His", "H", same=True)]
+    a = onco.assess(row(), {"missense_variant"}, "damaging", with_civic("TP53", "R175H", item(sig="Loss of Function")),
+                    refs)  # fmt: skip
+    assert a.points == 10  # OS3 + OS2 (stronger than OS1) + OP1 + OP4
+    assert "the standard's rule for OS1 would give 6 points" in a.evidence()
+
+
+def test_civic_release_names_are_english_whatever_the_locale():
+    import datetime as dt
+    import locale
+
+    old = locale.setlocale(locale.LC_TIME)
+    try:
+        for name in ("es_ES.UTF-8", "de_DE.UTF-8", "fr_FR.UTF-8"):
+            try:
+                locale.setlocale(locale.LC_TIME, name)
+                break
+            except locale.Error:
+                continue
+        assert onco.civic_releases(dt.date(2026, 1, 15)) == ["01-Jan-2026", "01-Dec-2025"]
+        assert onco.civic_releases(dt.date(2026, 8, 3)) == ["01-Aug-2026", "01-Jul-2026"]
+    finally:
+        locale.setlocale(locale.LC_TIME, old)

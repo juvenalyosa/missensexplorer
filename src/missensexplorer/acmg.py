@@ -8,7 +8,19 @@ counting of several tools). Two sources (PredictOptions.acmg_source):
   * "revel": the intervals ClinGen published: REVEL (Pejaver et al. 2022, as reprinted in Bergquist et
     al. 2025, Table 1); AlphaMissense when REVEL has no score (Bergquist et al., Genet Med 2025).
 Points follow the ACMG/AMP point system: Supporting 1, Moderate 2, (3), Strong 4; negative for BP4.
-The 3-point intervals count as Moderate under the 2015 guidelines.
+The 3-point level, between Moderate and Strong, is written "Moderate+" (PP3_Moderate+ +3) so that it is
+not mistaken for Moderate (2 points).
+
+BP4 means no predicted impact on the protein AND on splicing (Richards et al. 2015). It is therefore
+withheld when SpliceAI does not rule out a splicing effect: the ClinGen splicing subgroup takes a
+SpliceAI score of 0.1 or less as evidence of no splicing impact (Walker et al., AJHG 2023), so BP4 is
+not given above 0.1. PP3 is kept: a damaging protein prediction and a possible splicing effect point
+the same way, and PP3 is applied once.
+
+PP3 and the residue-level criteria (PS1/PM5 here; PM1, which a curator adds) can share information,
+such as the conservation of the residue; Pejaver et al. (2022) warn that combining a strong PP3 with
+them risks double counting, and recommend that PP3 plus PM1 not exceed 4 points. The tool does not cap
+the sum (it does not add the points up), but notes the combination (:func:`overlap_note`).
 
 PM2 (absent from controls) is given at Supporting strength (ClinGen SVI, 2020) only when gnomAD itself
 confirms the variant is absent and at least half of its exome samples have >= 20 reads at the
@@ -74,7 +86,8 @@ REVEL_BP4 = ((0.016, -4), (0.052, -3), (0.183, -2), (0.290, -1))
 # AlphaMissense: Bergquist et al., Genet Med 2025.
 AM_PP3 = ((0.990, 4), (0.972, 3), (0.906, 2), (0.792, 1))
 AM_BP4 = ((0.070, -3), (0.099, -2), (0.169, -1))
-STRENGTH = {1: "Supporting", 2: "Moderate", 3: "Moderate", 4: "Strong"}
+STRENGTH = {1: "Supporting", 2: "Moderate", 3: "Moderate+", 4: "Strong"}
+BP4_SPLICEAI_MAX = 0.1  # SpliceAI above this does not rule out a splicing effect (Walker et al. 2023)
 
 BA1_AF = 0.05
 BS1_AF = 0.01
@@ -147,6 +160,11 @@ def computational(row: Row, source: str = "model") -> tuple[str | None, int | No
     """
     if source not in SOURCES:
         raise ValueError(f"unknown PP3/BP4 source {source!r}; use one of {SOURCES}")
+    return _splicing_check(row, *_computational(row, source))
+
+
+def _computational(row: Row, source: str) -> tuple[str | None, int | None]:
+    """PP3/BP4 from the protein-level score alone (see :func:`computational`)."""
     if source == "model" and MODEL_CALIBRATED:
         ms = model.score(row)
         if ms is None:
@@ -161,6 +179,36 @@ def computational(row: Row, source: str = "model") -> tuple[str | None, int | No
         if value is not None:
             return _evidence(value, pp3, bp4, f"{tool} {value:.3f}")
     return None, None
+
+
+def _splicing_check(row: Row, text: str | None, pts: int | None) -> tuple[str | None, int | None]:
+    """Withhold BP4 unless SpliceAI rules out a splicing effect (score at most 0.1; Walker et al. 2023)."""
+    sp = _num(row.get("spliceai_max"))
+    if pts is not None and pts < 0 and text and (sp is None or sp > BP4_SPLICEAI_MAX):
+        code, shown = text.split(" ", 1)[0], text.split("(", 1)[1].rstrip(")")
+        why = "no SpliceAI score to rule out" if sp is None else f"SpliceAI {sp:.2f} does not rule out"
+        return f"none ({shown}; {code} withheld: {why} a splicing effect)", 0
+    return text, pts
+
+
+def overlap_note(row: Row) -> str | None:
+    """Note when a moderate or stronger PP3 meets PS1/PM5, which may share information (Pejaver 2022).
+
+    Args:
+        row: One results row with ``acmg_points`` and ``acmg_ps1_pm5`` filled.
+
+    Returns:
+        The note, or None.
+    """
+    pts = _num(row.get("acmg_points"))
+    ps = str(row.get("acmg_ps1_pm5") or "")
+    if pts is not None and pts >= 2 and ps[:3] in ("PS1", "PM5"):
+        return (
+            f"PP3 ({pts} points) and {ps.split(' ')[0]} may partly reflect the same residue-level information "
+            "(Pejaver et al. 2022): weigh their combination with care; if PM1 is added, PP3 + PM1 should not "
+            "exceed 4 points"
+        )
+    return None
 
 
 def thresholds_used(evidence: object) -> str | None:
@@ -178,6 +226,20 @@ def thresholds_used(evidence: object) -> str | None:
     if not text:
         return None
     return "model" if "(model " in text else "clingen"
+
+
+def ba1_grpmax(row: Row) -> float | None:
+    """Return the grpmax frequency that BA1 and the common-variant rule use.
+
+    Ensembl's grpmax, unless gnomAD itself was asked about a BA1 candidate (``_grpmax_2000``, set by
+    predict): then the highest frequency among the groups with at least 2,000 alleles, exomes and
+    genomes combined, as BA1 requires (Ghosh et al. 2018).
+    """
+    af = _num(row.get("gnomad_popmax_af"))
+    g2 = row.get("_grpmax_2000")
+    if af is not None and af > BA1_AF and isinstance(g2, tuple) and g2[0] is not None:
+        return float(g2[0])
+    return af
 
 
 def ba1_exception(row: Row) -> str | None:
@@ -281,8 +343,14 @@ def frequency(row: Row) -> str | None:
     pct = _pct(af)
     if af >= BS1_AF and ba1_exception(row):
         return f"frequent, but on the ClinGen BA1 exception list (grpmax {pct})"
-    if af >= BA1_AF:
-        return f"common: BA1 (grpmax {pct})"
+    if af > BA1_AF and (b := ba1_grpmax(row)) is not None and b <= BA1_AF:
+        return (
+            f"frequent: BS1 candidate (grpmax {pct}); BA1 not met: {_pct(b)} at most in the gnomAD groups "
+            "with >= 2,000 alleles"
+        )
+    if af > BA1_AF:
+        checked = isinstance(row.get("_grpmax_2000"), tuple)
+        return f"common: BA1 (grpmax {pct}{'' if checked else '; allele numbers not checked in gnomAD'})"
     if af >= BS1_AF:
         return f"frequent: BS1 candidate (grpmax {pct})"
     return f"rare (grpmax {pct})"

@@ -3,6 +3,110 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [2.5.0] — unreleased
+
+Corrections prompted by three rounds of expert review of the evaluation. The model and its PP3/BP4
+thresholds are retrained and recalibrated, so the results of 2.4 change.
+
+### Fixed
+- Missense model: the genes of the ClinVar benchmark were left out of training by an exact match on
+  ClinVar's gene-symbol field, which lists overlapping genes together ('LDLR;MIR6886'). Training now
+  leaves a variant out when the gene of its ClinVar name or any of its symbols is a benchmark gene;
+  cross-validation and the calibration's gene folds use the gene of the ClinVar name. The model is
+  retrained (version 2.5) and the PP3/BP4 thresholds recalibrated.
+- A missing predictor score is filled with the training mean, so it adds nothing to the score. The
+  median used before added a small term that the explanation did not show.
+- BP4 is withheld when SpliceAI does not rule out a splicing effect (score above 0.1, the ClinGen
+  splicing subgroup's threshold for no impact): BP4 means no predicted impact on the protein and on
+  splicing.
+- Evidence worth 3 points is written `PP3_Moderate+` / `BP4_Moderate+` instead of `_Moderate`, which
+  a curator would read as 2 points.
+- BA1 needs a population of at least 2,000 alleles (ClinGen, Ghosh et al. 2018): gnomAD itself is
+  asked about variants at or above 5%, and BA1 is not given when no such population exceeds 5%. BA1
+  now needs a frequency above 5%, as the guideline says (it was at or above).
+- BP4 is also withheld when there is no SpliceAI score to rule out a splicing effect; PS1/PM5 say so.
+- BA1 is not given below the higher BA1 threshold of a gene's expert panels (VWF 10%, ABCA4 16.3%):
+  BA1 at 5% applies to genes without a gene-specific rule (Ghosh et al. 2018). When gnomAD could not
+  be asked for allele numbers, the BA1 text says so.
+- PS1/PM5: a ClinVar reference variant with a single review star counts one step lower (a pathogenic
+  one like a likely pathogenic one; a likely pathogenic one not at all). Expert panels agreed with PM5
+  from single-star references in only about a third of their classifications.
+- Somatic oncogenicity:
+  - gene roles: IntOGen's role weighted by mutated samples in cohorts with a role (the majority of
+    cohorts made SMARCA4, KEAP1, GATA3 and CHEK2 "activating"), when it rests on at least 2 cohorts or
+    20 such samples and these are not outnumbered by samples in cohorts of ambiguous role (which made
+    PMS2 and SDHA "activating"); UniProt's curated keyword (tumour suppressor or proto-oncogene) when
+    IntOGen is absent, ambiguous or too thin; when they disagree, IntOGen decides only with at least 3
+    cohorts and 50 samples, otherwise the role is ambiguous (UniProt's Proto-oncogene keyword also marks
+    fusion genes such as RUNX1, NSD1 and CBFB, whose point mutations inactivate them; a few IntOGen
+    samples made SMARCB1 "activating"); genes known only to UniProt count too, and a note says when
+    UniProt could not be reached;
+  - OS1 never lowers the points: a ClinVar classification of the same amino-acid change and the
+    other evidence for that change (OS3, OM3, OP3, OS2, OM4) are alternatives, and the stronger is kept
+    (before, a likely oncogenic reference, OS1_Moderate, removed OS3, OS2 and OM4: TP53 p.K132N fell to
+    VUS). The standard does not combine OS1 with OS3, so keeping the hotspot path when it is stronger
+    departs from it; the evidence then gives the points under the standard's rule;
+  - OP4 ("absent from gnomAD") needs gnomAD itself to confirm the absence, with enough coverage, as
+    PM2 does (before, it was also given when gnomAD had not been asked);
+  - CIViC is read from its monthly release (citable), not the nightly file, with English month names
+    whatever the locale (the desktop app in Spanish built wrong release names);
+  - OVS1 is graded as ClinGen's loss-of-function guidance grades PVS1, which the standard
+    recommends: truncations that escape nonsense-mediated decay get OVS1_Strong or OVS1_Moderate by
+    the share of protein removed (before: no OVS1 anywhere in the last exon, which missed most APC
+    truncations); canonical splice variants by whether skipping the exon keeps the frame; lost start
+    codons OVS1_Moderate;
+  - OP1/SBP1 are applied in every gene, as the standard does, from the calibrated PP3/BP4 evidence
+    (before: not in activating genes, and from the model's call cut-offs);
+  - OS2 uses only CIViC's preclinical (functional) evidence, not clinical observations;
+  - cancerhotspots.org gene symbols are updated to HGNC's current ones (H3F3A is H3-3A), so those
+    hotspots are found;
+  - a variant's own ClinVar oncogenicity classification is found by its position, not only through
+    VEP's identifiers, so it is shown for many more variants (it is still never counted as evidence).
+- Desktop app: the *With frequency* and *AlphaMissense* column headers are no longer cut off.
+
+### Added
+- ClinGen expert panel specifications (`vcep.py`; table built from ClinGen's Criteria Specification
+  Registry by `benchmarks/make_vcep_table.py`: 127 released specifications, 126 with genes, 138
+  genes). For a variant in a covered gene, the new `vcep_specification` column names every
+  specification with its disease and link, and the new `acmg_notes` column gives one note per
+  specification on what differs from the tool's evidence:
+  - a strength the panel does not allow (stronger, or the 3-point level, which no panel uses; a weaker
+    PM2; a PS1/PM5 the tool lowered for a likely pathogenic or single-star reference, which the panel
+    would not apply);
+  - PP3/BP4 that the panel does not use for missense variants although CSpec marks them applicable
+    (the SCID genes, PALB2, APC, VHL, DDC, CDH1 and the brain malformation genes), quoted;
+  - that the panel sets its own predictor and thresholds for PP3/BP4;
+  - the panel's own BA1 threshold, read from its text (VWF's is above 10%, most are far below 5%), with a
+    warning when the panel applies it to the filtering allele frequency, which the tool does not compute;
+  - its conditions the tool cannot check, quoted from the clause that states them (for example,
+    references classified under its specification, PM5 not with PM1);
+  - the disease and mode of inheritance of each specification, from CSpec's structured fields;
+  - for the ten panels whose PP3/BP4, PM2 and BA1 rules were encoded by hand (`vcep_rules.py`), what
+    those rules give for the variant.
+  The notes are shown in the ACMG section of the desktop app, the web app and the reports.
+- A note when PP3 at moderate or stronger meets PS1/PM5, which may share residue-level information
+  (Pejaver et al. 2022); it is in `acmg_notes` too.
+- The run record lists the releases of the data sets used (CIViC, UniProt, IntOGen, cancerhotspots.org,
+  CSpec).
+- Benchmarks: per-variant tables for the ClinVar benchmark, the tool comparison and ProteinGym; the
+  ProteinGym comparison is paired by variant and reported by assay type; the tool comparison adds
+  variants absent from gnomAD and below 0.01%; the calibration tests leave out benchmark variants that
+  are in the calibration set and give exact (Katz) intervals and the probability that each band
+  reaches its ratio; the eRepo comparison (`validate_erepo.py`, `erepo_analyses.py`) and the ClinVar
+  oncogenicity comparison (`validate_clinvar_oncogenicity.py`) are new; `erepo_vcep_rules.py` applies the
+  hand-encoded rules of the ten largest panels to their classifications (with the tool capped at each
+  specification's maximum strength, by approval period, with intervals over panels), and
+  `erepo_clinvar_history.py` recomputes PS1/PM5 with the monthly ClinVar release before each panel's
+  decision plus the panels' own earlier classifications. `public_tables.py` writes the per-variant
+  tables without the third-party scores that may not be redistributed (`benchmarks/results/public/`);
+  the full tables are git-ignored (the two that 2.4 tracked, `model_training_set.csv.gz` and
+  `egfr_validation.csv`, leave the index with this release). `benchmarks/requirements-lock.txt` lists the
+  exact package versions of the analysis environment.
+
+### Changed
+- The `acmg_notes` column is new and sits after `vcep_specification`; the overlap and expert-panel
+  notes moved there from `notes`. Scripts that read the CSV by column position must be updated.
+
 ## [2.4.0] — 2026-11-25
 
 ### Changed

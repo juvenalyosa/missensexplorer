@@ -220,8 +220,21 @@ res.sequences      # wild-type and mutant protein sequences per row
     ([Pejaver et al. 2022](https://pmc.ncbi.nlm.nih.gov/articles/PMC9748256/)) on the same ClinVar
     data that set REVEL's ClinGen thresholds, and checked on two independent sets
     ([details](docs/model.md#acmg-pp3bp4-from-the-model-score)).
-  - At the same strength of evidence, the model gives PP3 Strong to 46% of the pathogenic variants of
-    ClinVar's 2020 test set (REVEL: 28%) and BP4 to 76% of the benign ones (REVEL: 66%).
+  - The model gives PP3 Strong to 47% of the pathogenic variants of ClinVar's 2020 test set (REVEL at
+    ClinGen's thresholds: 28%) and BP4 to 76% of the benign ones (REVEL: 66%), with a similar rate of
+    evidence in the wrong direction. The strongest bands rest on few benign variants, so their
+    intervals are wide (see the calibration report).
+  - **ClinGen expert panels.** When the gene has a released ClinGen expert panel (VCEP) specification,
+    `vcep_specification` names each one with its disease and link, and `acmg_notes` says what differs
+    from the tool's evidence: strengths the panel does not allow (many allow PP3 only at supporting
+    strength), PP3/BP4 the panel does not use for missense variants, the panel's own BA1 threshold,
+    conditions the tool cannot check, and, for the ten panels whose rules are encoded
+    (`vcep_rules.py`), what those rules give. The panel's specification is the reference where one
+    exists: the tool's PP3/BP4 is its own calibration, not the panel's rule.
+  - BP4 is not given unless SpliceAI rules out a splicing effect (score at most 0.1). Evidence worth 3
+    points is written `Moderate+`. A strong PP3 next to PS1/PM5 comes with a note: they may share
+    residue-level information (Pejaver et al. 2022). A ClinVar reference variant with one review star
+    counts one step lower for PS1/PM5.
   - The calibration is this project's, not one published by ClinGen. `--acmg-source revel` (desktop
     app: *Options → PP3/BP4*) uses REVEL with ClinGen's published thresholds instead, or AlphaMissense
     when REVEL is missing ([Bergquist et al. 2025](https://www.ccs.neu.edu/home/radivojac/papers/bergquist_genetmed_2025.pdf)).
@@ -305,12 +318,12 @@ leaves the computer.
   splice-altering synonymous, mitochondrial, chromosome X, multi-allelic and GRCh37 variants. A
   nightly GitHub workflow checks that the external APIs still return the fields the tool reads.
 - **Measured against ClinVar, on genes the model never saw.** On 1,972 expert-reviewed (≥ 2 stars)
-  germline missense variants from 1,181 genes, version 2.3 calls 91% of the pathogenic variants
+  germline missense variants from 1,181 genes, version 2.5 calls 92% of the pathogenic variants
   *damaging* (v2.1: 89%) and 88% of the benign ones *benign* (v2.1: 87%). 92.7% of the variants get
-  a decisive call, and decisive calls are right 97% of the time (2.4% of pathogenic variants are
+  a decisive call, and decisive calls are right 97% of the time (2.2% of pathogenic variants are
   called benign; 3.2% of benign variants are called damaging, against 5.2% with v2.1). On **rare**
   variants (gnomAD < 0.1%), where most of a patient's variants are, 6.0% of the benign ones are
-  called damaging (v2.1: 9.0%) and 91.6% of the pathogenic ones are found (v2.1: 89.2%). The AUC of
+  called damaging (v2.1: 9.0%) and 91.9% of the pathogenic ones are found (v2.1: 89.2%). The AUC of
   the model score is 0.985 (v2.1: 0.959); on rare variants it is 0.974 (v2.1: 0.937). Some predictors
   were trained or calibrated on similar data, so treat absolute figures as optimistic. The
   [benchmark](benchmarks/results/clinvar_benchmark.md) has per-predictor, rare-variant and
@@ -318,20 +331,28 @@ leaves the computer.
   `benchmarks/clinvar_benchmark.py` and `benchmarks/train_model.py` reproduce them.
 - **Compared with 31 other predictors** on the same held-out variants
   ([comparison](docs/comparison.md)). Among the predictors that leave out allele frequency, as ClinGen
-  recommends for ACMG PP3/BP4, MissensExplorer ranks best (AUC 0.985; REVEL 0.982; AlphaMissense
-  0.964). MetaRNN ranks higher (0.996), but the gap is allele frequency, which MetaRNN takes as input.
-  Adding frequency to the MissensExplorer score gives the same AUC. The comparison also lists similar
+  recommends for ACMG PP3/BP4, MissensExplorer ranks best (AUC 0.985; REVEL 0.982, a small but
+  significant difference on all variants, not on rare ones; AlphaMissense 0.964). MetaRNN ranks
+  higher (0.996). It takes allele frequency as input, and adding frequency to the MissensExplorer score
+  gives the same AUC, but MetaRNN also stays ahead among variants below 0.01%, so frequency is not the
+  whole difference; MetaRNN falls behind on laboratory data. The comparison also lists similar
   software (ProtVar, VarSome, Franklin, InterVar, OpenCRAVAT…) and what each one uses.
-- **Checked on laboratory data, without ClinVar.** On 13,408 variants whose effect was measured by deep
-  mutational scanning (61 human proteins, [ProteinGym](https://proteingym.org)), MissensExplorer's
-  score correlates best with the measured loss of function: Spearman 0.469, against popEVE 0.460,
-  AlphaMissense 0.458, MetaRNN 0.438, REVEL 0.425 and CADD 0.344
-  ([results](benchmarks/results/proteingym_validation.md)).
+- **Checked on laboratory data, without ClinVar.** On 27,012 variants whose effect was measured by deep
+  mutational scanning (71 assays of 61 human proteins, [ProteinGym](https://proteingym.org)), the
+  model's score correlates with the measured loss of function (mean Spearman 0.462). Compared on the
+  same variants, popEVE is not significantly different (−0.009, 95% CI −0.025 to +0.005), AlphaMissense
+  is slightly lower (−0.013, −0.025 to −0.001), and REVEL (−0.043), MetaRNN (−0.034) and CADD (−0.125)
+  are lower ([results](benchmarks/results/proteingym_validation.md)).
 - **ACMG evidence calibrated like REVEL's.** The thresholds behind PP3/BP4 were set with ClinGen's
   method on ClinGen's own calibration data. A port of the authors' code reproduces REVEL's published
   thresholds to within 0.002. On ClinVar's 2020 test set every evidence band reaches the likelihood
-  ratio its strength needs, and the model gives stronger evidence more often than REVEL
+  ratio its strength needs in point estimate (the lower bound falls short for PP3 Moderate+ and BP4
+  Strong), and the model gives stronger evidence more often than REVEL
   ([calibration](benchmarks/results/acmg_calibration.md)).
+- **Compared with ClinGen's expert panels.** On 6,310 missense variants classified by 48 panels
+  (Evidence Repository), the tool applies PP3 in 90% and BP4 in 77% of the classifications where the
+  panel did, rarely in the opposite direction, but gives PP3 at a higher strength than most panels
+  ([results](benchmarks/results/erepo_validation.md), [more](benchmarks/results/erepo_analyses.md)).
 - The desktop app writes an error log (*Help → Open error log*; on macOS
   `~/Library/Logs/MissensExplorer`).
 
@@ -375,8 +396,19 @@ python benchmarks/compare_tools.py      # same benchmark, 31 other predictors (d
 python benchmarks/validate_proteingym.py  # independent check on deep mutational scanning data
 python benchmarks/feature_tests.py      # inputs tested for the model and rejected
 python benchmarks/calibrate_acmg.py     # ACMG PP3/BP4 thresholds of the model score (ClinGen method)
+python benchmarks/calibration_by_inputs.py  # the PP3/BP4 bands by which predictor scores are missing
 python benchmarks/acmg_criteria.py      # how informative the automated PS1, PM5 and PM2 are
 python benchmarks/train_frequency_score.py  # the score with frequency (model score + gnomAD grpmax)
+python benchmarks/validate_erepo.py     # automated ACMG criteria against ClinGen expert panels (eRepo)
+python benchmarks/erepo_analyses.py     # its secondary analyses (per panel, clustered intervals, points)
+python benchmarks/erepo_vcep_rules.py   # the ten largest panels' own rules against their decisions (consistency check)
+python benchmarks/erepo_clinvar_history.py  # PS1/PM5 with the references available at each panel's decision
+python benchmarks/make_vcep_table.py    # refresh the ClinGen VCEP specification table (CSpec)
+python benchmarks/validate_egfr.py      # the model on EGFR transformation assays (outside its scope)
+python benchmarks/validate_oncogenicity.py  # somatic points on EGFR and TP53 laboratory assays
+python benchmarks/validate_clinvar_oncogenicity.py  # somatic points against ClinVar oncogenicity classes
+python benchmarks/public_tables.py      # the redistributable subset of the per-variant tables (results/public/)
+# exact package versions of the environment that produced the paper's results: benchmarks/requirements-lock.txt
 ```
 
 ## Data sources
@@ -385,7 +417,26 @@ Ensembl VEP REST (McLaren et al., 2016) · AlphaMissense (Cheng et al., 2023) ·
 al., 2016) · CADD (Rentzsch et al., 2019) · EVE (Frazer et al., 2021) and popEVE · SpliceAI
 (Jaganathan et al., 2019) · SIFT · PolyPhen-2 · UniProt · AlphaFold DB (Varadi et al., 2024) ·
 ClinVar · gnomAD · Grantham (1974) · BLOSUM62 · Kyte–Doolittle hydropathy · ClinGen PP3/BP4
-calibration (Pejaver et al., 2022; Bergquist et al., 2025).
+calibration (Pejaver et al., 2022; Bergquist et al., 2025). Somatic oncogenicity points:
+cancerhotspots.org (Chang et al., 2018) · IntOGen driver compendium (Martínez-Jiménez et al., 2020) ·
+UniProt keywords · CIViC (Griffith et al., 2017) · ClinVar oncogenicity classifications. Expert panel
+specifications: ClinGen Criteria Specification Registry (CSpec).
+
+### Licences of the data
+
+MissensExplorer itself is GPL-3.0. Some of the scores it fetches are not free for every use:
+
+- **REVEL, CADD and SpliceAI** scores are for non-commercial use only (as stated in Ensembl VEP's
+  plugin documentation and by their providers). Commercial users need a licence from the providers
+  or must leave them out.
+- **AlphaMissense** predictions are CC BY 4.0 (cite Cheng et al., 2023). **CIViC**, **IntOGen** and
+  ClinGen's data (including the CSpec specifications) are CC0; **UniProt** and **MONDO** are CC BY 4.0.
+- **cancerhotspots.org** states no licence for its data; the app reads it at run time and does not
+  redistribute it.
+- The benchmark scripts' full per-variant tables contain these third-party scores and stay local; the
+  repository keeps a redistributable subset (`benchmarks/results/public/`, written by
+  `benchmarks/public_tables.py`, with a NOTICE).
+- **OncoKB** is not used: its terms do not allow clinical or commercial use without a licence.
 
 # Powered by
 

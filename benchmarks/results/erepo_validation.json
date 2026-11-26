@@ -1,0 +1,767 @@
+{
+ "generated": "2026-11-26T14:27:49Z",
+ "missensexplorer": "2.5.0",
+ "run": {
+  "tool": "MissensExplorer 2.5.0",
+  "started_utc": "2026-11-26T14:27:44+00:00",
+  "seconds": "3.6",
+  "assembly": "GRCh38",
+  "annotation": "Ensembl VEP REST, release 116",
+  "ensembl_release": "116",
+  "options": "{'assembly': 'auto', 'default_gene': None, 'genes': None, 'sample': None, 'pass_only': False, 'include_noncoding': False, 'predictors': True, 'protein_context': False, 'clinvar': True, 'sequences': False, 'vep': 'rest', 'vep_command': None, 'vep_args': None, 'offline': False, 'common_af': 0.05, 'acmg_source': 'model', 'gnomad_check': True, 'oncogenicity': False, 'workers': 6, 'cache': True}",
+  "inputs": "{'text_lines': 6389, 'files': []}",
+  "sources": "{'ClinVar': 'ok', 'Ensembl VEP': 'ok', 'VEP predictor plugins': 'ok'}",
+  "data_versions": "{'ClinGen CSpec (expert panel specifications)': 'accessed 2026-11-26'}",
+  "missense_model": "{'version': '2.5', 'trained': '2026-11-26', 'training_variants': 9086, 'cut_offs': [0.3, 0.76]}",
+  "python": "3.13.5"
+ },
+ "erepo_sha256": "5ec56489fed35c6a0f298c7a95d40f6764cd60f181c820976a9d0ad2c3fb07f9",
+ "steps": {
+  "classifications": 13945,
+  "not retracted": 13938,
+  "single-nucleotide missense with a ClinVar Variation ID": 6400,
+  "unique variants (latest approval kept)": 6389,
+  "mapped to GRCh38 (ClinVar variant_summary)": 6389,
+  "annotated as missense on the panel's gene": 6310
+ },
+ "panels": 48,
+ "genes": 133,
+ "assertions": {
+  "Uncertain Significance": 2479,
+  "Pathogenic": 1264,
+  "Likely Pathogenic": 1373,
+  "Likely Benign": 580,
+  "Benign": 614
+ },
+ "overlap": {
+  "gene never seen": 5789,
+  "variant in training": 131,
+  "gene in training": 390
+ },
+ "criteria": {
+  "PP3": {
+   "evaluated": 5153,
+   "panel_met": 3098,
+   "panel_not_met": 2055,
+   "tp": 2777,
+   "fn": 321,
+   "fp": 453,
+   "tn": 1602,
+   "sensitivity": 0.896385,
+   "sensitivity_ci": [
+    0.885158,
+    0.90663
+   ],
+   "specificity": 0.779562,
+   "specificity_ci": [
+    0.761127,
+    0.796954
+   ],
+   "ppv": 0.859752,
+   "ppv_ci": [
+    0.847349,
+    0.871301
+   ],
+   "tool_applied_not_evaluated": 223
+  },
+  "BP4": {
+   "evaluated": 3134,
+   "panel_met": 1011,
+   "panel_not_met": 2123,
+   "tp": 775,
+   "fn": 236,
+   "fp": 399,
+   "tn": 1724,
+   "sensitivity": 0.766568,
+   "sensitivity_ci": [
+    0.739513,
+    0.791604
+   ],
+   "specificity": 0.812058,
+   "specificity_ci": [
+    0.794882,
+    0.828107
+   ],
+   "ppv": 0.660136,
+   "ppv_ci": [
+    0.632559,
+    0.686669
+   ],
+   "tool_applied_not_evaluated": 385
+  },
+  "PM2": {
+   "evaluated": 5345,
+   "panel_met": 4148,
+   "panel_not_met": 1197,
+   "tp": 2002,
+   "fn": 2146,
+   "fp": 10,
+   "tn": 1187,
+   "sensitivity": 0.482642,
+   "sensitivity_ci": [
+    0.467459,
+    0.497858
+   ],
+   "specificity": 0.991646,
+   "specificity_ci": [
+    0.98469,
+    0.995456
+   ],
+   "ppv": 0.99503,
+   "ppv_ci": [
+    0.990875,
+    0.997298
+   ],
+   "tool_applied_not_evaluated": 71
+  },
+  "PS1": {
+   "evaluated": 2060,
+   "panel_met": 65,
+   "panel_not_met": 1995,
+   "tp": 39,
+   "fn": 26,
+   "fp": 35,
+   "tn": 1960,
+   "sensitivity": 0.6,
+   "sensitivity_ci": [
+    0.47856,
+    0.71028
+   ],
+   "specificity": 0.982456,
+   "specificity_ci": [
+    0.975699,
+    0.987359
+   ],
+   "ppv": 0.527027,
+   "ppv_ci": [
+    0.414774,
+    0.636613
+   ],
+   "tool_applied_not_evaluated": 61
+  },
+  "PM5": {
+   "evaluated": 3245,
+   "panel_met": 724,
+   "panel_not_met": 2521,
+   "tp": 641,
+   "fn": 83,
+   "fp": 527,
+   "tn": 1994,
+   "sensitivity": 0.885359,
+   "sensitivity_ci": [
+    0.860091,
+    0.90656
+   ],
+   "specificity": 0.790956,
+   "specificity_ci": [
+    0.774646,
+    0.80638
+   ],
+   "ppv": 0.548801,
+   "ppv_ci": [
+    0.52015,
+    0.577133
+   ],
+   "tool_applied_not_evaluated": 490
+  },
+  "BA1": {
+   "evaluated": 2758,
+   "panel_met": 458,
+   "panel_not_met": 2300,
+   "tp": 97,
+   "fn": 361,
+   "fp": 0,
+   "tn": 2300,
+   "sensitivity": 0.21179,
+   "sensitivity_ci": [
+    0.176848,
+    0.251527
+   ],
+   "specificity": 1.0,
+   "specificity_ci": [
+    0.998333,
+    1.0
+   ],
+   "ppv": 1.0,
+   "ppv_ci": [
+    0.961906,
+    1.0
+   ],
+   "tool_applied_not_evaluated": 0
+  }
+ },
+ "criteria_by_period": {
+  "approved before 2023": {
+   "PP3": {
+    "evaluated": 891,
+    "panel_met": 619,
+    "panel_not_met": 272,
+    "tp": 563,
+    "fn": 56,
+    "fp": 75,
+    "tn": 197,
+    "sensitivity": 0.909532,
+    "sensitivity_ci": [
+     0.884337,
+     0.929675
+    ],
+    "specificity": 0.724265,
+    "specificity_ci": [
+     0.668312,
+     0.773971
+    ],
+    "ppv": 0.882445,
+    "ppv_ci": [
+     0.855134,
+     0.905178
+    ],
+    "tool_applied_not_evaluated": 37
+   },
+   "BP4": {
+    "evaluated": 449,
+    "panel_met": 96,
+    "panel_not_met": 353,
+    "tp": 86,
+    "fn": 10,
+    "fp": 47,
+    "tn": 306,
+    "sensitivity": 0.895833,
+    "sensitivity_ci": [
+     0.818778,
+     0.942428
+    ],
+    "specificity": 0.866856,
+    "specificity_ci": [
+     0.827437,
+     0.898376
+    ],
+    "ppv": 0.646617,
+    "ppv_ci": [
+     0.562304,
+     0.722698
+    ],
+    "tool_applied_not_evaluated": 99
+   },
+   "PM2": {
+    "evaluated": 897,
+    "panel_met": 760,
+    "panel_not_met": 137,
+    "tp": 307,
+    "fn": 453,
+    "fp": 1,
+    "tn": 136,
+    "sensitivity": 0.403947,
+    "sensitivity_ci": [
+     0.369629,
+     0.439232
+    ],
+    "specificity": 0.992701,
+    "specificity_ci": [
+     0.959814,
+     0.99871
+    ],
+    "ppv": 0.996753,
+    "ppv_ci": [
+     0.981841,
+     0.999427
+    ],
+    "tool_applied_not_evaluated": 4
+   },
+   "PS1": {
+    "evaluated": 342,
+    "panel_met": 10,
+    "panel_not_met": 332,
+    "tp": 10,
+    "fn": 0,
+    "fp": 6,
+    "tn": 326,
+    "sensitivity": 1.0,
+    "sensitivity_ci": [
+     0.722467,
+     1.0
+    ],
+    "specificity": 0.981928,
+    "specificity_ci": [
+     0.961139,
+     0.991692
+    ],
+    "ppv": 0.625,
+    "ppv_ci": [
+     0.38641,
+     0.815188
+    ],
+    "tool_applied_not_evaluated": 21
+   },
+   "PM5": {
+    "evaluated": 618,
+    "panel_met": 148,
+    "panel_not_met": 470,
+    "tp": 131,
+    "fn": 17,
+    "fp": 182,
+    "tn": 288,
+    "sensitivity": 0.885135,
+    "sensitivity_ci": [
+     0.823747,
+     0.927036
+    ],
+    "specificity": 0.612766,
+    "specificity_ci": [
+     0.567983,
+     0.655721
+    ],
+    "ppv": 0.41853,
+    "ppv_ci": [
+     0.36519,
+     0.473846
+    ],
+    "tool_applied_not_evaluated": 123
+   },
+   "BA1": {
+    "evaluated": 466,
+    "panel_met": 114,
+    "panel_not_met": 352,
+    "tp": 23,
+    "fn": 91,
+    "fp": 0,
+    "tn": 352,
+    "sensitivity": 0.201754,
+    "sensitivity_ci": [
+     0.138371,
+     0.284583
+    ],
+    "specificity": 1.0,
+    "specificity_ci": [
+     0.989205,
+     1.0
+    ],
+    "ppv": 1.0,
+    "ppv_ci": [
+     0.856883,
+     1.0
+    ],
+    "tool_applied_not_evaluated": 0
+   }
+  },
+  "approved 2023 or later": {
+   "PP3": {
+    "evaluated": 4262,
+    "panel_met": 2479,
+    "panel_not_met": 1783,
+    "tp": 2214,
+    "fn": 265,
+    "fp": 378,
+    "tn": 1405,
+    "sensitivity": 0.893102,
+    "sensitivity_ci": [
+     0.880325,
+     0.904663
+    ],
+    "specificity": 0.787998,
+    "specificity_ci": [
+     0.768417,
+     0.80634
+    ],
+    "ppv": 0.854167,
+    "ppv_ci": [
+     0.840055,
+     0.86723
+    ],
+    "tool_applied_not_evaluated": 186
+   },
+   "BP4": {
+    "evaluated": 2685,
+    "panel_met": 915,
+    "panel_not_met": 1770,
+    "tp": 689,
+    "fn": 226,
+    "fp": 352,
+    "tn": 1418,
+    "sensitivity": 0.753005,
+    "sensitivity_ci": [
+     0.724043,
+     0.779853
+    ],
+    "specificity": 0.80113,
+    "specificity_ci": [
+     0.781891,
+     0.819064
+    ],
+    "ppv": 0.661864,
+    "ppv_ci": [
+     0.632577,
+     0.68996
+    ],
+    "tool_applied_not_evaluated": 286
+   },
+   "PM2": {
+    "evaluated": 4448,
+    "panel_met": 3388,
+    "panel_not_met": 1060,
+    "tp": 1695,
+    "fn": 1693,
+    "fp": 9,
+    "tn": 1051,
+    "sensitivity": 0.500295,
+    "sensitivity_ci": [
+     0.483468,
+     0.517122
+    ],
+    "specificity": 0.991509,
+    "specificity_ci": [
+     0.983943,
+     0.995527
+    ],
+    "ppv": 0.994718,
+    "ppv_ci": [
+     0.989992,
+     0.997219
+    ],
+    "tool_applied_not_evaluated": 67
+   },
+   "PS1": {
+    "evaluated": 1718,
+    "panel_met": 55,
+    "panel_not_met": 1663,
+    "tp": 29,
+    "fn": 26,
+    "fp": 29,
+    "tn": 1634,
+    "sensitivity": 0.527273,
+    "sensitivity_ci": [
+     0.397915,
+     0.653069
+    ],
+    "specificity": 0.982562,
+    "specificity_ci": [
+     0.975068,
+     0.987831
+    ],
+    "ppv": 0.5,
+    "ppv_ci": [
+     0.375383,
+     0.624617
+    ],
+    "tool_applied_not_evaluated": 40
+   },
+   "PM5": {
+    "evaluated": 2627,
+    "panel_met": 576,
+    "panel_not_met": 2051,
+    "tp": 510,
+    "fn": 66,
+    "fp": 345,
+    "tn": 1706,
+    "sensitivity": 0.885417,
+    "sensitivity_ci": [
+     0.856812,
+     0.908914
+    ],
+    "specificity": 0.831789,
+    "specificity_ci": [
+     0.814984,
+     0.847354
+    ],
+    "ppv": 0.596491,
+    "ppv_ci": [
+     0.563246,
+     0.628874
+    ],
+    "tool_applied_not_evaluated": 367
+   },
+   "BA1": {
+    "evaluated": 2292,
+    "panel_met": 344,
+    "panel_not_met": 1948,
+    "tp": 74,
+    "fn": 270,
+    "fp": 0,
+    "tn": 1948,
+    "sensitivity": 0.215116,
+    "sensitivity_ci": [
+     0.174967,
+     0.261558
+    ],
+    "specificity": 1.0,
+    "specificity_ci": [
+     0.998032,
+     1.0
+    ],
+    "ppv": 1.0,
+    "ppv_ci": [
+     0.95065,
+     1.0
+    ],
+    "tool_applied_not_evaluated": 0
+   }
+  }
+ },
+ "strength": {
+  "PP3": {
+   "panel 0 / tool 0": 1602,
+   "panel 0 / tool 1": 227,
+   "panel 0 / tool 2": 122,
+   "panel 0 / tool 3": 44,
+   "panel 0 / tool 4": 60,
+   "panel 1 / tool 0": 297,
+   "panel 1 / tool 1": 344,
+   "panel 1 / tool 2": 430,
+   "panel 1 / tool 3": 296,
+   "panel 1 / tool 4": 1135,
+   "panel 2 / tool 0": 23,
+   "panel 2 / tool 1": 72,
+   "panel 2 / tool 2": 113,
+   "panel 2 / tool 3": 102,
+   "panel 2 / tool 4": 200,
+   "panel 4 / tool 0": 1,
+   "panel 4 / tool 1": 6,
+   "panel 4 / tool 2": 6,
+   "panel 4 / tool 3": 8,
+   "panel 4 / tool 4": 65
+  },
+  "BP4": {
+   "panel 0 / tool 0": 1724,
+   "panel 0 / tool 1": 163,
+   "panel 0 / tool 2": 173,
+   "panel 0 / tool 3": 49,
+   "panel 0 / tool 4": 14,
+   "panel 1 / tool 0": 232,
+   "panel 1 / tool 1": 169,
+   "panel 1 / tool 2": 360,
+   "panel 1 / tool 3": 220,
+   "panel 1 / tool 4": 20,
+   "panel 4 / tool 0": 4,
+   "panel 4 / tool 3": 1,
+   "panel 4 / tool 4": 5
+  }
+ },
+ "conflicts": {
+  "panel PP3, tool BP4": 14,
+  "panel BP4, tool PP3": 24,
+  "panel PP3 (any)": 3098,
+  "panel BP4 (any)": 1011,
+  "panel P/LP, tool BP4": 37,
+  "panel B/LB, tool PP3": 97,
+  "panel P/LP": 2637,
+  "panel B/LB": 1194
+ },
+ "auc": {
+  "all": {
+   "model_score": {
+    "n": 3815,
+    "pathogenic": 2636,
+    "benign": 1179,
+    "coverage": 0.9958,
+    "auc": 0.9606,
+    "ci": [
+     0.954,
+     0.9669
+    ]
+   },
+   "revel": {
+    "n": 3737,
+    "pathogenic": 2589,
+    "benign": 1148,
+    "coverage": 0.9755,
+    "auc": 0.9525,
+    "ci": [
+     0.9448,
+     0.9596
+    ]
+   },
+   "alphamissense": {
+    "n": 3796,
+    "pathogenic": 2631,
+    "benign": 1165,
+    "coverage": 0.9909,
+    "auc": 0.9344,
+    "ci": [
+     0.9258,
+     0.9423
+    ]
+   }
+  },
+  "variant not in training": {
+   "model_score": {
+    "n": 3684,
+    "pathogenic": 2551,
+    "benign": 1133,
+    "coverage": 0.9957,
+    "auc": 0.9612,
+    "ci": [
+     0.9547,
+     0.9676
+    ]
+   },
+   "revel": {
+    "n": 3616,
+    "pathogenic": 2510,
+    "benign": 1106,
+    "coverage": 0.9773,
+    "auc": 0.9548,
+    "ci": [
+     0.9473,
+     0.9625
+    ]
+   },
+   "alphamissense": {
+    "n": 3670,
+    "pathogenic": 2548,
+    "benign": 1122,
+    "coverage": 0.9919,
+    "auc": 0.9344,
+    "ci": [
+     0.9258,
+     0.9425
+    ]
+   }
+  },
+  "gene never seen": {
+   "model_score": {
+    "n": 3486,
+    "pathogenic": 2467,
+    "benign": 1019,
+    "coverage": 0.9954,
+    "auc": 0.9605,
+    "ci": [
+     0.9536,
+     0.967
+    ]
+   },
+   "revel": {
+    "n": 3419,
+    "pathogenic": 2426,
+    "benign": 993,
+    "coverage": 0.9763,
+    "auc": 0.9522,
+    "ci": [
+     0.9436,
+     0.9605
+    ]
+   },
+   "alphamissense": {
+    "n": 3475,
+    "pathogenic": 2467,
+    "benign": 1008,
+    "coverage": 0.9923,
+    "auc": 0.9362,
+    "ci": [
+     0.9271,
+     0.9447
+    ]
+   }
+  },
+  "approved 2023 or later, variant not in training": {
+   "model_score": {
+    "n": 2880,
+    "pathogenic": 1961,
+    "benign": 919,
+    "coverage": 0.9945,
+    "auc": 0.9602,
+    "ci": [
+     0.9526,
+     0.9675
+    ]
+   },
+   "revel": {
+    "n": 2831,
+    "pathogenic": 1928,
+    "benign": 903,
+    "coverage": 0.9776,
+    "auc": 0.9515,
+    "ci": [
+     0.9426,
+     0.9601
+    ]
+   },
+   "alphamissense": {
+    "n": 2870,
+    "pathogenic": 1958,
+    "benign": 912,
+    "coverage": 0.991,
+    "auc": 0.9351,
+    "ci": [
+     0.9259,
+     0.944
+    ]
+   }
+  }
+ },
+ "calls": {
+  "all": {
+   "P/LP": {
+    "Likely damaging": 2348,
+    "Uncertain (conflicting predictors)": 163,
+    "Uncertain (intermediate scores)": 64,
+    "Likely benign": 61,
+    "Likely benign (single predictor)": 1
+   },
+   "B/LB": {
+    "Likely benign": 890,
+    "Uncertain (conflicting predictors)": 93,
+    "Likely damaging": 107,
+    "Likely benign (common in population)": 10,
+    "Uncertain (intermediate scores)": 79,
+    "Likely benign (single predictor)": 15
+   }
+  },
+  "variant not in training": {
+   "P/LP": {
+    "Likely damaging": 2273,
+    "Uncertain (conflicting predictors)": 158,
+    "Uncertain (intermediate scores)": 64,
+    "Likely benign": 56,
+    "Likely benign (single predictor)": 1
+   },
+   "B/LB": {
+    "Likely benign": 857,
+    "Uncertain (conflicting predictors)": 89,
+    "Likely damaging": 102,
+    "Likely benign (common in population)": 10,
+    "Uncertain (intermediate scores)": 75,
+    "Likely benign (single predictor)": 15
+   }
+  },
+  "gene never seen": {
+   "P/LP": {
+    "Likely damaging": 2193,
+    "Uncertain (conflicting predictors)": 156,
+    "Uncertain (intermediate scores)": 63,
+    "Likely benign": 55,
+    "Likely benign (single predictor)": 1
+   },
+   "B/LB": {
+    "Likely benign": 768,
+    "Uncertain (conflicting predictors)": 81,
+    "Likely damaging": 90,
+    "Likely benign (common in population)": 10,
+    "Uncertain (intermediate scores)": 70,
+    "Likely benign (single predictor)": 15
+   }
+  },
+  "approved 2023 or later, variant not in training": {
+   "P/LP": {
+    "Likely damaging": 1754,
+    "Uncertain (conflicting predictors)": 108,
+    "Uncertain (intermediate scores)": 53,
+    "Likely benign": 46,
+    "Likely benign (single predictor)": 1
+   },
+   "B/LB": {
+    "Likely benign": 687,
+    "Uncertain (conflicting predictors)": 69,
+    "Likely damaging": 87,
+    "Likely benign (common in population)": 10,
+    "Uncertain (intermediate scores)": 66,
+    "Likely benign (single predictor)": 15
+   }
+  },
+  "VUS (all)": {
+   "Likely damaging": 1183,
+   "Uncertain (intermediate scores)": 197,
+   "Likely benign": 778,
+   "Uncertain (conflicting predictors)": 321
+  }
+ },
+ "seconds": 51
+}

@@ -50,7 +50,7 @@ one. A difference is called real only when its 95% paired bootstrap interval exc
 | ClinPred (ClinVar-trained, uses frequency) | 0.993 | 0.973 | 0.971 |
 | BayesDel with AF (uses frequency) | 0.992 | 0.972 | 0.969 |
 | MutationTaster2021 (ClinVar/HGMD look-up) | 0.992 | 0.974 | 0.972 |
-| **MissensExplorer v2.3** | **0.985** | **0.974** | **0.971** |
+| **MissensExplorer v2.5** | **0.985** | **0.974** | **0.971** |
 | PHACTboost | 0.983 | 0.957 | 0.956 |
 | REVEL (Franklin's PP3/BP4) | 0.982 | 0.972 | 0.966 |
 | BayesDel without AF | 0.977 | 0.962 | 0.950 |
@@ -73,14 +73,19 @@ release, so no tool trained before then can have seen it.
   - It significantly beats AlphaMissense, BayesDel without AF, VARITY and PHACTboost on rare and new
     variants, and gMVP on new variants.
   - It also scores the 4% of variants that REVEL leaves out, through AlphaMissense.
-- **MetaRNN ranks higher, because of frequency.**
+- **MetaRNN ranks higher.**
   - MetaRNN is significantly ahead on all three sets (+0.009 to +0.012).
   - MetaRNN takes allele frequency as input. Adding frequency to the MissensExplorer score as a second
-    feature gives the same AUC as MetaRNN: 0.996, 0.983 and 0.982. The tool now offers that
-    combination as an extra column for ranking variants
+    feature gives the same AUC as MetaRNN: 0.996, 0.983 and 0.982. The tool offers that combination
+    as an extra column for ranking variants
     ([score with frequency](model.md#score-with-frequency-for-ranking)). It is not used for the
     verdict or for ACMG evidence.
-  - The gap is therefore the frequency, not better protein-level prediction.
+  - Whether its lead comes from frequency is not settled by these data. Among the 920 variants below
+    0.01% or absent from gnomAD (865 pathogenic, 55 benign), MetaRNN's lead is not significant (0.961
+    against 0.947; +0.013, 95% CI −0.008 to 0.042). Among the 412 present below 0.01% it is (0.966
+    against 0.933; 95% CI of the difference 0.007 to 0.068), but frequency alone still ranks those
+    variants with an AUC of 0.707, so the stratum does not remove frequency's information. MetaRNN was
+    trained on ClinVar, which this benchmark samples; on laboratory data (below) it falls behind.
 - **ClinPred, BayesDel with AF and MutationTaster2021** are ahead on all variants but level with
   MissensExplorer on rare and new ones. Their edge sits in the common benign variants, which
   frequency alone already separates (AUC 0.978).
@@ -93,25 +98,24 @@ release, so no tool trained before then can have seen it.
 
 ### On laboratory data (independent of ClinVar)
 
-Deep mutational scanning data from [ProteinGym](https://proteingym.org): 13,408 variants measured on
-61 human proteins
+Deep mutational scanning data from [ProteinGym](https://proteingym.org): 27,012 variants measured in 71
+assays of 61 human proteins, each tool compared with MissensExplorer on the same variants
 ([full results](../benchmarks/results/proteingym_validation.md)). The order changes:
 
-| Spearman with measured loss of function | |
-|---|---|
-| **MissensExplorer v2.3** | **0.469** |
-| popEVE | 0.460 |
-| AlphaMissense | 0.458 |
-| MetaRNN | 0.438 |
-| VARITY_R | 0.431 |
-| REVEL | 0.425 |
-| ClinPred | 0.405 |
-| CADD | 0.344 |
+| Spearman with measured loss of function | | Difference from MissensExplorer (95% CI) |
+|---|---|---|
+| **MissensExplorer v2.5** | **0.462** | — |
+| popEVE | 0.453 | −0.009 (−0.025 to +0.005) |
+| AlphaMissense | 0.453 | −0.013 (−0.025 to −0.001) |
+| MetaRNN | 0.431 | −0.034 (−0.052 to −0.018) |
+| VARITY_R | 0.430 | −0.033 (−0.053 to −0.015) |
+| REVEL | 0.419 | −0.043 (−0.053 to −0.032) |
+| ClinPred | 0.402 | −0.059 (−0.073 to −0.044) |
+| CADD | 0.337 | −0.125 (−0.152 to −0.100) |
 
-- MissensExplorer ranks first.
-- MetaRNN and ClinPred, ahead on ClinVar thanks to allele frequency, fall significantly behind it.
-- popEVE and AlphaMissense, which use no clinical labels, come next. Their gap to MissensExplorer is
-  within noise.
+- MissensExplorer is level with popEVE and slightly ahead of AlphaMissense, which use no clinical
+  labels.
+- MetaRNN and ClinPred, ahead on ClinVar, fall significantly behind it.
 
 ### Calls on rare variants
 
@@ -120,7 +124,7 @@ MissensExplorer verdict:
 
 | Rare variants | Pathogenic called damaging | Benign called damaging | Decisive calls | Decisive calls right |
 |---|---|---|---|---|
-| **MissensExplorer v2.3** | **91.6%** | 6.0% | **92.4%** | 96.8% |
+| **MissensExplorer v2.5** | **91.9%** | 6.0% | **92.7%** | 96.9% |
 | BayesDel without AF | 88.2% | 7.0% | 88.0% | 96.7% |
 | REVEL | 86.0% | 6.0% | 85.3% | **97.6%** |
 | VARITY_R | 77.7% | 5.0% | 77.4% | 96.7% |
@@ -130,7 +134,7 @@ MissensExplorer verdict:
 
 - Against REVEL at the same false-alarm rate, MissensExplorer finds more pathogenic variants and
   gives a decisive call more often.
-- REVEL calls fewer pathogenic variants benign (1.2% against 2.3%), so it is right a little more
+- REVEL calls fewer pathogenic variants benign (1.2% against 2.2%), so it is right a little more
   often when it decides.
 
 ## Caveats

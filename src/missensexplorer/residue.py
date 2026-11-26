@@ -7,11 +7,14 @@ PM5  a different missense change at a residue where a missense change is establi
 The lower strengths for likely pathogenic reference variants follow several ClinGen expert panel
 specifications (e.g. glaucoma, HNF4A). Only one of the two is given (the stronger), never both.
 
-Reference variants are ClinVar germline classifications Pathogenic, Pathogenic/Likely pathogenic or
-Likely pathogenic with review criteria (>= 1 star, no conflicts). They are matched on the reported
-transcript (MANE Select RefSeq, as in ClinVar's variant names), the protein position and the
-reference amino acid; the variant itself never counts. When the variant may act on splicing
-(SpliceAI >= 0.2), PS1/PM5 are not given: its effect need not be the amino-acid change.
+Reference variants are ClinVar germline classifications Pathogenic, Pathogenic/Likely pathogenic
+(counted as pathogenic) or Likely pathogenic with review criteria (>= 1 star, no conflicts). A
+reference with a single review star (one submitter, not reviewed by anyone else) counts one step lower:
+a pathogenic one like a likely pathogenic one, and a likely pathogenic one not at all. References are
+matched on the reported transcript (MANE Select RefSeq, as in ClinVar's variant names), the protein
+position and the reference amino acid; the variant itself never counts. When the variant may act on
+splicing (SpliceAI >= 0.2), PS1/PM5 are not given: its effect need not be the amino-acid change; with
+no SpliceAI score, the evidence says so.
 
 Not checked automatically: whether the reference variant's classification is independent of PS1/PM5,
 and whether the reference variant itself acts on splicing (check it for codons at exon edges).
@@ -108,7 +111,18 @@ def references(row: Row, records: dict[str, dict[str, Any]], assembly: str) -> l
         if m.group(2) == own_cdna or _same_allele(rec, own, assembly):
             continue  # the variant itself
         out.append(Reference(acc, m.group(2), f"p.{m.group(3)}{m.group(4)}{m.group(5)}", level, stars, a_aa == alt_aa))
-    return sorted(out, key=lambda x: (not x.same_change, x.level != "P", -x.stars, x.accession))
+    return sorted(out, key=lambda x: (not x.same_change, -rank(x), x.level != "P", -x.stars, x.accession))
+
+
+def rank(x: Reference) -> int:
+    """How strongly a reference variant counts.
+
+    2: full strength (pathogenic, >= 2 stars); 1: one step lower (pathogenic with 1 star, or likely
+    pathogenic with >= 2 stars); 0: not used (likely pathogenic with 1 star).
+    """
+    if x.level == "P" and x.stars >= 2:
+        return 2
+    return 1 if x.level == "P" or x.stars >= 2 else 0
 
 
 def _same_allele(rec: dict[str, Any], own: tuple[str, int, str, str], assembly: str) -> bool:
@@ -138,15 +152,21 @@ def evidence(row: Row, refs: list[Reference] | None) -> tuple[str | None, int | 
         return f"not applied (SpliceAI {row['spliceai_max']:.2f}: the variant may act on splicing)", 0
     if not refs:
         return "none (no pathogenic missense variant at this residue in ClinVar)", 0
-    same = [x for x in refs if x.same_change]
-    other = [x for x in refs if not x.same_change]
+    usable = [x for x in refs if rank(x) > 0]
+    if not usable:
+        return f"none (only single-star likely pathogenic variants at this residue: {_describe(refs[0])})", 0
+    same = sorted((x for x in usable if x.same_change), key=lambda x: -rank(x))
+    other = sorted((x for x in usable if not x.same_change), key=lambda x: -rank(x))
     options = []
     if same:
-        options.append(("PS1" if same[0].level == "P" else "PS1_Moderate", same))
+        options.append(("PS1" if rank(same[0]) == 2 else "PS1_Moderate", same))
     if other:
-        options.append(("PM5" if other[0].level == "P" else "PM5_Supporting", other))
+        options.append(("PM5" if rank(other[0]) == 2 else "PM5_Supporting", other))
     code, used = max(options, key=lambda o: POINTS[o[0]])  # PS1 first on a tie (the more specific)
     shown = "; ".join(_describe(x) for x in used[:2]) + (f"; and {len(used) - 2} more" if len(used) > 2 else "")
+    sp = row.get("spliceai_max")
+    if sp is None or sp != sp:  # PS1/PM5 assume that neither variant acts on splicing (Walker et al. 2023)
+        shown += "; no SpliceAI score: check that neither variant acts on splicing"
     return f"{code} ({shown})", POINTS[code]
 
 

@@ -59,8 +59,8 @@ def test_pm5_from_other_pathogenic_changes_at_the_residue():
         x.accession for x in refs
     }
     text, pts = residue.evidence(V600E, refs)
-    assert text.startswith("PM5 (p.Val600Gly: Pathogenic, 3★, VCV000040389")
-    assert "and 2 more" in text
+    # the single-star likely pathogenic references are not used
+    assert text == "PM5 (p.Val600Gly: Pathogenic, 3★, VCV000040389; p.Val600Leu: Pathogenic, 2★, VCV000376289)"
     assert pts == 2
 
 
@@ -70,17 +70,39 @@ def test_ps1_from_the_same_change_by_another_nucleotide():
     assert pts == 4
 
 
-def test_ps1_moderate_when_the_same_change_is_only_likely_pathogenic():
-    text, pts = evidence(V600L_GC)  # its own record does not count; c.1798G>T is likely pathogenic
-    assert text.startswith("PS1_Moderate (same change by c.1798G>T: Likely pathogenic")
+def test_a_single_star_likely_pathogenic_same_change_is_not_used():
+    text, pts = evidence(V600L_GC)  # its own record does not count; c.1798G>T is likely pathogenic, 1 star
+    assert text.startswith("PM5 (p.Val600Gly: Pathogenic, 3★")
     assert pts == 2
 
 
-def test_pm5_supporting_when_only_likely_pathogenic_changes_are_known():
+def ref(level, stars, same, protein="p.Val600Leu"):
+    return residue.Reference("VCV000000001", "c.1798G>T", protein, level, stars, same)
+
+
+@pytest.mark.parametrize(
+    ("level", "stars", "same", "code"),
+    [
+        ("P", 2, True, "PS1"),
+        ("P", 1, True, "PS1_Moderate"),  # one review star: one step lower
+        ("LP", 2, True, "PS1_Moderate"),
+        ("LP", 1, True, "none"),  # likely pathogenic with one star: not used
+        ("P", 3, False, "PM5"),
+        ("P", 1, False, "PM5_Supporting"),
+        ("LP", 2, False, "PM5_Supporting"),
+        ("LP", 1, False, "none"),
+    ],
+)
+def test_reference_strength_depends_on_level_and_review_stars(level, stars, same, code):
+    text, _ = residue.evidence(V600E, [ref(level, stars, same, "p.Val600Glu" if same else "p.Val600Leu")])
+    assert text.split(" ", 1)[0] == code
+
+
+def test_none_when_only_single_star_likely_pathogenic_changes_are_known():
     lp_only = {k: v for k, v in RECORDS.items() if v["classification"] == "Likely pathogenic"}
     text, pts = evidence(V600E, lp_only)
-    assert text.startswith("PM5_Supporting (p.Val600Met: Likely pathogenic, 1★")
-    assert pts == 1
+    assert text.startswith("none (only single-star likely pathogenic variants at this residue: p.Val600Met")
+    assert pts == 0
 
 
 def test_no_reference_other_transcript_and_splicing():

@@ -57,19 +57,20 @@ def _result():
             "pos": 140753336,
             "ref": "A",
             "alt": "T",
-            "acmg_pp3_bp4": "PP3_Moderate (REVEL 0.930)",
+            "acmg_pp3_bp4": "PP3_Moderate+ (REVEL 0.930)",
             "acmg_points": 3,
             "acmg_ps1_pm5": "PM5 (p.Val600Gly: Pathogenic, 3★, VCV000040389)",
-            "acmg_codes": "PP3_Moderate +3, PM5 +2",
+            "acmg_codes": "PP3_Moderate+ +3, PM5 +2",
             "population_frequency": "rare (grpmax 0.0004%)",
             "score_with_frequency": 0.97,
-            "oncogenicity": "VUS",
-            "oncogenicity_points": 4,
-            "oncogenicity_codes": "OS3 +4",
-            "oncogenicity_evidence": "OS3 (hotspot V600: 897 tumours, 833 with E; cancerhotspots.org); BRAF: "
-            "activating in 54 of 57 IntOGen cohorts; OP1/SBP1 not applied (activating gene: the model measures "
-            "damage to the protein, not activation); not assessed automatically: functional studies beyond CIViC, "
-            "OM1 functional domain, OP2",
+            "oncogenicity": "Likely oncogenic",
+            "oncogenicity_points": 6,
+            "oncogenicity_codes": "OS3 +4, OP1 +1, OP4 +1",
+            "oncogenicity_evidence": "OS3 (hotspot V600: 897 tumours, 833 with E; cancerhotspots.org); OP1 "
+            "(calibrated computational evidence reaches PP3); OP4 (absent from gnomAD); BRAF: activating (UniProt: "
+            "proto-oncogene); in an activating gene, a damage prediction does not tell activation from "
+            "inactivation; not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2, "
+            "tumour type",
             "clinvar_oncogenicity": "Oncogenic",
             "clinical_evidence_level": "A",
             "clinical_evidence": "88 CIViC items (level A 6, B 55, C 16, D 11); best: level A predictive, "
@@ -136,14 +137,14 @@ def test_window_shows_results_and_details(app, lang):
     texts = " ".join(lbl.text() for lbl in w.detail.findChildren(QtWidgets.QLabel))
     assert "BRAF p.Val600Glu" in texts
     assert ("Probablemente dañina" if lang == "es" else "Likely damaging") in texts
-    assert "PP3_Moderate" in texts
+    assert "PP3_Moderate+" in texts
     assert ("rara (grpmax" if lang == "es" else "rare (grpmax") in texts
     assert ("PM5 (p.Val600Gly: patogénica, 3★" if lang == "es" else "PM5 (p.Val600Gly: Pathogenic, 3★") in texts
-    assert "PP3_Moderate +3, PM5 +2" in texts
+    assert "PP3_Moderate+ +3, PM5 +2" in texts
     assert ("con frecuencia 0.97" if lang == "es" else "with frequency 0.97") in texts
-    assert ("Significado incierto (VUS) · +4 puntos" if lang == "es" else "VUS · +4 points") in texts
+    assert ("Probablemente oncogénica · +6 puntos" if lang == "es" else "Likely oncogenic · +6 points") in texts
     assert ("hotspot V600: 897 tumores, 833 con E" if lang == "es" else "hotspot V600: 897 tumours") in texts
-    assert ("activador en 54 de 57 cohortes de IntOGen" if lang == "es" else "activating in 54 of 57") in texts
+    assert ("activador (UniProt: protooncogén)" if lang == "es" else "activating (UniProt: proto-oncogene)") in texts
     assert (
         "88 evidencias en CIViC (nivel A 6, B 55, C 16, D 11); la mejor: nivel A, predictiva, sensibilidad/respuesta: "
         "Vemurafenib en Skin Melanoma (EID1409)"
@@ -215,20 +216,41 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "protein notation: other DNA changes can give the same F508del; this is the one Ensembl maps "
         "(c.1522_1524del). Give the c. or genomic change to analyse a specific one",
         "not checked (no MANE Select transcript, on which ClinVar names its variants)",
-        "OP1/SBP1 not applied (activating gene: the model measures damage to the protein, not activation)",
+        "in an activating gene, a damage prediction does not tell activation from inactivation",
+        "OP1 (calibrated computational evidence reaches PP3)",
+        "OVS1_Strong (NMD escape likely (last exon); the truncation removes 24% of the protein (ClinGen LoF "
+        "guidance: > 10% strong))",
+        "OVS1 (canonical splice site; skipping exon 4 would shift the reading frame)",
+        "OVS1_Moderate (start codon lost: another in-frame start codon may be used (ClinGen LoF guidance))",
+        "OVS1 not applied (not a loss-of-function gene: not a known cancer gene)",
+        "CIViC oncogenic evidence from clinical observations (not functional studies) not used",
         "OS1/OM4 not checked (ClinVar oncogenicity search unavailable)",
-        "hotspot not counted (OS1 already uses this amino-acid change)",
+        "none (model 0.050; BP4_Moderate+ withheld: SpliceAI 0.30 does not rule out a splicing effect)",
+        "frequent: BS1 candidate (grpmax 6.1%); BA1 not met: 4.2% at most in the gnomAD groups with >= 2,000 alleles",
+        "PP3 (4 points) and PM5 may partly reflect the same residue-level information (Pejaver et al. 2022): weigh "
+        "their combination with care; if PM1 is added, PP3 + PM1 should not exceed 4 points",
+        "OS3 not counted (OS1 uses this amino-acid change)",
+        "OS1_Moderate not counted (same change by c.1A>G: Likely oncogenic, VCV1; OS3 + OS2 for this change is "
+        "stronger)",
+        "OP4 not checked (absence from gnomAD not confirmed)",
+        "OP4 not applied (absent from gnomAD, but few reads there)",
+        "ambiguous (IntOGen: 1 cohort, 12 mutated samples: too few to decide)",
+        "loss-of-function (IntOGen: 96% loss-of-function in 90 samples of cohorts with a role, 7 cohorts)",
+        "ambiguous (IntOGen: 10 of 14 mutated samples in cohorts of ambiguous role)",
+        "ambiguous (IntOGen: 38% loss-of-function in 13 samples, 5 cohorts; UniProt: tumour suppressor: they disagree)",
+        "UniProt keywords unavailable: gene roles from IntOGen only",
+        "the standard's rule for OS1 would give 6 points",
+        "common: BA1 (grpmax 6.2%; allele numbers not checked in gnomAD)",
+        "frequent: BS1 candidate (grpmax 7.04%); BA1 not met: the gene's expert panel sets BA1 above 10%",
         "OM4 not applied (this change is milder than the oncogenic ones at the residue)",
-        "OVS1 not applied (the gene is not a loss-of-function driver in IntOGen)",
-        "OM2 not applied (not a known cancer gene in IntOGen)",
+        "OM2 not applied (not a known cancer gene: UniProt, IntOGen)",
         "OM4_Supporting not used (p.Gly719Ser: Likely oncogenic; the hotspot criterion OM3 is stronger)",
         "not assessed (cancerhotspots.org or IntOGen unavailable)",
         "OS1 (same change by c.524_525delinsAT: Oncogenic, VCV000000001)",
         "OS2/SBS2 not checked (CIViC unavailable)",
         "OS2/SBS2 not applied (CIViC functional evidence conflicts)",
         "CIViC functional evidence rated below 3 stars not used",
-        "OS2 not applied (OS1 already uses this amino-acid change)",
-        "not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2",
+        "not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2, tumour type",
         "protein change given as p.Gly396Asp (another isoform's numbering); on the reported transcript it is G368D",
         "protein change given as p.Ala175His exists only on another isoform; on the reported transcript this DNA "
         "change is C182S: check the input",

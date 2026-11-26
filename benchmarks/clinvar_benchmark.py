@@ -45,6 +45,7 @@ GOOD_REVIEW = {"criteria provided, multiple submitters, no conflicts", "reviewed
 PATHOGENIC = {"Pathogenic", "Likely pathogenic", "Pathogenic/Likely pathogenic"}
 BENIGN = {"Benign", "Likely benign", "Benign/Likely benign"}
 MISSENSE = re.compile(r"\(p\.([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})\)$")
+NAME_GENE = re.compile(r"^[A-Z]{2}_\d+(?:\.\d+)?\(([^)]+)\):")
 CHROMS = {str(i) for i in range(1, 23)} | {"X", "Y", "MT"}
 OUT = Path(__file__).resolve().parent / "results"
 
@@ -99,6 +100,27 @@ def load_candidates(path: Path) -> list[dict]:
                 }
             )
     return out
+
+
+def gene_of(name: str, symbol: str) -> str:
+    """The variant's gene: the one in its ClinVar name ('NM_000546.6(TP53):c.817C>T ...'), else its first symbol.
+
+    ClinVar's GeneSymbol lists every gene a variant overlaps ('LDLR;MIR6886', 'CCDC40;GAA'), so the
+    transcript's gene in the name is the reliable key for grouping variants by gene.
+    """
+    m = NAME_GENE.match(name or "")
+    return m.group(1) if m else (symbol or "").split(";")[0]
+
+
+def gene_keys(c: dict) -> set[str]:
+    """Every gene a candidate can belong to: the gene of its name and each of its ClinVar symbols.
+
+    Used to keep held-out genes out of training: a variant is excluded when ANY of its keys is a
+    benchmark gene (an exact match on the GeneSymbol string missed 'LDLR;MIR6886' for LDLR).
+    """
+    keys = {s.strip() for s in (c.get("gene") or "").split(";") if s.strip() and " " not in s.strip()}
+    keys.add(gene_of(c.get("name", ""), c.get("gene", "")))
+    return {k for k in keys if k}
 
 
 def sample(cands: list[dict], per_class: int, per_gene: int, seed: int) -> list[dict]:
@@ -180,7 +202,7 @@ V21 = {"AlphaMissense": 1.0, "REVEL": 1.0, "EVE": 1.0, "CADD": 0.75, "PolyPhen":
 # The v2.2 model (trained on a plain random ClinVar sample), kept to compare with the current one.
 V22 = {
     "features": ["alphamissense", "revel", "cadd_phred", "popeve"],
-    "median": [0.3227, 0.3915, 24.5, -3.469],
+    "fill": [0.3227, 0.3915, 24.5, -3.469],  # v2.2 filled missing scores with the training median
     "mean": [0.4726, 0.455065, 22.068322, -3.591189],
     "scale": [0.385334, 0.341274, 9.409868, 0.764894],
     "coef": [1.150214, 1.752403, 0.837612, -0.827833],
@@ -286,7 +308,11 @@ def main(argv=None) -> int:
         "v2.2 model + frequency rule (BA1, 5%)": lambda x: with_freq(x["v22"], x, 0.05),
         "v2.1 vote": lambda x: x["v21"],
         "v2.1 vote + frequency rule (BA1, 5%)": lambda x: with_freq(x["v21"], x, 0.05),
-        "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)": lambda x: x["clingen"],
+        (
+            "PP3/BP4 alone (model score, this project's ClinGen-method calibration)"
+            if acmg.MODEL_CALIBRATED
+            else "ClinGen PP3/BP4 alone (REVEL, else AlphaMissense)"
+        ): lambda x: x["clingen"],
     }
     report: dict = {
         "clinvar_file": URL,
@@ -337,6 +363,34 @@ def main(argv=None) -> int:
     report["seconds"] = round(time.time() - t0, 1)
 
     OUT.mkdir(exist_ok=True)
+    import pandas as pd
+
+    ms_of = {x["id"]: model.score(x["row"]) for x in rows}
+    pd.DataFrame(
+        [
+            {
+                "clinvar_id": x["id"],
+                "gene": x["gene"],
+                "gene_key": gene_of(x.get("name", ""), x["gene"]),
+                "label": x["label"],
+                "year": x.get("year"),
+                "review": x.get("review"),
+                "grpmax": x["grpmax"],
+                "model_score": ms_of[x["id"]].p if ms_of[x["id"]] else None,
+                "prediction": x["row"].get("prediction"),
+                "model_label": x["model_label"],
+                "v21": x["v21"],
+                "v22": x["v22"],
+                "acmg_pp3_bp4": x["row"].get("acmg_pp3_bp4"),
+                "acmg_points": x["row"].get("acmg_points"),
+                **{
+                    f: x["row"].get(f)
+                    for f in ("alphamissense", "revel", "cadd_phred", "popeve", "eve", "spliceai_max")
+                },
+            }
+            for x in rows
+        ]
+    ).to_csv(OUT / "clinvar_benchmark_variants.csv.gz", index=False)
     (OUT / "clinvar_benchmark.json").write_text(json.dumps(report, indent=1, default=str))
     (OUT / "clinvar_benchmark.md").write_text(markdown(report))
     print((OUT / "clinvar_benchmark.md").read_text())

@@ -18,7 +18,7 @@ from urllib.parse import unquote
 
 import pandas as pd
 
-from . import __version__, acmg, gnomad, model, residue
+from . import __version__, acmg, gnomad, model, residue, vcep
 from . import clinvar as cv
 from . import oncogenicity as onco
 from . import protein as prot
@@ -88,6 +88,8 @@ COLUMNS = [
     "acmg_ps1_pm5",
     "acmg_pm2",
     "population_frequency",
+    "vcep_specification",
+    "acmg_notes",
     "oncogenicity",
     "oncogenicity_points",
     "oncogenicity_codes",
@@ -955,6 +957,7 @@ class _Context:
         n_unique: unique VEP queries, for the statistics.
         n_no_protein: valid inputs that gave no row, for the statistics.
         warnings: messages for the user, in the order they arose.
+        data_versions: releases (or retrieval dates) of the downloaded data sets, for the run record.
     """
 
     opt: PredictOptions
@@ -976,6 +979,7 @@ class _Context:
     n_unique: int = 0
     n_no_protein: int = 0
     warnings: list[str] = field(default_factory=list)
+    data_versions: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -992,6 +996,7 @@ class _Lookups:
         protein_seqs: Ensembl protein ID (without version) -> reference protein sequence.
         onco_data: hotspots and gene roles for the oncogenicity points (None: not asked for or offline).
         onco_refs: row index -> ClinVar oncogenic variants at the same residue, for the rows searched.
+        onco_structures: transcript id -> exons and protein length, for the null variants (OVS1 strength).
     """
 
     windows: dict[int, tuple[str, int, int]] = field(default_factory=dict)
@@ -1003,6 +1008,7 @@ class _Lookups:
     protein_seqs: dict[str, str] = field(default_factory=dict)
     onco_data: onco.Data | None = None
     onco_refs: dict[int, list[onco.Reference]] = field(default_factory=dict)
+    onco_structures: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 def predict(
@@ -1085,7 +1091,9 @@ def predict(
         _add_clinvar(ctx, rows)
         found = _Lookups()
         found.windows, found.residue_refs = _search_same_residue(ctx, rows)
-        found.onco_data, found.onco_refs = _oncogenicity_lookups(ctx, rows, found.windows)
+        found.onco_data, found.onco_refs, found.onco_structures = _oncogenicity_lookups(ctx, rows, found.windows)
+        if found.onco_data is not None:
+            ctx.data_versions.update(found.onco_data.versions)
         found.gnomad_need, found.gnomad_info = _check_gnomad(ctx, rows)
         found.uniprot, found.alphafold, found.protein_seqs = _fetch_protein_context(ctx, rows)
         sequences = _finish_rows(ctx, rows, found)
@@ -1622,19 +1630,20 @@ def _search_same_residue(
 
 def _oncogenicity_lookups(
     ctx: _Context, rows: list[Row], windows: dict[int, tuple[str, int, int]]
-) -> tuple[onco.Data | None, dict[int, list[onco.Reference]]]:
+) -> tuple[onco.Data | None, dict[int, list[onco.Reference]], dict[str, dict[str, Any]]]:
     """Somatic oncogenicity: the hotspots and gene roles, and the ClinVar oncogenic variants at each residue.
 
     Returns:
-        The data (None when the points were not asked for, or offline) and row index -> ClinVar oncogenic
-        missense variants at its residue, for the rows whose search and records were obtained.
+        The data (None when the points were not asked for, or offline), row index -> ClinVar oncogenic
+        missense variants at its residue, for the rows whose search and records were obtained, and the
+        exons and protein length of the transcripts of null variants.
     """
     if not ctx.opt.oncogenicity or not rows:
-        return None, {}
+        return None, {}, {}
     if not ctx.net:
         for src in ("cancerhotspots.org", "IntOGen", "CIViC"):
             ctx.status.skip(src, "offline: oncogenicity points not computed")
-        return None, {}
+        return None, {}, {}
     ctx.say("Oncogenicity (hotspots, IntOGen, CIViC)", 0, 1)
     data = onco.load(ctx.http, ctx.cache, ctx.status)
     refs: dict[int, list[onco.Reference]] = {}
@@ -1645,8 +1654,11 @@ def _oncogenicity_lookups(
         for i, w in searched.items():
             if w in found and all(v in recs for v in found[w]):
                 refs[i] = onco.references(rows[i], {v: recs[v] for v in found[w]}, ctx.assembly)
+        _own_oncogenicity(ctx, rows)
+    null_tx = {str(r.get("transcript") or "") for r in rows if set(r.get("_terms") or ()) & onco.NULL_TERMS}
+    structures = onco.transcript_structures(ctx.http, ctx.cache, null_tx, ctx.assembly, ctx.status) if null_tx else {}
     ctx.say("Oncogenicity (hotspots, IntOGen, CIViC)", 1, 1)
-    return data, refs
+    return data, refs, structures
 
 
 def _check_gnomad(
@@ -1665,13 +1677,20 @@ def _check_gnomad(
         for i, r in enumerate(rows)
         if r.get("gnomad_af") is None and r.get("pos") and _vcf_alleles(r)
     }
+    # BA1 candidates: Ensembl gives the frequency but not the allele number, and BA1 needs a group of at
+    # least 2,000 alleles (Ghosh et al. 2018), so gnomAD itself is asked for these too.
+    common = {
+        i: (str(r["chrom"]), int(r["pos"]), str(r["ref"]), str(r["alt"]))
+        for i, r in enumerate(rows)
+        if i not in need and (_num(r.get("gnomad_popmax_af")) or 0) >= acmg.BA1_AF and r.get("pos") and _vcf_alleles(r)
+    }
     gnomad_info: dict[int, dict[str, Any]] = {}
-    if need and ctx.opt.gnomad_check and ctx.net:
+    if (need or common) and ctx.opt.gnomad_check and ctx.net:
         ctx.say("gnomAD", 0, 1)
         got = gnomad.lookup(
             ctx.http,
             ctx.cache,
-            list(need.values()),
+            [*need.values(), *common.values()],
             ctx.assembly,
             status=ctx.status,
             progress=lambda k, n: ctx.say("gnomAD", k, n),
@@ -1681,6 +1700,9 @@ def _check_gnomad(
                 gnomad_info[i] = got[k]
                 if got[k]["found"]:
                     rows[i]["gnomad_af"], rows[i]["gnomad_popmax_af"] = got[k]["af"], got[k]["grpmax"]
+        for i, k in common.items():
+            if k in got and got[k].get("grpmax_2000") is not None:
+                rows[i]["_grpmax_2000"] = (got[k]["grpmax_2000"], got[k].get("grpmax_2000_an"))
         ctx.say("gnomAD", 1, 1)
     elif need and ctx.opt.gnomad_check:
         ctx.status.skip("gnomAD", "offline")
@@ -1817,14 +1839,28 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     if i in found.gnomad_need and i not in found.gnomad_info and ctx.opt.gnomad_check and ctx.net:
         notes.append("gnomAD check unavailable (service error)")
     r["population_frequency"] = acmg.frequency(r)
+    if str(r["population_frequency"] or "").startswith("common: BA1") and (t := vcep.ba1_above_5pct(r.get("gene"))):
+        # the gene's expert panels set BA1 above 5% (Ghosh et al.: BA1 at 5% only without a gene-specific rule)
+        g = acmg.ba1_grpmax(r) or 0.0
+        if not g > t:
+            r["population_frequency"] = (
+                f"frequent: BS1 candidate (grpmax {acmg._pct(g)}); BA1 not met: the gene's expert panel sets BA1 "
+                f"above {acmg._pct(t)}"
+            )
     r.pop("_gnomad")
     if "missense_variant" in terms and (ms := model.score(r)) is not None:
         r["score_with_frequency"] = model.with_frequency(ms.p, r.get("gnomad_popmax_af"))
     r["acmg_codes"] = acmg.codes(r)
+    acmg_notes = [n for n in (acmg.overlap_note(r),) if n]
+    if r.get("acmg_codes") or r.get("acmg_pp3_bp4"):
+        r["vcep_specification"] = vcep.describe(r.get("gene"))
+        acmg_notes.extend(vcep.notes(r))
+    r["acmg_notes"] = vcep.SEP.join(acmg_notes) or None
     if found.onco_data is not None:
         _add_oncogenicity(r, i, terms, label, found)
     if not acmg.ba1_exception(r):  # common but pathogenic/uncertain (ClinGen list): no frequency rule
-        label, basis = apply_frequency(label, basis, r.get("gnomad_popmax_af"), ctx.opt.common_af)
+        label, basis = apply_frequency(label, basis, acmg.ba1_grpmax(r), ctx.opt.common_af)
+    r.pop("_grpmax_2000", None)
     r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis
     r["spliceai_effect"] = (
         "likely splice-altering"
@@ -1835,6 +1871,33 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     )
 
 
+def _own_oncogenicity(ctx: _Context, rows: list[Row]) -> None:
+    """Fill each row's own ClinVar oncogenicity classification by searching its position.
+
+    VEP links a variant to ClinVar only through the variation database's identifiers, which miss many
+    recent somatic records; the oncogenicity search at the variant's own position finds them. Shown
+    only: the variant's own classification is never evidence for itself.
+    """
+    need: dict[int, tuple[str, int, int]] = {}
+    for i, r in enumerate(rows):
+        if r.get("clinvar_oncogenicity") or not r.get("pos") or not _vcf_alleles(r):
+            continue
+        pos = int(r["pos"])
+        need[i] = (str(r["chrom"]), pos, pos + max(len(str(r.get("ref") or "")), 1) - 1)
+    if not need:
+        return
+    found = cv.search_oncogenicity_windows(ctx.http, ctx.cache, sorted(set(need.values())), ctx.assembly, ctx.status)
+    recs = cv.fetch(ctx.http, ctx.cache, {v for w in found.values() for v in w}, status=ctx.status)
+    for i, w in need.items():
+        r = rows[i]
+        own = (str(r["chrom"]), int(r["pos"]), str(r["ref"]), str(r["alt"]))
+        cands = [v for v in found.get(w, []) if v in recs]
+        hit = next((recs[v] for v in cands if residue._same_allele(recs[v], own, ctx.assembly)), None)
+        hit = hit or cv.match(recs, cands, None, r.get("mane_select"), str(r.get("hgvsc") or "").split(":")[-1])
+        if hit and (hit.get("oncogenicity") or hit.get("somatic_impact")):
+            r["clinvar_oncogenicity"] = hit.get("oncogenicity") or hit.get("somatic_impact")
+
+
 def _add_oncogenicity(r: Row, i: int, terms: set[str], label: str, found: _Lookups) -> None:
     """Add the somatic oncogenicity class, points, criteria and evidence to row ``i``."""
     data = found.onco_data
@@ -1843,9 +1906,13 @@ def _add_oncogenicity(r: Row, i: int, terms: set[str], label: str, found: _Looku
     if not (data.hotspots_ok and data.roles_ok):
         r["oncogenicity"] = "not assessed (cancerhotspots.org or IntOGen unavailable)"
         return
-    call = "damaging" if is_damaging(label) else "benign" if "benign" in label.lower() else None
+    # OP1/SBP1: the calibrated computational evidence (PP3 or BP4 at any strength), as the standard asks
+    # that "all utilized lines of computational evidence" agree, splicing impact included
+    pts = r.get("acmg_points")
+    call = "damaging" if isinstance(pts, int) and pts > 0 else "benign" if isinstance(pts, int) and pts < 0 else None
     refs = found.onco_refs.get(i) if i in found.windows else []
-    a = onco.assess(r, terms, call, data, refs, found.gnomad_info.get(i))
+    structure = found.onco_structures.get(str(r.get("transcript") or "").split(".")[0])
+    a = onco.assess(r, terms, call, data, refs, found.gnomad_info.get(i), structure)
     r["oncogenicity"] = onco.tier(a.points)
     r["oncogenicity_points"] = a.points
     r["oncogenicity_codes"] = a.summary()
@@ -1935,6 +2002,10 @@ def _run_record(ctx: _Context, seconds: float) -> dict[str, Any]:
             "files": [_file_info(n, d) for n, d in ctx.files],
         },
         "sources": ctx.status.summary(),
+        "data_versions": {
+            **ctx.data_versions,
+            "ClinGen CSpec (expert panel specifications)": f"accessed {vcep.VCEP['accessed']}",
+        },
         "missense_model": {
             "version": model.MODEL["version"],
             "trained": model.MODEL["trained"],

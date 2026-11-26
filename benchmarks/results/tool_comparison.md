@@ -14,138 +14,222 @@ Same held-out benchmark as [clinvar_benchmark.md](clinvar_benchmark.md): 1972 ex
 | Tool | Clinical training labels | Uses allele frequency | Coverage | AUC | Δ vs ours |
 |---|---|---|---|---|---|
 | MetaRNN | ClinVar | yes | 99% | 0.996 [0.994–0.998] | +0.011 [+0.007, +0.015] |
-| **MissensExplorer v2.3 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.996 [0.994–0.998] | +0.010 [+0.007, +0.014] |
-| ClinPred | ClinVar | yes | 99% | 0.993 [0.989–0.996] | +0.008 [+0.004, +0.011] |
+| **MissensExplorer v2.5 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.996 [0.994–0.997] | +0.010 [+0.007, +0.014] |
+| ClinPred | ClinVar | yes | 99% | 0.993 [0.989–0.996] | +0.007 [+0.004, +0.011] |
 | BayesDel (with AF) | ClinVar, UniProt | yes | 100% | 0.992 [0.988–0.995] | +0.007 [+0.003, +0.011] |
-| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.992 [0.988–0.996] | +0.006 [+0.002, +0.011] |
-| **MissensExplorer v2.3 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.986 [0.982–0.990] | +0.001 [+0.000, +0.001] |
-| **MissensExplorer v2.3** | ClinVar (other genes) | no | 100% | 0.985 [0.980–0.990] | — |
-| PHACTboost | ClinVar | no | 93% | 0.983 [0.977–0.988] | -0.003 [-0.007, +0.001] |
-| REVEL | HGMD | no | 96% | 0.982 [0.977–0.986] | -0.004 [-0.007, -0.001] |
+| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.992 [0.988–0.995] | +0.006 [+0.002, +0.011] |
+| **MissensExplorer v2.5 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.986 [0.982–0.990] | +0.001 [+0.000, +0.001] |
+| **MissensExplorer v2.5** | ClinVar (other genes) | no | 100% | 0.985 [0.981–0.990] | — |
+| PHACTboost | ClinVar | no | 93% | 0.983 [0.978–0.988] | -0.003 [-0.007, +0.001] |
+| REVEL | HGMD | no | 96% | 0.982 [0.977–0.987] | -0.004 [-0.007, -0.001] |
 | gnomAD frequency alone (reference) | — | yes | 100% | 0.978 [0.973–0.983] | -0.007 [-0.013, -0.001] |
 | BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.977 [0.971–0.983] | -0.008 [-0.013, -0.004] |
-| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.972 [0.964–0.978] | -0.015 [-0.021, -0.009] |
-| VARITY_R | ClinVar, HGMD | no | 91% | 0.971 [0.964–0.977] | -0.014 [-0.019, -0.009] |
-| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.968 [0.961–0.976] | -0.017 [-0.022, -0.012] |
-| AlphaMissense | none (population) | no | 99% | 0.964 [0.956–0.970] | -0.022 [-0.027, -0.018] |
-| MutPred2 | HGMD, SwissVar | no | 100% | 0.958 [0.949–0.966] | -0.027 [-0.033, -0.021] |
-| DEOGEN2 | UniProt | no | 97% | 0.954 [0.946–0.963] | -0.031 [-0.038, -0.023] |
-| MetaSVM | UniProt | yes | 99% | 0.954 [0.945–0.963] | -0.031 [-0.039, -0.023] |
-| MetaLR | UniProt | yes | 99% | 0.952 [0.943–0.961] | -0.033 [-0.041, -0.025] |
-| MutFormer | HGMD | no | 99% | 0.952 [0.942–0.960] | -0.034 [-0.043, -0.025] |
-| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.952 [0.941–0.962] | -0.032 [-0.041, -0.022] |
-| ESM1b | none | no | 100% | 0.935 [0.925–0.946] | -0.050 [-0.059, -0.040] |
-| Eigen | none | no | 92% | 0.933 [0.922–0.943] | -0.053 [-0.063, -0.045] |
-| EVE | none | no | 59% | 0.928 [0.913–0.942] | -0.054 [-0.068, -0.042] |
-| CADD | none (simulated) | no | 100% | 0.923 [0.912–0.935] | -0.062 [-0.072, -0.052] |
-| FATHMM-XF | HGMD | no | 92% | 0.914 [0.901–0.926] | -0.072 [-0.083, -0.061] |
-| MutationAssessor | none | no | 92% | 0.912 [0.899–0.925] | -0.073 [-0.085, -0.061] |
-| PROVEAN | none | no | 95% | 0.910 [0.896–0.923] | -0.076 [-0.088, -0.064] |
-| popEVE | none (population) | no | 83% | 0.906 [0.892–0.920] | -0.079 [-0.091, -0.066] |
-| SIFT4G | none | no | 95% | 0.898 [0.884–0.912] | -0.087 [-0.100, -0.075] |
-| LIST-S2 | few parameters | no | 98% | 0.893 [0.879–0.907] | -0.092 [-0.105, -0.079] |
-| PolyPhen-2 | UniProt | no | 93% | 0.884 [0.867–0.898] | -0.101 [-0.118, -0.087] |
-| PrimateAI | none (population) | no | 98% | 0.877 [0.863–0.892] | -0.108 [-0.122, -0.094] |
-| SIFT | none | no | 98% | 0.862 [0.845–0.877] | -0.123 [-0.138, -0.110] |
+| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.972 [0.965–0.978] | -0.015 [-0.021, -0.010] |
+| VARITY_R | ClinVar, HGMD | no | 91% | 0.971 [0.964–0.977] | -0.014 [-0.019, -0.010] |
+| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.968 [0.961–0.975] | -0.017 [-0.022, -0.012] |
+| AlphaMissense | none (population) | no | 99% | 0.964 [0.956–0.970] | -0.022 [-0.028, -0.017] |
+| MutPred2 | HGMD, SwissVar | no | 100% | 0.958 [0.950–0.966] | -0.027 [-0.034, -0.021] |
+| DEOGEN2 | UniProt | no | 97% | 0.954 [0.945–0.963] | -0.031 [-0.039, -0.023] |
+| MetaSVM | UniProt | yes | 99% | 0.954 [0.944–0.963] | -0.032 [-0.040, -0.024] |
+| MetaLR | UniProt | yes | 99% | 0.952 [0.944–0.961] | -0.033 [-0.041, -0.026] |
+| MutFormer | HGMD | no | 99% | 0.952 [0.943–0.960] | -0.034 [-0.042, -0.025] |
+| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.952 [0.942–0.961] | -0.032 [-0.042, -0.023] |
+| ESM1b | none | no | 100% | 0.935 [0.923–0.946] | -0.050 [-0.061, -0.040] |
+| Eigen | none | no | 92% | 0.933 [0.922–0.944] | -0.054 [-0.063, -0.045] |
+| EVE | none | no | 59% | 0.928 [0.911–0.942] | -0.054 [-0.069, -0.041] |
+| CADD | none (simulated) | no | 100% | 0.923 [0.911–0.934] | -0.062 [-0.073, -0.052] |
+| FATHMM-XF | HGMD | no | 92% | 0.914 [0.901–0.927] | -0.072 [-0.084, -0.061] |
+| MutationAssessor | none | no | 92% | 0.912 [0.898–0.926] | -0.073 [-0.086, -0.061] |
+| PROVEAN | none | no | 95% | 0.910 [0.896–0.924] | -0.076 [-0.088, -0.064] |
+| popEVE | none (population) | no | 83% | 0.906 [0.892–0.921] | -0.079 [-0.091, -0.067] |
+| SIFT4G | none | no | 95% | 0.898 [0.884–0.913] | -0.087 [-0.101, -0.074] |
+| LIST-S2 | few parameters | no | 98% | 0.893 [0.880–0.906] | -0.092 [-0.105, -0.079] |
+| PolyPhen-2 | UniProt | no | 93% | 0.884 [0.868–0.899] | -0.101 [-0.117, -0.087] |
+| PrimateAI | none (population) | no | 98% | 0.877 [0.861–0.892] | -0.108 [-0.123, -0.095] |
+| SIFT | none | no | 98% | 0.862 [0.845–0.878] | -0.123 [-0.138, -0.109] |
 | phyloP (100 vertebrates) | none | no | 100% | 0.859 [0.843–0.874] | -0.126 [-0.142, -0.112] |
-| DANN | none (simulated) | no | 100% | 0.827 [0.808–0.846] | -0.158 [-0.176, -0.140] |
-| MPC | ClinVar (402 variants) | no | 86% | 0.817 [0.797–0.837] | -0.169 [-0.189, -0.150] |
+| DANN | none (simulated) | no | 100% | 0.827 [0.808–0.844] | -0.159 [-0.177, -0.142] |
+| MPC | ClinVar (402 variants) | no | 86% | 0.817 [0.796–0.837] | -0.169 [-0.191, -0.149] |
 
 ## Rare variants
 
 | Tool | Clinical training labels | Uses allele frequency | Coverage | AUC | Δ vs ours |
 |---|---|---|---|---|---|
-| MetaRNN | ClinVar | yes | 99% | 0.983 [0.973–0.991] | +0.009 [+0.002, +0.018] |
-| **MissensExplorer v2.3 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.983 [0.973–0.990] | +0.009 [+0.003, +0.015] |
-| **MissensExplorer v2.3** | ClinVar (other genes) | no | 100% | 0.974 [0.961–0.985] | — |
-| **MissensExplorer v2.3 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.974 [0.961–0.985] | +0.000 [+0.000, +0.000] |
-| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.974 [0.956–0.988] | -0.002 [-0.016, +0.012] |
-| ClinPred | ClinVar | yes | 99% | 0.973 [0.958–0.985] | -0.002 [-0.010, +0.006] |
+| MetaRNN | ClinVar | yes | 99% | 0.983 [0.975–0.991] | +0.009 [+0.001, +0.017] |
+| **MissensExplorer v2.5 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.983 [0.973–0.991] | +0.009 [+0.003, +0.016] |
+| **MissensExplorer v2.5** | ClinVar (other genes) | no | 100% | 0.974 [0.961–0.985] | — |
+| **MissensExplorer v2.5 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.974 [0.960–0.985] | +0.000 [+0.000, +0.000] |
+| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.974 [0.958–0.987] | -0.002 [-0.017, +0.012] |
+| ClinPred | ClinVar | yes | 99% | 0.973 [0.958–0.985] | -0.002 [-0.011, +0.006] |
 | BayesDel (with AF) | ClinVar, UniProt | yes | 100% | 0.972 [0.955–0.986] | -0.002 [-0.014, +0.007] |
-| REVEL | HGMD | no | 96% | 0.972 [0.959–0.983] | -0.004 [-0.009, +0.001] |
-| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.966 [0.951–0.979] | -0.008 [-0.019, +0.002] |
-| BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.962 [0.943–0.977] | -0.013 [-0.025, -0.003] |
-| VARITY_R | ClinVar, HGMD | no | 91% | 0.960 [0.944–0.974] | -0.013 [-0.022, -0.005] |
-| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.957 [0.940–0.971] | -0.017 [-0.025, -0.007] |
-| PHACTboost | ClinVar | no | 93% | 0.957 [0.937–0.974] | -0.018 [-0.031, -0.004] |
-| AlphaMissense | none (population) | no | 99% | 0.953 [0.938–0.966] | -0.022 [-0.032, -0.013] |
-| MutPred2 | HGMD, SwissVar | no | 100% | 0.946 [0.927–0.962] | -0.028 [-0.043, -0.016] |
-| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.938 [0.917–0.958] | -0.037 [-0.055, -0.020] |
-| DEOGEN2 | UniProt | no | 97% | 0.930 [0.910–0.950] | -0.044 [-0.060, -0.029] |
-| MutationAssessor | none | no | 92% | 0.923 [0.904–0.943] | -0.050 [-0.065, -0.034] |
-| ESM1b | none | no | 100% | 0.920 [0.899–0.942] | -0.054 [-0.072, -0.036] |
-| Eigen | none | no | 92% | 0.916 [0.894–0.938] | -0.058 [-0.074, -0.041] |
+| REVEL | HGMD | no | 96% | 0.972 [0.958–0.983] | -0.004 [-0.008, +0.001] |
+| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.966 [0.949–0.979] | -0.008 [-0.018, +0.002] |
+| BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.962 [0.944–0.976] | -0.013 [-0.025, -0.003] |
+| VARITY_R | ClinVar, HGMD | no | 91% | 0.960 [0.945–0.973] | -0.013 [-0.022, -0.005] |
+| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.957 [0.941–0.970] | -0.017 [-0.026, -0.007] |
+| PHACTboost | ClinVar | no | 93% | 0.957 [0.936–0.974] | -0.018 [-0.032, -0.005] |
+| AlphaMissense | none (population) | no | 99% | 0.953 [0.938–0.967] | -0.022 [-0.033, -0.012] |
+| MutPred2 | HGMD, SwissVar | no | 100% | 0.946 [0.928–0.963] | -0.028 [-0.042, -0.015] |
+| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.938 [0.915–0.958] | -0.037 [-0.057, -0.021] |
+| DEOGEN2 | UniProt | no | 97% | 0.930 [0.906–0.949] | -0.044 [-0.059, -0.031] |
+| MutationAssessor | none | no | 92% | 0.923 [0.904–0.941] | -0.050 [-0.065, -0.037] |
+| ESM1b | none | no | 100% | 0.920 [0.898–0.941] | -0.054 [-0.074, -0.036] |
+| Eigen | none | no | 92% | 0.916 [0.894–0.938] | -0.058 [-0.076, -0.041] |
 | MetaSVM | UniProt | yes | 99% | 0.916 [0.887–0.940] | -0.058 [-0.083, -0.038] |
-| gnomAD frequency alone (reference) | — | yes | 100% | 0.909 [0.890–0.928] | -0.065 [-0.085, -0.044] |
-| MetaLR | UniProt | yes | 99% | 0.909 [0.882–0.931] | -0.065 [-0.087, -0.047] |
-| PROVEAN | none | no | 95% | 0.905 [0.876–0.928] | -0.070 [-0.094, -0.049] |
-| EVE | none | no | 59% | 0.901 [0.868–0.929] | -0.065 [-0.093, -0.040] |
-| SIFT4G | none | no | 95% | 0.897 [0.872–0.920] | -0.077 [-0.103, -0.056] |
-| FATHMM-XF | HGMD | no | 92% | 0.897 [0.869–0.921] | -0.077 [-0.101, -0.056] |
-| MutFormer | HGMD | no | 99% | 0.889 [0.862–0.916] | -0.085 [-0.109, -0.060] |
-| CADD | none (simulated) | no | 100% | 0.885 [0.855–0.912] | -0.089 [-0.116, -0.066] |
-| PolyPhen-2 | UniProt | no | 93% | 0.883 [0.859–0.907] | -0.092 [-0.113, -0.070] |
-| popEVE | none (population) | no | 83% | 0.856 [0.821–0.887] | -0.116 [-0.147, -0.089] |
-| LIST-S2 | few parameters | no | 98% | 0.851 [0.822–0.879] | -0.123 [-0.151, -0.097] |
-| phyloP (100 vertebrates) | none | no | 100% | 0.835 [0.802–0.864] | -0.139 [-0.168, -0.112] |
-| SIFT | none | no | 98% | 0.805 [0.765–0.840] | -0.169 [-0.206, -0.136] |
-| PrimateAI | none (population) | no | 98% | 0.793 [0.756–0.831] | -0.180 [-0.216, -0.147] |
-| DANN | none (simulated) | no | 100% | 0.787 [0.748–0.826] | -0.187 [-0.224, -0.151] |
-| MPC | ClinVar (402 variants) | no | 86% | 0.746 [0.705–0.783] | -0.229 [-0.268, -0.192] |
+| gnomAD frequency alone (reference) | — | yes | 100% | 0.909 [0.890–0.927] | -0.065 [-0.086, -0.046] |
+| MetaLR | UniProt | yes | 99% | 0.909 [0.882–0.931] | -0.066 [-0.087, -0.047] |
+| PROVEAN | none | no | 95% | 0.905 [0.879–0.930] | -0.070 [-0.092, -0.050] |
+| EVE | none | no | 59% | 0.901 [0.872–0.930] | -0.065 [-0.093, -0.041] |
+| SIFT4G | none | no | 95% | 0.897 [0.873–0.920] | -0.077 [-0.099, -0.056] |
+| FATHMM-XF | HGMD | no | 92% | 0.897 [0.868–0.922] | -0.077 [-0.101, -0.057] |
+| MutFormer | HGMD | no | 99% | 0.889 [0.861–0.915] | -0.085 [-0.111, -0.060] |
+| CADD | none (simulated) | no | 100% | 0.885 [0.857–0.913] | -0.089 [-0.114, -0.063] |
+| PolyPhen-2 | UniProt | no | 93% | 0.883 [0.858–0.910] | -0.092 [-0.113, -0.070] |
+| popEVE | none (population) | no | 83% | 0.856 [0.821–0.890] | -0.117 [-0.145, -0.087] |
+| LIST-S2 | few parameters | no | 98% | 0.851 [0.822–0.880] | -0.123 [-0.151, -0.096] |
+| phyloP (100 vertebrates) | none | no | 100% | 0.835 [0.803–0.864] | -0.139 [-0.167, -0.114] |
+| SIFT | none | no | 98% | 0.805 [0.765–0.842] | -0.170 [-0.206, -0.136] |
+| PrimateAI | none (population) | no | 98% | 0.793 [0.756–0.831] | -0.180 [-0.213, -0.146] |
+| DANN | none (simulated) | no | 100% | 0.787 [0.746–0.825] | -0.187 [-0.224, -0.151] |
+| MPC | ClinVar (402 variants) | no | 86% | 0.746 [0.709–0.786] | -0.229 [-0.263, -0.189] |
 
 ## New since 2023 variants
 
 | Tool | Clinical training labels | Uses allele frequency | Coverage | AUC | Δ vs ours |
 |---|---|---|---|---|---|
-| MetaRNN | ClinVar | yes | 99% | 0.983 [0.971–0.992] | +0.012 [+0.002, +0.024] |
-| **MissensExplorer v2.3 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.982 [0.971–0.992] | +0.011 [+0.002, +0.022] |
-| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.972 [0.952–0.987] | +0.000 [-0.017, +0.016] |
+| MetaRNN | ClinVar | yes | 99% | 0.983 [0.972–0.992] | +0.012 [+0.003, +0.024] |
+| **MissensExplorer v2.5 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.982 [0.970–0.992] | +0.011 [+0.002, +0.021] |
+| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.972 [0.952–0.989] | +0.001 [-0.017, +0.018] |
 | ClinPred | ClinVar | yes | 99% | 0.971 [0.953–0.986] | +0.001 [-0.011, +0.012] |
-| **MissensExplorer v2.3 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.971 [0.952–0.986] | +0.000 [+0.000, +0.001] |
-| **MissensExplorer v2.3** | ClinVar (other genes) | no | 100% | 0.971 [0.952–0.985] | — |
-| BayesDel (with AF) | ClinVar, UniProt | yes | 100% | 0.969 [0.949–0.986] | -0.002 [-0.016, +0.010] |
-| REVEL | HGMD | no | 96% | 0.966 [0.947–0.981] | -0.005 [-0.014, +0.003] |
-| AlphaMissense | none (population) | no | 99% | 0.957 [0.940–0.974] | -0.014 [-0.026, -0.004] |
-| PHACTboost | ClinVar | no | 93% | 0.956 [0.935–0.974] | -0.015 [-0.029, -0.004] |
-| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.956 [0.934–0.975] | -0.018 [-0.032, -0.004] |
-| VARITY_R | ClinVar, HGMD | no | 91% | 0.954 [0.932–0.972] | -0.016 [-0.031, -0.003] |
-| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.953 [0.931–0.973] | -0.017 [-0.031, -0.003] |
-| BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.950 [0.926–0.970] | -0.021 [-0.037, -0.008] |
-| MutPred2 | HGMD, SwissVar | no | 100% | 0.942 [0.919–0.964] | -0.029 [-0.046, -0.014] |
-| gnomAD frequency alone (reference) | — | yes | 100% | 0.938 [0.919–0.957] | -0.033 [-0.057, -0.009] |
-| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.929 [0.899–0.954] | -0.042 [-0.068, -0.019] |
-| MutationAssessor | none | no | 92% | 0.923 [0.897–0.948] | -0.046 [-0.066, -0.027] |
-| Eigen | none | no | 92% | 0.921 [0.892–0.944] | -0.052 [-0.071, -0.033] |
-| MutFormer | HGMD | no | 99% | 0.917 [0.889–0.942] | -0.054 [-0.079, -0.031] |
-| DEOGEN2 | UniProt | no | 97% | 0.912 [0.884–0.940] | -0.058 [-0.082, -0.035] |
-| FATHMM-XF | HGMD | no | 92% | 0.910 [0.879–0.937] | -0.063 [-0.088, -0.038] |
-| ESM1b | none | no | 100% | 0.909 [0.881–0.938] | -0.062 [-0.088, -0.037] |
-| MetaSVM | UniProt | yes | 99% | 0.907 [0.874–0.938] | -0.064 [-0.092, -0.037] |
-| MetaLR | UniProt | yes | 99% | 0.906 [0.875–0.934] | -0.065 [-0.091, -0.041] |
+| **MissensExplorer v2.5 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.971 [0.953–0.985] | +0.000 [+0.000, +0.001] |
+| **MissensExplorer v2.5** | ClinVar (other genes) | no | 100% | 0.971 [0.952–0.985] | — |
+| BayesDel (with AF) | ClinVar, UniProt | yes | 100% | 0.969 [0.947–0.984] | -0.002 [-0.018, +0.010] |
+| REVEL | HGMD | no | 96% | 0.966 [0.948–0.981] | -0.005 [-0.013, +0.003] |
+| AlphaMissense | none (population) | no | 99% | 0.957 [0.938–0.973] | -0.014 [-0.027, -0.004] |
+| PHACTboost | ClinVar | no | 93% | 0.956 [0.936–0.974] | -0.015 [-0.027, -0.004] |
+| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.956 [0.934–0.975] | -0.017 [-0.033, -0.004] |
+| VARITY_R | ClinVar, HGMD | no | 91% | 0.954 [0.933–0.972] | -0.016 [-0.032, -0.002] |
+| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.953 [0.933–0.972] | -0.017 [-0.031, -0.004] |
+| BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.950 [0.927–0.969] | -0.021 [-0.037, -0.008] |
+| MutPred2 | HGMD, SwissVar | no | 100% | 0.942 [0.919–0.963] | -0.029 [-0.047, -0.014] |
+| gnomAD frequency alone (reference) | — | yes | 100% | 0.938 [0.916–0.957] | -0.033 [-0.055, -0.010] |
+| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.929 [0.895–0.956] | -0.042 [-0.069, -0.019] |
+| MutationAssessor | none | no | 92% | 0.923 [0.896–0.950] | -0.046 [-0.068, -0.027] |
+| Eigen | none | no | 92% | 0.921 [0.895–0.945] | -0.052 [-0.073, -0.033] |
+| MutFormer | HGMD | no | 99% | 0.917 [0.888–0.943] | -0.054 [-0.079, -0.029] |
+| DEOGEN2 | UniProt | no | 97% | 0.912 [0.881–0.940] | -0.058 [-0.081, -0.036] |
+| FATHMM-XF | HGMD | no | 92% | 0.910 [0.879–0.936] | -0.063 [-0.091, -0.042] |
+| ESM1b | none | no | 100% | 0.909 [0.878–0.937] | -0.062 [-0.089, -0.037] |
+| MetaSVM | UniProt | yes | 99% | 0.907 [0.874–0.936] | -0.064 [-0.093, -0.038] |
+| MetaLR | UniProt | yes | 99% | 0.906 [0.876–0.934] | -0.065 [-0.089, -0.041] |
 | EVE | none | no | 59% | 0.906 [0.867–0.941] | -0.059 [-0.092, -0.029] |
-| PolyPhen-2 | UniProt | no | 93% | 0.896 [0.864–0.928] | -0.077 [-0.107, -0.047] |
-| PROVEAN | none | no | 95% | 0.893 [0.857–0.926] | -0.077 [-0.108, -0.049] |
-| CADD | none (simulated) | no | 100% | 0.890 [0.859–0.920] | -0.081 [-0.108, -0.056] |
-| SIFT4G | none | no | 95% | 0.886 [0.854–0.916] | -0.083 [-0.116, -0.054] |
-| popEVE | none (population) | no | 83% | 0.867 [0.828–0.903] | -0.098 [-0.132, -0.068] |
+| PolyPhen-2 | UniProt | no | 93% | 0.896 [0.863–0.926] | -0.077 [-0.107, -0.048] |
+| PROVEAN | none | no | 95% | 0.893 [0.858–0.923] | -0.077 [-0.108, -0.051] |
+| CADD | none (simulated) | no | 100% | 0.890 [0.857–0.921] | -0.081 [-0.108, -0.055] |
+| SIFT4G | none | no | 95% | 0.886 [0.852–0.917] | -0.083 [-0.114, -0.053] |
+| popEVE | none (population) | no | 83% | 0.867 [0.826–0.907] | -0.098 [-0.130, -0.066] |
 | LIST-S2 | few parameters | no | 98% | 0.864 [0.828–0.896] | -0.107 [-0.139, -0.076] |
-| phyloP (100 vertebrates) | none | no | 100% | 0.856 [0.821–0.890] | -0.115 [-0.145, -0.084] |
-| SIFT | none | no | 98% | 0.812 [0.770–0.854] | -0.158 [-0.197, -0.119] |
-| DANN | none (simulated) | no | 100% | 0.810 [0.767–0.850] | -0.161 [-0.201, -0.122] |
-| PrimateAI | none (population) | no | 98% | 0.802 [0.753–0.842] | -0.169 [-0.214, -0.129] |
-| MPC | ClinVar (402 variants) | no | 86% | 0.734 [0.680–0.784] | -0.236 [-0.286, -0.189] |
+| phyloP (100 vertebrates) | none | no | 100% | 0.856 [0.820–0.890] | -0.115 [-0.146, -0.085] |
+| SIFT | none | no | 98% | 0.812 [0.769–0.856] | -0.158 [-0.195, -0.119] |
+| DANN | none (simulated) | no | 100% | 0.810 [0.763–0.854] | -0.161 [-0.203, -0.120] |
+| PrimateAI | none (population) | no | 98% | 0.802 [0.754–0.841] | -0.169 [-0.208, -0.132] |
+| MPC | ClinVar (402 variants) | no | 86% | 0.734 [0.682–0.785] | -0.236 [-0.286, -0.188] |
+
+## Absent from gnomAD variants
+
+| Tool | Clinical training labels | Uses allele frequency | Coverage | AUC | Δ vs ours |
+|---|---|---|---|---|---|
+| FATHMM-XF | HGMD | no | 92% | 1.000 [1.000–1.000] | +0.000 [+0.000, +0.000] |
+| Eigen | none | no | 92% | 1.000 [1.000–1.000] | +0.000 [+0.000, +0.000] |
+| DANN | none (simulated) | no | 100% | 0.980 [0.950–1.000] | +0.035 [+0.000, +0.089] |
+| SIFT4G | none | no | 95% | 0.971 [0.939–0.996] | +0.027 [-0.013, +0.080] |
+| AlphaMissense | none (population) | no | 99% | 0.961 [0.907–1.000] | +0.015 [-0.004, +0.045] |
+| EVE | none | no | 59% | 0.956 [0.892–1.000] | -0.002 [-0.026, +0.015] |
+| **MissensExplorer v2.5** | ClinVar (other genes) | no | 100% | 0.946 [0.876–1.000] | — |
+| **MissensExplorer v2.5 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.946 [0.874–1.000] | +0.000 [+0.000, +0.000] |
+| **MissensExplorer v2.5 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.946 [0.874–1.000] | +0.000 [+0.000, +0.000] |
+| MutationAssessor | none | no | 92% | 0.929 [0.839–0.998] | -0.016 [-0.051, +0.002] |
+| CADD | none (simulated) | no | 100% | 0.923 [0.827–1.000] | -0.023 [-0.066, +0.000] |
+| REVEL | HGMD | no | 96% | 0.875 [0.726–1.000] | -0.071 [-0.164, +0.000] |
+| VARITY_R | ClinVar, HGMD | no | 91% | 0.867 [0.706–1.000] | -0.081 [-0.185, +0.000] |
+| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.864 [0.698–1.000] | -0.084 [-0.198, +0.000] |
+| ESM1b | none | no | 100% | 0.836 [0.652–0.998] | -0.110 [-0.239, -0.002] |
+| popEVE | none (population) | no | 83% | 0.835 [0.687–0.971] | -0.115 [-0.213, -0.029] |
+| MetaRNN | ClinVar | yes | 99% | 0.808 [0.588–1.000] | -0.137 [-0.305, +0.000] |
+| ClinPred | ClinVar | yes | 99% | 0.807 [0.584–1.000] | -0.139 [-0.302, +0.000] |
+| LIST-S2 | few parameters | no | 98% | 0.802 [0.618–0.970] | -0.146 [-0.282, -0.030] |
+| PHACTboost | ClinVar | no | 93% | 0.791 [0.551–1.000] | -0.161 [-0.351, +0.000] |
+| MutPred2 | HGMD, SwissVar | no | 100% | 0.787 [0.544–1.000] | -0.159 [-0.348, +0.000] |
+| MPC | ClinVar (402 variants) | no | 86% | 0.748 [0.489–0.987] | -0.198 [-0.405, -0.013] |
+| PolyPhen-2 | UniProt | no | 93% | 0.729 [0.454–0.980] | -0.211 [-0.431, -0.020] |
+| SIFT | none | no | 98% | 0.709 [0.408–1.000] | -0.237 [-0.490, +0.000] |
+| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.672 [0.311–1.000] | -0.271 [-0.571, +0.000] |
+| PrimateAI | none (population) | no | 98% | 0.669 [0.315–1.000] | -0.276 [-0.579, +0.000] |
+| MetaLR | UniProt | yes | 99% | 0.656 [0.300–0.992] | -0.290 [-0.594, -0.008] |
+| MutFormer | HGMD | no | 99% | 0.638 [0.596–0.680] | -0.308 [-0.397, -0.213] |
+| phyloP (100 vertebrates) | none | no | 100% | 0.608 [0.203–0.992] | -0.338 [-0.696, -0.008] |
+| DEOGEN2 | UniProt | no | 97% | 0.598 [0.184–0.996] | -0.347 [-0.711, -0.004] |
+| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.565 [0.522–0.612] | -0.329 [-0.369, -0.279] |
+| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.561 [0.106–1.000] | -0.385 [-0.792, +0.000] |
+| PROVEAN | none | no | 95% | 0.530 [0.045–1.000] | -0.416 [-0.855, +0.000] |
+| BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.525 [0.040–1.000] | -0.420 [-0.859, +0.000] |
+| BayesDel (with AF) | ClinVar, UniProt | yes | 100% | 0.525 [0.042–1.000] | -0.420 [-0.859, +0.000] |
+| gnomAD frequency alone (reference) | — | yes | 100% | 0.500 [0.500–0.500] | -0.446 [-0.500, -0.372] |
+| MetaSVM | UniProt | yes | 99% | 0.495 [0.004–0.990] | -0.451 [-0.901, -0.010] |
+
+## Grpmax below 0.01% variants
+
+| Tool | Clinical training labels | Uses allele frequency | Coverage | AUC | Δ vs ours |
+|---|---|---|---|---|---|
+| MetaRNN | ClinVar | yes | 99% | 0.966 [0.942–0.987] | +0.032 [+0.007, +0.068] |
+| MutationTaster2021 | ClinVar, HGMD (+ look-up) | no | 96% | 0.945 [0.895–0.983] | +0.007 [-0.035, +0.045] |
+| REVEL | HGMD | no | 96% | 0.942 [0.898–0.977] | +0.005 [-0.008, +0.019] |
+| **MissensExplorer v2.5 + frequency as a feature (exploratory)** | ClinVar (other genes) | yes | 100% | 0.940 [0.893–0.976] | +0.007 [-0.000, +0.015] |
+| gMVP | ClinVar, HGMD, UniProt | no | 93% | 0.937 [0.888–0.972] | +0.005 [-0.028, +0.036] |
+| BayesDel (with AF) | ClinVar, UniProt | yes | 100% | 0.936 [0.879–0.977] | +0.003 [-0.020, +0.022] |
+| BayesDel (no AF) | ClinVar, UniProt | no | 100% | 0.933 [0.880–0.973] | +0.000 [-0.023, +0.021] |
+| **MissensExplorer v2.5** | ClinVar (other genes) | no | 100% | 0.933 [0.879–0.972] | — |
+| **MissensExplorer v2.5 + frequency rule (BA1)** | ClinVar (other genes) | yes | 100% | 0.933 [0.886–0.970] | +0.000 [+0.000, +0.000] |
+| VARITY_R | ClinVar, HGMD | no | 91% | 0.930 [0.882–0.968] | +0.001 [-0.022, +0.026] |
+| VARITY_R (leave-one-out) | ClinVar, HGMD | no | 91% | 0.926 [0.880–0.969] | -0.003 [-0.026, +0.021] |
+| ClinPred | ClinVar | yes | 99% | 0.923 [0.872–0.963] | -0.010 [-0.034, +0.011] |
+| MutPred2 | HGMD, SwissVar | no | 100% | 0.921 [0.867–0.963] | -0.012 [-0.053, +0.027] |
+| PHACTboost | ClinVar | no | 93% | 0.916 [0.849–0.967] | -0.013 [-0.051, +0.020] |
+| AlphaMissense | none (population) | no | 99% | 0.904 [0.852–0.944] | -0.030 [-0.058, -0.005] |
+| MetaSVM | UniProt | yes | 99% | 0.893 [0.837–0.939] | -0.040 [-0.076, -0.002] |
+| DEOGEN2 | UniProt | no | 97% | 0.890 [0.831–0.939] | -0.042 [-0.070, -0.015] |
+| MVP | ClinVar, HGMD, UniProt | no | 89% | 0.888 [0.822–0.942] | -0.048 [-0.093, -0.008] |
+| MutationAssessor | none | no | 92% | 0.888 [0.836–0.932] | -0.042 [-0.077, -0.011] |
+| SIFT4G | none | no | 95% | 0.884 [0.838–0.924] | -0.054 [-0.100, -0.009] |
+| Eigen | none | no | 92% | 0.880 [0.818–0.929] | -0.044 [-0.080, -0.009] |
+| ESM1b | none | no | 100% | 0.875 [0.812–0.927] | -0.058 [-0.108, -0.014] |
+| MetaLR | UniProt | yes | 99% | 0.871 [0.811–0.923] | -0.062 [-0.103, -0.022] |
+| PROVEAN | none | no | 95% | 0.867 [0.795–0.923] | -0.068 [-0.123, -0.020] |
+| PolyPhen-2 | UniProt | no | 93% | 0.865 [0.803–0.915] | -0.075 [-0.126, -0.029] |
+| EVE | none | no | 59% | 0.840 [0.759–0.906] | -0.065 [-0.128, -0.001] |
+| FATHMM-XF | HGMD | no | 92% | 0.839 [0.766–0.907] | -0.084 [-0.139, -0.035] |
+| MutFormer | HGMD | no | 99% | 0.838 [0.772–0.905] | -0.095 [-0.160, -0.038] |
+| CADD | none (simulated) | no | 100% | 0.834 [0.759–0.895] | -0.099 [-0.161, -0.048] |
+| LIST-S2 | few parameters | no | 98% | 0.813 [0.746–0.871] | -0.120 [-0.187, -0.056] |
+| DANN | none (simulated) | no | 100% | 0.772 [0.698–0.847] | -0.161 [-0.232, -0.085] |
+| SIFT | none | no | 98% | 0.763 [0.687–0.842] | -0.175 [-0.245, -0.094] |
+| phyloP (100 vertebrates) | none | no | 100% | 0.762 [0.684–0.827] | -0.171 [-0.227, -0.115] |
+| popEVE | none (population) | no | 83% | 0.748 [0.635–0.837] | -0.183 [-0.267, -0.112] |
+| gnomAD frequency alone (reference) | — | yes | 100% | 0.707 [0.638–0.772] | -0.226 [-0.303, -0.158] |
+| PrimateAI | none (population) | no | 98% | 0.680 [0.594–0.767] | -0.251 [-0.330, -0.169] |
+| MPC | ClinVar (402 variants) | no | 86% | 0.672 [0.580–0.766] | -0.264 [-0.353, -0.174] |
 
 ## Same variants for every tool (1290 variants scored by all tools with ≥ 90% coverage)
 
 | Tool | All | Rare | New since 2023 |
 |---|---|---|---|
 | MetaRNN | 0.997 | 0.986 | 0.987 |
-| MissensExplorer v2.3 + frequency as a feature (exploratory) | 0.997 | 0.982 | 0.984 |
+| MissensExplorer v2.5 + frequency as a feature (exploratory) | 0.996 | 0.982 | 0.984 |
 | ClinPred | 0.994 | 0.973 | 0.978 |
 | BayesDel (with AF) | 0.994 | 0.975 | 0.974 |
 | MutationTaster2021 | 0.994 | 0.980 | 0.986 |
-| MissensExplorer v2.3 + frequency rule (BA1) | 0.987 | 0.975 | 0.974 |
-| MissensExplorer v2.3 | 0.987 | 0.975 | 0.974 |
+| MissensExplorer v2.5 + frequency rule (BA1) | 0.987 | 0.975 | 0.973 |
+| MissensExplorer v2.5 | 0.987 | 0.975 | 0.973 |
 | PHACTboost | 0.984 | 0.954 | 0.958 |
 | REVEL | 0.984 | 0.973 | 0.971 |
 | gnomAD frequency alone (reference) | 0.981 | 0.904 | 0.940 |
@@ -177,7 +261,7 @@ Same held-out benchmark as [clinvar_benchmark.md](clinvar_benchmark.md): 1972 ex
 
 | Tool | Pathogenic called damaging | Benign called benign | Pathogenic called benign | Benign called damaging | Decisive calls | Decisive calls right |
 |---|---|---|---|---|---|---|
-| **MissensExplorer v2.3 (default verdict)** | 91.6% | 79.4% | 2.3% | 6.0% | 92.4% | 96.8% |
+| **MissensExplorer v2.5 (default verdict)** | 91.9% | 79.9% | 2.2% | 6.0% | 92.7% | 96.9% |
 | AlphaMissense | 71.5% | 68.8% | 3.4% | 4.0% | 74.5% | 95.3% |
 | REVEL | 86.0% | 69.8% | 1.2% | 6.0% | 85.3% | 97.6% |
 | CADD | 78.5% | 60.8% | 6.1% | 18.6% | 83.7% | 90.1% |

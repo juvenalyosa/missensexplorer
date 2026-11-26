@@ -1,4 +1,4 @@
-# Missense model (version 2.3)
+# Missense model (version 2.5)
 
 MissensExplorer calls missense variants with a logistic regression over four predictor scores. This
 page describes what the model is, how it was trained and validated, and where it should not be
@@ -8,13 +8,15 @@ The coefficients live in `src/missensexplorer/model_params.py`.
 ## What it computes
 
 ```
-z = 0.0255 + 1.161·AlphaMissense′ + 1.661·REVEL′ + 0.897·CADD′ − 0.576·popEVE′
+z = −0.0129 + 1.123·AlphaMissense′ + 1.658·REVEL′ + 0.990·CADD′ − 0.588·popEVE′
 model score = 1 / (1 + e^(−z))
 ```
 
 Each `′` is the score standardised with the training mean and standard deviation. A missing score
-is replaced by the training median, so it does not push the call either way. The model is used only
-when AlphaMissense or REVEL has a score. Otherwise the v2.1 weighted vote decides.
+is replaced by the training mean, which is 0 after standardisation, so it adds nothing to `z`
+(versions up to 2.4 used the median, which added a small term that the explanation did not show).
+The model is used only when AlphaMissense or REVEL has a score. Otherwise the v2.1 weighted vote
+decides.
 
 | Model score | Label |
 |---|---|
@@ -35,13 +37,19 @@ positive pushes towards damaging. The contributions appear in `prediction_basis`
 - **Source:** ClinVar `variant_summary.txt.gz`, as in the benchmark.
 - **Selection:** germline missense SNVs on GRCh38 with ≥ 2 review stars. Pathogenic/Likely pathogenic
   versus Benign/Likely benign. At most 8 variants per gene and class, so a few genes cannot dominate.
-- **Held out:** every gene of the benchmark sample (1,198 genes) was excluded, so the benchmark below
-  measures genes that the model never saw.
-- **Enriched in rare benign variants:** 9,218 variants from 3,263 genes:
-  - every pathogenic variant (4,609);
-  - every *rare* benign variant, with gnomAD grpmax < 0.1% or absent (1,826);
-  - 2,783 common benign variants, picked at random to balance the classes.
-- **Annotation:** Ensembl VEP REST, release 116, with the same pipeline that the tool runs.
+- **Held out:** every gene of the benchmark sample was excluded, so the benchmark below measures
+  genes that the model never saw. A variant is excluded when the gene in its ClinVar name
+  (`NM_...(GENE):c.`) or any of its ClinVar gene symbols is a benchmark gene. Up to version 2.4 the
+  exclusion matched ClinVar's gene-symbol field exactly, and that field lists overlapping genes
+  together (`LDLR;MIR6886`, `CCDC40;GAA`): 63 variants of 36 benchmark genes entered training. Version
+  2.5 fixes this; cross-validation and the PP3/BP4 calibration also group variants by the gene of
+  their ClinVar name.
+- **Enriched in rare benign variants:** 9,086 variants from 3,190 genes:
+  - every pathogenic variant (4,543);
+  - every *rare* benign variant, with gnomAD grpmax < 0.1% or absent (1,854);
+  - 2,689 common benign variants, picked at random to balance the classes.
+- **Annotation:** Ensembl VEP REST, release 116, with the same pipeline that the tool runs (gnomAD
+  itself is asked about variants without an Ensembl frequency).
 
 **Why enriched.** Rare benign variants are the hard cases, and the ones the model is used for:
 common variants are handled by the frequency rule, and most of the rare missense variants in a
@@ -57,7 +65,8 @@ gave a useless model; this check exists because of it.
 ## Choice of cut-offs
 
 The cut-offs are chosen by the training script with 5-fold cross-validation split by gene, on the
-6,355 rare variants of the training set (the benchmark plays no part):
+6,323 rare variants of the training set (the benchmark plays no part). Cross-validated AUC: 0.972 on
+all training variants, 0.967 on the rare ones.
 
 - **Damaging: 0.76.** The highest cut-off (at least 0.70) at which the model still calls at least
   as many rare pathogenic variants damaging as the v2.1 vote did. Within that limit it calls as few
@@ -66,16 +75,16 @@ The cut-offs are chosen by the training script with 5-fold cross-validation spli
 - **Benign: 0.30.** The highest cut-off (at most 0.30) at which no more rare pathogenic variants
   are called benign than with the v2.1 vote.
 
-Cross-validated on the rare training variants:
+Cross-validated on the rare training variants (version 2.5):
 
 | | v2.1 vote | model at 0.70/0.30 | **model at 0.76/0.30** |
 |---|---|---|---|
-| Pathogenic called *damaging* | 84.9% | 87.1% | **84.9%** |
-| Benign called *damaging* | 7.1% | 6.9% | **5.8%** |
-| Pathogenic called *benign* | 5.5% | 4.9% | **4.9%** |
+| Pathogenic called *damaging* | 84.7% | 87.3% | **85.0%** |
+| Benign called *damaging* | 6.8% | 6.2% | **5.3%** |
+| Pathogenic called *benign* | 5.4% | 4.9% | **4.9%** |
 
-The same cross-validation compared other designs; none ranked rare variants better, so the
-simplest was kept:
+During development (training sets of versions 2.2 and 2.3), the same cross-validation compared other
+designs; none ranked rare variants better, so the simplest was kept:
 
 | Training design (rare variants, CV by gene) | AUC |
 |---|---|
@@ -91,8 +100,8 @@ higher cut-off); it does not rank them better.
 
 ## Choice of predictors
 
-All seven available scores were tried on the v2.2 training set, using 5-fold cross-validation split
-by gene:
+During development, all seven available scores were tried on the v2.2 training set, using 5-fold
+cross-validation split by gene:
 
 | Predictors | AUC |
 |---|---|
@@ -114,70 +123,73 @@ Other options did not help in an exploratory run on 5,874 variants:
 ## Validation (held-out genes)
 
 [Full benchmark](../benchmarks/results/clinvar_benchmark.md): 1,972 ClinVar variants from 1,181
-genes, none used for training.
+genes, none used for training (per-variant table: `benchmarks/results/clinvar_benchmark_variants.csv.gz`).
 
-| All variants | v2.1 vote | v2.2 model | **v2.3 model** |
+| All variants | v2.1 vote | v2.2 model | **v2.5 model** |
 |---|---|---|---|
 | AUC | 0.959 | 0.985 | **0.985** |
-| Pathogenic called *damaging* | 89.1% | 93.1% | **91.4%** |
-| Benign called *benign* | 87.3% | 88.4% | **88.4%** |
-| Pathogenic called *benign* | 2.7% | 2.4% | **2.4%** |
+| Pathogenic called *damaging* | 89.1% | 93.1% | **91.7%** |
+| Benign called *benign* | 87.3% | 88.4% | **88.3%** |
+| Pathogenic called *benign* | 2.7% | 2.4% | **2.2%** |
 | Benign called *damaging* | 5.2% | 5.1% | **3.2%** |
 | Decisive calls | 92.1% | 94.5% | **92.7%** |
 | Decisive calls that are right | 95.7% | 96.0% | **97.0%** |
 
-The v2.2 and v2.3 columns include the frequency rule (BA1); the v2.1 column is the vote alone.
+The v2.2 and v2.5 columns include the frequency rule (BA1); the v2.1 column is the vote alone.
 
-| Rare variants (gnomAD grpmax < 0.1%: 964 pathogenic, 199 benign) | v2.1 vote | v2.2 model | **v2.3 model** |
+| Rare variants (gnomAD grpmax < 0.1%: 964 pathogenic, 199 benign) | v2.1 vote | v2.2 model | **v2.5 model** |
 |---|---|---|---|
 | AUC | 0.937 | 0.973 | **0.974** |
-| Pathogenic called *damaging* | 89.2% | 93.4% | **91.6%** |
+| Pathogenic called *damaging* | 89.2% | 93.4% | **91.9%** |
 | Benign called *damaging* | 9.0% (18) | 10.6% (21) | **6.0% (12)** |
-| Pathogenic called *benign* | 2.6% | 2.3% | **2.3%** |
-| Benign called *benign* | 81.9% | 80.4% | **79.4%** |
-| Decisive calls that are right | 96.0% | 96.1% | **96.8%** |
+| Pathogenic called *benign* | 2.6% | 2.3% | **2.2%** |
+| Benign called *benign* | 81.9% | 80.4% | **79.9%** |
+| Decisive calls that are right | 96.0% | 96.1% | **96.9%** |
 
-- On rare variants, v2.3 makes fewer wrong calls than v2.1 in both directions and finds more of the
-  pathogenic variants.
-- The price is that more rare benign variants stay *uncertain* (14.6% against 9.1% with v2.1), so
+- On rare variants, the model makes fewer wrong calls than v2.1 in both directions and finds more of
+  the pathogenic variants.
+- The price is that more rare benign variants stay *uncertain* (14.1% against 9.1% with v2.1), so
   slightly fewer are called *benign*.
-- Compared with v2.2, the borderline variants (scores 0.70–0.76) are now *uncertain* instead of
-  *damaging*. Sensitivity drops by about two points, and about 40% fewer benign variants are
-  called damaging.
 - **Variants evaluated since 2024:** AUC 0.984 (v2.1: 0.960). 3.4% of the benign variants are
   called damaging (v2.1: 5.1%).
+- **Against REVEL**, its strongest input, on the variants both score: +0.004 in AUC (95% CI 0.001 to
+  0.007) on all variants; not significant on rare variants or on variants labelled since 2023.
 
 Compared with 31 other predictors on the same variants, see [comparison.md](comparison.md).
 
-The benchmark had already shown the v2.2 problem, so this is its second use for the model. The
-benchmark took no part in choosing v2.3's design or cut-offs, which were set by the rule above on
-the training genes alone.
+The benchmark had already shown the v2.2 problem (too many rare benign variants called damaging),
+which led to the enriched training set, so it is not untouched by the model's design. The
+cut-offs were set by the rule above on the training genes alone.
 
 ## Independent validation on laboratory data (ProteinGym)
 
 [Full results](../benchmarks/results/proteingym_validation.md), from `benchmarks/validate_proteingym.py`.
 
 **Data.** Deep mutational scanning measures, in the laboratory, how each amino-acid substitution
-changes a protein's function. The check used 13,408 single-nucleotide missense variants from 71
-human assays on 61 proteins of [ProteinGym](https://proteingym.org). No ClinVar label is involved.
+changes a protein's function. The check used up to 500 single-nucleotide missense variants per assay
+from 71 human assays on 61 proteins of [ProteinGym](https://proteingym.org): 28,701 measurements of
+27,012 variants. No ClinVar label is involved.
 
-**Measure.** Spearman correlation with the measured loss of function, averaged per protein.
+**Measure.** Spearman correlation with the measured loss of function, averaged over the assays of
+each protein and then over proteins. Each tool is compared with MissensExplorer on exactly the same
+variants within each assay.
 
-| | Spearman | vs MissensExplorer |
+| | Spearman | Difference from MissensExplorer, same variants (95% CI) |
 |---|---|---|
-| **MissensExplorer v2.3** | **0.469** | — |
-| popEVE | 0.460 | −0.009, not significant |
-| AlphaMissense | 0.458 | −0.012, borderline |
-| MetaRNN | 0.438 | −0.035, significant |
-| REVEL | 0.425 | −0.044, significant |
-| ClinPred | 0.405 | −0.065, significant |
-| CADD | 0.344 | −0.126, significant |
+| **MissensExplorer v2.5** | **0.462** | — |
+| popEVE | 0.453 | −0.009 (−0.025 to +0.005) |
+| AlphaMissense | 0.453 | −0.013 (−0.025 to −0.001) |
+| MetaRNN | 0.431 | −0.034 (−0.052 to −0.018) |
+| REVEL | 0.419 | −0.043 (−0.053 to −0.032) |
+| ClinPred | 0.402 | −0.059 (−0.073 to −0.044) |
+| CADD | 0.337 | −0.125 (−0.152 to −0.100) |
 
-- **The model generalizes beyond ClinVar.** It ranks first of the 34 scores tested.
-- **It beats every input but one.** It does better than REVEL and CADD, and level with popEVE and
-  AlphaMissense.
-- **The ClinVar-trained meta-predictors drop back.** MetaRNN and ClinPred lead on ClinVar, where
-  allele frequency helps them, but fall behind here.
+- **The model generalizes beyond ClinVar.** It is level with popEVE, slightly ahead of AlphaMissense
+  (not significant after correcting for the eight primary comparisons), and ahead of REVEL and CADD.
+- **By assay type** (activity, binding, expression, organismal fitness, stability), neither popEVE
+  nor AlphaMissense is significantly better than the model in any type.
+- **The ClinVar-trained meta-predictors drop back.** MetaRNN and ClinPred lead on ClinVar, but fall
+  behind here.
 - **Correlations are moderate for every tool,** because an assay measures one function in one
   experimental system, not disease.
 
@@ -232,12 +244,33 @@ worked examples in Horak et al.
 
 | Criteria | Source |
 |---|---|
-| OS3 / OM3 / OP3: tumour hotspot, by the number of tumours at the residue and with this change | cancerhotspots.org |
+| OS3 / OM3 / OP3: tumour hotspot, by the number of tumours at the residue and with this change | cancerhotspots.org (gene symbols updated to HGNC's current ones) |
 | OS1 / OM4: the same change, or another missense change at the residue, classified oncogenic in ClinVar (one strength lower when only *likely* oncogenic) | ClinVar |
-| OVS1: null variant in a loss-of-function gene; OM2: in-frame change in a cancer gene | IntOGen driver genes (CC0) |
+| OVS1 (graded): null variant in a loss-of-function gene; OM2: in-frame change in a cancer gene, stop lost in a loss-of-function gene | UniProt keywords, IntOGen; Ensembl transcript structure |
 | OP4: absent from gnomAD or below 1e-5; SBS1 / SBVS1: above 1% / 5% in a continental population | gnomAD |
-| OS2 / SBS2: functional studies of this protein change (rated at least 3 of 5): evidence of an oncogenic effect, or of unaltered function | CIViC (CC0) |
-| OP1 / SBP1: the model calls the missense variant damaging / benign | MissensExplorer |
+| OS2 / SBS2: preclinical functional studies of this protein change (CIViC level D, rated at least 3 of 5): evidence of an oncogenic effect, or of unaltered function | CIViC (CC0) |
+| OP1 / SBP1: the calibrated computational evidence reaches PP3 / BP4 | MissensExplorer |
+
+**Gene roles.** IntOGen, weighting each cohort by its mutated samples, when its evidence is enough (at
+least 2 cohorts or 20 samples in cohorts with a role, and no more samples in cohorts of ambiguous role):
+loss-of-function when at least 60% of the samples in cohorts with a role are in loss-of-function ones,
+activating when at most 40%. Otherwise, or when IntOGen is ambiguous, UniProt's curated keyword (Tumor
+suppressor or Proto-oncogene) when it names one role. When the two disagree, IntOGen decides only with at
+least 3 cohorts and 50 samples (RUNX1, NSD1 and CBFB are loss-of-function genes although UniProt calls
+them proto-oncogenes, from their fusions); otherwise the role is ambiguous (SMARCB1, BCL6). Up to
+version 2.4 the role was the majority of IntOGen cohorts, which made tumour suppressors such as SMARCA4,
+KEAP1, GATA3 and CHEK2 "activating". Some remain unclassified: SMARCA4 is ambiguous, BARD1 rests on a
+single small IntOGen cohort, BRIP1 is in neither source, and ETV6 and IKZF1 are activating in IntOGen.
+
+**OVS1 is graded** as ClinGen's loss-of-function guidance (Abou Tayoun et al. 2018) grades PVS1,
+which the standard recommends, using the standard's option to downgrade a criterion:
+- full (8) when nonsense-mediated decay is expected, or when skipping the affected exon would shift
+  the reading frame;
+- OVS1_Strong (4) when decay is escaped (last exon, single-exon gene) and the truncation removes more
+  than 10% of the protein, or an in-frame exon skip removes more than 10% of the coding sequence;
+- OVS1_Moderate (2) otherwise, and for a lost start codon.
+Cryptic splice sites and alternative isoforms are not assessed, and the penultimate exon counts as
+subject to decay. Up to version 2.4, OVS1 was not given anywhere in a last exon.
 
 For OS2, what counts as an oncogenic effect depends on the gene. Gain of function or neomorphic
 function counts in any driver. Loss of function or a dominant-negative effect counts only in a
@@ -247,59 +280,55 @@ loss-of-function gene.
 protein change goes in `clinical_evidence`. It gives the best level (A validated or in guidelines,
 B clinical trials, C case reports, D preclinical, E inferential), the drug and the tumour type. This
 is the other axis of somatic interpretation, what the variant means for treatment (AMP/ASCO/CAP),
-so it never adds oncogenicity points. For example, L858R reaches level A (erlotinib in lung cancer)
-and BRAF V600E level A (vemurafenib in melanoma), although CIViC has no functional study of either.
+so it never adds oncogenicity points.
 
 **What is not computed.**
-- Functional studies outside CIViC, a critical functional domain (OM1) and OP2 need a curator. CIViC
-  holds few functional studies: 341 in 63 genes, 196 of them rated 3 stars or more.
+- Functional studies outside CIViC, a critical functional domain (OM1), OP2 and the tumour type,
+  which the standard asks to consider. The class comes from the automated criteria only: a starting
+  point for a curator, not an oncogenicity classification.
 - The variant's own ClinVar oncogenicity classification never counts as evidence for itself; it is
-  shown apart (`clinvar_oncogenicity`).
+  shown apart (`clinvar_oncogenicity`), found by the variant's position.
 - OncoKB is not used: its terms do not allow use in clinical or commercial settings without a
   licence.
 
-**Three choices.**
-1. **OP1/SBP1 only outside activating genes.** In a gene IntOGen calls activating, the model's call
-   does not count. The data:
-   - In EGFR, an oncogene, a damaging call marks broken kinases as much as activated ones. With OP1
-     the points ranked Ba/F3 transformation at 0.42, without it at 0.56.
-   - In TP53, a tumour suppressor, the model is the strongest criterion: the points rank loss of
-     function at 0.93 with it and 0.87 without it.
-2. **OP4 below 1e-5.** The standard says "absent or extremely low" without a number.
-3. **OS1 removes the hotspot criteria**, whose counts mix nucleotide changes. OM3 and OM4 are never
-   combined; the stronger one is kept.
+**Choices where the standard leaves room.**
+1. **OP1/SBP1 in every gene,** as the standard does. In an activating gene a damage prediction does
+   not tell activation from inactivation, which the output notes. Up to version 2.4 OP1/SBP1 were not
+   applied in activating genes: that ranked EGFR transformation better but left canonical hotspots
+   such as BRAF V600E and EGFR L858R at 5 points (VUS).
+2. **OP4 below 1e-5.** The standard says "absent or extremely low" without a number. Clonal
+   haematopoiesis is not handled, so hotspots present in gnomAD (KRAS G12D, IDH1 R132H, JAK2 V617F) get
+   no OP4.
+3. **OS1 removes the hotspot criteria** (OS3, as the standard says, and also OM3 and OP3). OM3 and OM4
+   are never combined; the stronger one is kept.
 
-**Validation.** The points are ranked against laboratory assays: AUC, where ties count half.
+**Validation on laboratory assays** (AUC; ties count half; CIViC items citing the assays left out):
 
-| Gene (role) | Assay | Variants | Model alone | Points |
-|---|---|---|---|---|
-| EGFR (oncogene) | 3T3 transformation (3-4 vs 1), missense | 225 | 0.543 | **0.729** (0.620-0.823) |
-| EGFR | Ba/F3 transformation, missense | 258 | 0.215 | **0.557** (0.507-0.608) |
-| TP53 (tumour suppressor) | Kato yeast transactivation | 1,724 | 0.928 | **0.932** (0.917-0.946) |
-| TP53 | Giacomelli loss of function | 2,158 | 0.841 | **0.842** (0.820-0.864) |
+| Gene (role) | Assay | Variants | Model alone | Points | Points without OP1/SBP1 |
+|---|---|---|---|---|---|
+| EGFR (oncogene) | 3T3 transformation (3-4 vs 1), missense | 225 | 0.542 | **0.693** (0.581-0.797) | 0.729 |
+| EGFR | Ba/F3 transformation, missense | 258 | 0.214 | **0.396** (0.341-0.450) | 0.557 |
+| TP53 (tumour suppressor) | Kato yeast transactivation | 1,724 | 0.927 | **0.931** (0.916-0.947) | 0.868 |
+| TP53 | Giacomelli loss of function | 2,158 | 0.840 | **0.847** (0.826-0.868) | 0.782 |
 
-In this validation, CIViC items that cite the assays themselves, or yeast assays like Kato's, are left
-out: 78 items. Otherwise the points would be tested against their own source. With the rest, OS2
-applies to 3 EGFR and 10 TP53 variants.
+- In EGFR the points rank transformation better than the model (paired difference +0.153 for 3T3),
+  but OP1/SBP1 lower the ranking; two transforming variants (R165Q, T638M) are called likely benign on
+  SBP1 alone. L858R, T790M and E746_A750del are likely oncogenic.
+- In TP53 the points rank as well as the model (paired differences not significant); 90 of 493
+  non-functional variants are oncogenic or likely oncogenic, none of the 1,147 functional ones.
+- 66 EGFR variants cannot be analysed (protein-level insertions and deletion-insertions); 60 of them
+  transform 3T3 cells.
 
-- **Ranking:**
-  - In the oncogene the points rank far better than the model, because the tumour hotspots carry
-    the signal.
-  - In the tumour suppressor they rank as well as the model, which is already good.
-  - Without ClinVar the AUCs barely change: the points do not depend on ClinVar's classifications.
-- **Calls:** they are cautious.
-  - No TP53 variant functional in yeast is called oncogenic.
-  - One EGFR variant that does not transform 3T3, K754E, comes out *Likely oncogenic*. CIViC holds
-    evidence that it is oncogenic, and it does transform Ba/F3.
-  - Few variants reach *Likely oncogenic* or *Oncogenic*:
-    - TP53: 91 of 493 non-functional variants. G245S is *Oncogenic*, with 10 points from the
-      hotspot, a CIViC functional study, the model and gnomAD.
-    - EGFR: E746_A750del and T790M.
-  - L858R, the TP53 hotspot R273H and most uncommon EGFR mutations stay *VUS*. They have no
-    functional study in CIViC, and without one the automatic criteria rarely pass 5 points.
+**Against ClinVar oncogenicity classifications** (`benchmarks/validate_clinvar_oncogenicity.py`;
+2,283 variants, almost all from one submitting laboratory): 994 of 1,700 oncogenic or likely
+oncogenic variants called oncogenic or likely oncogenic (58.5%); null variants 77.4%, missense 25.3%
+(16.0% with the version 2.4 rule), in-frame 2 of 37; loss-of-function genes 72.4%, activating genes
+17.4%. Two opposite-direction calls (likely benign on SBP1 alone); 33 variants that ClinVar calls
+uncertain are called likely oncogenic (52 with version 2.4). Most oncogenic APC truncations lie in the
+last exon and get OVS1_Strong (5 points with OP4: VUS).
+
 - **Use:** the points rank and document the evidence; they do not replace curation.
   - A *VUS* here means "not enough automatic evidence", not "probably harmless".
-  - ClinVar's classification of the variant itself is shown next to them.
 - **Not assessed:**
   - Insertions written as protein changes, such as most EGFR exon 20 insertions, cannot be traced
     to one DNA change; give the c. change.
@@ -381,17 +410,19 @@ on the same data, so its evidence has the same meaning as REVEL's.
 
 | Evidence (points) | Likelihood ratio needed | Model score |
 |---|---|---|
-| PP3 Strong (+4) | 33.5 | ≥ 0.985 |
-| PP3 Moderate (+3) | 13.9 | ≥ 0.975 |
-| PP3 Moderate (+2) | 5.8 | ≥ 0.941 |
-| PP3 Supporting (+1) | 2.4 | ≥ 0.816 |
-| BP4 Supporting (−1) | 1/2.4 | ≤ 0.271 |
-| BP4 Moderate (−2) | 1/5.8 | ≤ 0.105 |
-| BP4 Moderate (−3) | 1/13.9 | ≤ 0.017 |
-| BP4 Strong (−4) | 1/33.5 | ≤ 0.005 |
+| PP3 Strong (+4) | 33.5 | ≥ 0.984 |
+| PP3 Moderate+ (+3) | 13.9 | ≥ 0.975 |
+| PP3 Moderate (+2) | 5.8 | ≥ 0.938 |
+| PP3 Supporting (+1) | 2.4 | ≥ 0.817 |
+| BP4 Supporting (−1) | 1/2.4 | ≤ 0.262 |
+| BP4 Moderate (−2) | 1/5.8 | ≤ 0.109 |
+| BP4 Moderate+ (−3) | 1/13.9 | ≤ 0.021 |
+| BP4 Strong (−4) | 1/33.5 | ≤ 0.003 |
 
-The +3/−3 intervals count as Moderate under the 2015 guidelines, as for REVEL. The output reads, for
-example, `PP3_Strong (model 0.994)` = +4 points.
+The 3-point level is written `Moderate+` so that it is not read as Moderate (2 points). The output
+reads, for example, `PP3_Strong (model 0.994)` = +4 points. BP4 is withheld unless SpliceAI is at
+most 0.1 (the ClinGen splicing subgroup's threshold for no splicing impact; also when there is no
+SpliceAI score), because BP4 means no predicted impact on the protein and on splicing.
 
 **How the thresholds were set.**
 - **Method.** A Python port of the authors' MATLAB code
@@ -405,75 +436,81 @@ example, `PP3_Strong (model 0.994)` = +4 points.
   (0.644 / 0.774 / 0.879 / 0.932 for PP3; 0.290 / 0.181 / 0.052 / 0.016 for BP4), VEST4, MutPred2
   and PolyPhen-2. Every value is within 0.002, the size of bootstrap noise.
 - **Data.**
-  - The paper's ClinVar 2019 set: the data behind REVEL's ClinGen thresholds.
-    - It has missense variants below 1% in gnomAD, with the training variants of REVEL and other
-      tools removed.
-    - 11,201 of its 11,834 variants are missense on the transcript MissensExplorer reports.
-  - Each variant is scored by a model fitted without its gene, because the shipped model was trained
-    on ClinVar variants of many of these genes. These scores agree with the shipped model's on genes
-    neither model saw (correlation 0.9999).
+  - The paper's ClinVar 2019 set: the data behind REVEL's ClinGen thresholds. 11,201 of its 11,834
+    variants are missense on the transcript MissensExplorer reports.
+  - Each variant is scored by a model fitted without its gene (genes grouped by the gene of the
+    ClinVar name), because the shipped model was trained on ClinVar variants of many of these genes.
   - The gnomAD part is 5,615 rare gnomAD v4 missense variants that are not in ClinVar.
-- **Effect of the substitutions.** Done on REVEL's own scores:
-  - **gnomAD set.** A set of 5,615 variants instead of 364,000 makes BP4 Moderate a little stricter
-    (0.159 instead of 0.183) and leaves PP3 unchanged.
-  - **Variant subset.** Keeping only the 11,201 variants that are missense on the current transcript
-    moves BP4 Supporting from 0.290 to 0.342. The 633 variants left out include 344 pathogenic ones
-    with middling REVEL scores, probably pathogenic for other reasons such as splicing.
-    MissensExplorer gives PP3/BP4 only to variants that are missense on the reported transcript, so
-    this is the right population. The tests below check the BP4 bands for exactly this reason.
+- **How much the data matter.** With the same data, REVEL's thresholds move by up to 0.052 from the
+  published ones (BP4 Supporting 0.342 instead of 0.290), mostly because only variants that are
+  missense on the current transcript are kept and the gnomAD set is smaller. Calibrating the model on
+  this project's own training data instead gives thresholds up to 0.025 away (BP4 Supporting 0.237).
+  The exact values therefore depend on the calibration data.
 
 **Tests on data not used for the calibration.** For each band, the likelihood ratio was compared
-with the one the level needs:
-- the paper's ClinVar 2020 set (8,723 variants), as in the paper;
-- the rare variants of the held-out benchmark (1,163 variants, genes the shipped model never saw);
+with the one the level needs, with a Katz 95% interval and the probability that the ratio exceeds
+the one needed:
+- the paper's ClinVar 2020 set (8,723 variants), as in the paper; and the same set scored by the
+  shipped model after removing its training variants;
+- the rare variants of the held-out benchmark (genes the shipped model never saw), without the 66
+  that are also in the 2019 calibration set;
 - among those, the ones labelled since 2023.
 
-| ClinVar 2020 set | Pathogenic | Benign | Likelihood ratio (95% CI) | Needed |
+| ClinVar 2020 set | Pathogenic | Benign | Likelihood ratio (Katz 95% CI) | Needed |
 |---|---|---|---|---|
-| PP3 Strong | 1,233 | 50 | 55.6 (43.5–75.6) | 33.5 |
-| PP3 +3 | 269 | 37 | 16.4 (12.0–23.8) | 13.9 |
-| PP3 Moderate | 352 | 106 | 7.5 (6.1–9.4) | 5.8 |
-| PP3 Supporting | 333 | 200 | 3.8 (3.2–4.5) | 2.4 |
-| BP4 Supporting | 89 | 976 | 4.9 (4.0–6.1) | 2.4 |
-| BP4 Moderate | 71 | 2,202 | 13.8 (11.1–17.9) | 5.8 |
-| BP4 −3 | 10 | 982 | 43.5 (26.2–108.5) | 13.9 |
-| BP4 Strong | 1 | 452 | 200 (62–∞) | 33.5 |
+| PP3 Strong | 1,265 | 52 | 54.9 (41.8–72.2) | 33.5 |
+| PP3 Moderate+ | 222 | 31 | 16.2 (11.1–23.5) | 13.9 |
+| PP3 Moderate | 383 | 114 | 7.6 (6.2–9.3) | 5.8 |
+| PP3 Supporting | 314 | 194 | 3.7 (3.1–4.3) | 2.4 |
+| BP4 Supporting | 77 | 888 | 5.1 (4.1–6.4) | 2.4 |
+| BP4 Moderate | 70 | 1,892 | 12.0 (9.5–15.1) | 5.8 |
+| BP4 Moderate+ | 17 | 1,488 | 38.8 (24.1–62.4) | 13.9 |
+| BP4 Strong | 1 | 301 | 133 (19–950) | 33.5 |
 
-- **ClinVar 2020 set:** every band reaches the ratio it needs.
-- **Held-out benchmark:** every band reaches it too.
-- **Labelled since 2023:** one band falls short, PP3 +3 at 11.3 against 13.9. It rests on a single
-  benign variant (31 pathogenic, 1 benign).
+- **ClinVar 2020 set:** every band reaches the ratio it needs in point estimate; the lower bound
+  falls short for PP3 Moderate+ and BP4 Strong. The shipped model gives the same picture.
+- **Held-out benchmark:** every band reaches it in point estimate, but three PP3 bands rest on a
+  single benign variant each, so their intervals are wide.
+- **Labelled since 2023:** PP3 Moderate+ falls short (8.2 against 13.9; 22 pathogenic, 1 benign).
 
 **Compared with REVEL at ClinGen's published thresholds** (the `revel` source):
 
 | | ClinVar 2020: model | ClinVar 2020: REVEL | Held-out, rare: model | Held-out, rare: REVEL |
 |---|---|---|---|---|
-| Pathogenic with PP3 | **81.6%** | 73.2% | 87.8% | 88.5% |
-| … PP3 Strong | **46.0%** | 28.2% | **46.5%** | 34.4% |
-| Benign with BP4 | **76.3%** | 65.6% | **78.9%** | 71.4% |
-| … BP4 Moderate or more | **60.2%** | 47.4% | **68.8%** | 51.3% |
-| Pathogenic with BP4 (wrong way) | 6.4% | 6.7% | 2.2% | 1.5% |
-| Benign with PP3 (wrong way) | 6.5% | 7.3% | 5.0% | 6.0% |
+| Pathogenic with PP3 | **81.5%** | 73.2% | 87.4% | 88.6% |
+| … PP3 Strong | **47.2%** | 28.2% | **46.8%** | 34.1% |
+| Benign with BP4 | **75.6%** | 65.6% | **78.7%** | 71.0% |
+| … BP4 Moderate or more | **60.9%** | 47.4% | **69.4%** | 51.9% |
+| Pathogenic with BP4 (wrong way) | 6.2% | 6.7% | 2.1% | 1.3% |
+| Benign with PP3 (wrong way) | 6.5% | 7.3% | 4.9% | 6.0% |
 
 - The model gives stronger evidence more often, in both directions.
-- Its wrong-way evidence is about as frequent as REVEL's:
-  - ClinVar 2020 set: a little lower on both sides.
-  - Held-out benchmark: 7 more pathogenic variants out of 964 get BP4 Supporting, and 2 fewer benign
-    variants out of 199 get PP3.
-- Among rare gnomAD variants, 20% get no computational evidence, against 28% with REVEL.
+- Its wrong-way evidence is about as frequent as REVEL's.
+- Among rare gnomAD variants, 21% get no computational evidence, against 28% with REVEL.
+- ClinGen's expert panels mostly apply PP3 at supporting strength; where a panel applied PP3, the
+  model's strength matches theirs in only 17% (see `benchmarks/results/erepo_analyses.md`). In the ten
+  largest panels, the same comparison gives 16% for the tool, 80% for the tool capped at the highest
+  strength each specification allows, and 86% for the panels' own hand-encoded rules
+  (`benchmarks/results/erepo_vcep_rules.md`): the disagreement is systematic and follows the
+  specifications. This is a consistency check, not a test of which strength is right. The output names
+  the panel's specification (`vcep_specification`) and lists what differs from it (`acmg_notes`). Use
+  the panel's specification where one exists.
 
 **Using it.**
 - **Not published by ClinGen.** The calibration follows ClinGen's method on ClinGen's data, but it is
   this project's work, not reviewed by ClinGen. A laboratory that requires a ClinGen-published
   calibration should use `--acmg-source revel`.
-- **One source only.** Use either the model or REVEL, chosen in advance, never both for the same
-  variant. Pejaver et al. also recommend limiting PP3 and PM1 together to Strong (4 points).
+- **One source only.** Use either the model or REVEL, chosen in advance (it can be fixed in the
+  configuration file), never both for the same variant.
+- **Residue-level criteria.** Pejaver et al. warn that PP3 and PM1, PS1 or PM5 may count the same
+  information twice, and recommend limiting PP3 and PM1 together to Strong (4 points). The output
+  notes every variant with PP3 at Moderate or stronger together with PS1/PM5.
 - **Two different standards on one score.**
   - The verdict (*Likely damaging* from 0.76) is tuned to find pathogenic variants.
-  - PP3 needs the likelihood ratio of the ACMG point system (from 0.816).
-  - A variant between 0.76 and 0.816 is therefore *Likely damaging* without PP3. Likewise, BP4
-    starts at 0.271 while *Likely benign* starts at 0.30.
-- **Tied to one trained model.** The thresholds apply to model 2.3 as trained on 2026-11-23. After a
+  - PP3 needs the likelihood ratio of the ACMG point system (from 0.817).
+  - A variant between 0.76 and 0.817 is therefore *Likely damaging* without PP3. Likewise, BP4
+    starts at 0.262 while *Likely benign* starts at 0.30.
+- **Tied to one trained model.** The thresholds apply to model 2.5 as trained on 2026-11-26. After a
   retrain, the app falls back to REVEL until `benchmarks/calibrate_acmg.py` is run again, and a test
   fails as a reminder.
 
@@ -500,7 +537,10 @@ points in `acmg_codes`, and explained in `acmg_ps1_pm5` and `acmg_pm2`.
   | Another missense change at the residue | PM5 (+2) | PM5_Supporting (+1) |
 
   The lower strengths for likely pathogenic references follow several ClinGen expert panels (for
-  example glaucoma and HNF4A). Only the stronger of PS1 and PM5 is given, never both.
+  example glaucoma and HNF4A). A reference with a single review star counts one step lower (a
+  pathogenic one gives PS1_Moderate or PM5_Supporting; a likely pathogenic one is not used): expert
+  panels applied PM5 in only about a third of the classifications where the tool's PM5 rested on such a
+  reference. Only the stronger of PS1 and PM5 is given, never both.
 - **Not given when SpliceAI ≥ 0.2.** The variant may then act through splicing rather than through
   the amino-acid change.
 - **What you must still check.**
@@ -556,7 +596,7 @@ points in `acmg_codes`, and explained in `acmg_ps1_pm5` and `acmg_pm2`.
 ranking the variants of a sample. Desktop app: column *With frequency*.
 
 ```
-z = −6.937 + 0.855·logit(model score) − 1.822·log10(gnomAD grpmax + 10⁻⁶)
+z = −7.087 + 0.866·logit(model score) − 1.857·log10(gnomAD grpmax + 10⁻⁶)
 score with frequency = 1 / (1 + e^(−z))
 ```
 
@@ -580,7 +620,7 @@ tool in the comparison.
 
 **Read it as a ranking, not as a probability or a call.**
 - **Frequency weighs heavily, the way ClinVar's variants do.** A variant absent from gnomAD gets a
-  high value even with a low model score: 0.98 at model score 0.5, 0.89 at 0.1, and about 0.5 at
+  high value even with a low model score: 0.98 at model score 0.5, 0.90 at 0.1, and about 0.5 at
   0.01. In ClinVar most absent variants are pathogenic. In a patient's exome, most absent variants
   are private and benign.
 - **Use it to sort a sample's variants.** It brings forward the rare and absent variants with high
@@ -592,6 +632,6 @@ tool in the comparison.
 - **Common pathogenic variants rank low.** Variants that are frequent but pathogenic (recessive or
   founder conditions, for example HFE C282Y) rank low here. The main prediction keeps them, through
   ClinGen's BA1 exception list.
-- **Tied to one trained model.** The coefficients belong to model 2.3 as trained on 2026-11-23. After
+- **Tied to one trained model.** The coefficients belong to model 2.5 as trained on 2026-11-26. After
   a retrain the column stays empty until `train_frequency_score.py` is run again, and a test fails
   as a reminder.

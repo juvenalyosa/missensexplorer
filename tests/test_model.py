@@ -91,9 +91,17 @@ def test_classify_uses_model_and_falls_back_to_votes():
     ],
 )
 def test_pp3_bp4_intervals(row, code, pts):
-    text, p = acmg.computational(row, "revel")
+    text, p = acmg.computational({**row, "spliceai_max": 0.01}, "revel")
     assert text.startswith(code)
     assert p == pts
+
+
+def test_bp4_needs_spliceai_to_rule_out_splicing():
+    text, p = acmg.computational({"revel": 0.016}, "revel")  # no SpliceAI score
+    assert text == "none (REVEL 0.016; BP4_Strong withheld: no SpliceAI score to rule out a splicing effect)"
+    assert p == 0
+    assert acmg.computational({"revel": 0.016, "spliceai_max": 0.3}, "revel")[1] == 0
+    assert acmg.computational({"revel": 0.016, "spliceai_max": 0.1}, "revel")[1] == -4
 
 
 def test_pp3_bp4_without_scores():
@@ -127,7 +135,7 @@ def test_model_pp3_bp4_follows_its_calibration():
     assert cal["pp3"][-1][0] > cal["bp4"][-1][0]  # weakest PP3 cut-off above the weakest BP4 one
     seen = set()
     for v in json.loads((DATA / "model_vectors.json").read_text()):
-        text, pts = acmg.computational(v)  # the model is the default source
+        text, pts = acmg.computational({**v, "spliceai_max": 0.0})  # the model is the default source
         if v["alphamissense"] is None and v["revel"] is None:
             assert (text, pts) == (None, None)
             continue
@@ -139,7 +147,12 @@ def test_model_pp3_bp4_follows_its_calibration():
 
 
 def test_frequency_evidence():
-    assert acmg.frequency({"gnomad_af": 0.04, "gnomad_popmax_af": 0.062}) == "common: BA1 (grpmax 6.2%)"
+    assert (
+        acmg.frequency({"gnomad_af": 0.04, "gnomad_popmax_af": 0.062})
+        == "common: BA1 (grpmax 6.2%; allele numbers not checked in gnomAD)"
+    )
+    checked = {"gnomad_af": 0.04, "gnomad_popmax_af": 0.062, "_grpmax_2000": (0.061, 30000)}
+    assert acmg.frequency(checked) == "common: BA1 (grpmax 6.2%)"
     assert acmg.frequency({"gnomad_af": 0.004, "gnomad_popmax_af": 0.013}) == "frequent: BS1 candidate (grpmax 1.3%)"
     assert acmg.frequency({"gnomad_af": 1e-5, "gnomad_popmax_af": 2e-5}) == "rare (grpmax 0.002%)"
     assert acmg.frequency({}) == "no gnomAD frequency in Ensembl's data (not checked in gnomAD)"

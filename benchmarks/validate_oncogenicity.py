@@ -14,9 +14,16 @@ Two genes with opposite roles, both measured in the laboratory:
 
 Every variant goes through the full pipeline with ``oncogenicity=True``, as a user would run it, and
 again without ClinVar (to see what the points do without ClinVar's oncogenicity classifications).
-The points are compared with the model's score alone (AUC, ties count half), and the classes are
-counted per assay class. TP53 is not in the model's training set; neither are the EGFR variants
-(validate_egfr.py checks it). Only summaries are written; no per-variant table of the TP53 database.
+The points are compared with the model's score alone (AUC, ties count half), also paired on the
+variants both score (DeLong test of the difference), and the classes are counted per assay class. The
+points are also shown without OP1/SBP1 (the model's part) and, for EGFR, as v2.4 computed them (no
+OP1/SBP1 in activating genes), because that design choice was made on these data. gnomAD comes from
+Ensembl and, for variants without an Ensembl frequency, from gnomAD itself (OP4 needs confirmed absence).
+Variants of the EGFR table that cannot be analysed (protein-level insertions and deletion-insertions,
+which do not map to one DNA change, and nonsense or compound entries) are counted by assay class. TP53
+is not in the model's training set; neither are the EGFR variants (validate_egfr.py checks it). The EGFR
+per-variant table is written (Ikeuchi et al. 2022, CC BY 4.0); for TP53 only summaries, no per-variant
+table of the TP53 database.
 
 CIViC evidence (OS2/SBS2 and the clinical summary) is used as the app uses it, except the items that
 cite the assays themselves or yeast assays like Kato's (EXCLUDED_PMIDS): those would test the
@@ -27,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -37,6 +45,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import validate_egfr as E
+from erepo_analyses import delong
 
 from missensexplorer import PredictOptions, model, predict
 from missensexplorer import oncogenicity as onco
@@ -53,6 +62,8 @@ EXCLUDED_PMIDS = {
     "10519380": "Marutani et al. 1999 (TP53 yeast assay)",
     "11896595": "Monti et al. 2002 (TP53 yeast assay)",
 }
+EXCLUDED: list[dict] = []  # EGFR table variants that cannot be analysed (filled by egfr())
+RUNS: list[dict] = []  # data versions and sources of each predict() run, for the report
 WATCH = {
     "EGFR": ["L858R", "G719A", "G719C", "G719S", "L861Q", "S768I", "E709K", "T790M", "L747P", "E746_A750del"],
     "TP53": ["R175H", "R248Q", "R248W", "R273H", "G245S", "Y220C", "R337H", "V217M", "P47S"],
@@ -106,8 +117,9 @@ onco.load = load_without_assay_papers  # predict() reads it through the module
 def run(inputs: list[str], clinvar: bool) -> pd.DataFrame:
     res = predict(
         text="\n".join(inputs),
+        # gnomAD itself is asked for variants without a frequency in Ensembl: OP4 needs confirmed absence
         options=PredictOptions(
-            oncogenicity=True, clinvar=clinvar, protein_context=False, sequences=False, gnomad_check=False, workers=6
+            oncogenicity=True, clinvar=clinvar, protein_context=False, sequences=False, gnomad_check=True, workers=6
         ),
         progress=lambda s, k, n: print(f"  {s}: {k}/{n}", end="\r", flush=True),
     )
@@ -115,6 +127,7 @@ def run(inputs: list[str], clinvar: bool) -> pd.DataFrame:
     failed = {k: v for k, v in res.sources.items() if str(v).startswith("failed")}
     if failed:
         raise SystemExit(f"incomplete: {failed}. Run again (cached answers are kept).")
+    RUNS.append({"data_versions": res.run.get("data_versions", {}), "sources": res.sources})
     return res.table
 
 
@@ -129,12 +142,41 @@ def summarise(rows: list[dict]) -> dict:
         "points": float(np.mean(pts)) if pts else None,
         "tier": tiers.pop() if len(tiers) == 1 else "mixed",
         "codes": " / ".join(sorted({str(r.get("oncogenicity_codes") or "") for r in rows})),
+        "op1": float(np.mean([_op1(r) for r in rows])) if rows else 0.0,
+        "hotspot": float(np.mean([_hotspot(r) for r in rows])) if rows else 0.0,
+        "points_standard_os1": float(np.mean(std))
+        if (std := [x for r in rows if (x := _standard(r)) is not None])
+        else None,
         "model": float(np.mean(ps)) if ps else None,
         "own_clinvar": any(isinstance(r.get("clinvar_oncogenicity"), str) for r in rows),
         "clinical_level": next(
             (r["clinical_evidence_level"] for r in rows if isinstance(r.get("clinical_evidence_level"), str)), None
         ),
     }
+
+
+STANDARD = re.compile(r"the standard's rule for OS1 would give (-?\d+) points")
+
+
+def _standard(r: dict) -> float | None:
+    """The row's points under the standard's OS1 rule (the tool keeps the stronger evidence for the change)."""
+    pts = r.get("oncogenicity_points")
+    if not isinstance(pts, (int, float)):
+        return None
+    m = STANDARD.search(str(r.get("oncogenicity_evidence") or ""))
+    return float(m.group(1)) if m else float(pts)
+
+
+def _hotspot(r: dict) -> int:
+    """The points of the hotspot criteria (OS3, OM3, OP3) in a row."""
+    c = [x.strip().split(" ")[0] for x in str(r.get("oncogenicity_codes") or "").split(",")]
+    return 4 * ("OS3" in c) + 2 * ("OM3" in c) + ("OP3" in c)
+
+
+def _op1(r: dict) -> int:
+    """The points OP1/SBP1 add to a row (+1, -1 or 0)."""
+    c = [x.strip().split(" ")[0] for x in str(r.get("oncogenicity_codes") or "").split(",")]
+    return ("OP1" in c) - ("SBP1" in c)
 
 
 def egfr(client: httpx.Client) -> pd.DataFrame:
@@ -144,11 +186,13 @@ def egfr(client: httpx.Client) -> pd.DataFrame:
         r = client.get(E.TABLE)
         r.raise_for_status()
         path.write_bytes(r.content)
-    items = []
+    items, EXCLUDED[:] = [], []
     for x in E.read_table(path).to_dict("records"):
         kind, text = E.to_input(x["variant"])
         if text and kind in ("missense", "deletion", "insertion", "deletion-insertion"):
             items.append({"variant": x["variant"], "kind": kind, "input": text, "ffa": x["ffa"], "baf3": x["baf3"]})
+        else:
+            EXCLUDED.append({"variant": x["variant"], "kind": kind, "ffa": x["ffa"], "baf3": x["baf3"]})
     out = []
     for clinvar in (True, False):
         print(f"EGFR, ClinVar {'on' if clinvar else 'off'}: {len(items)} variants")
@@ -225,14 +269,33 @@ def evaluate(df: pd.DataFrame, labels: dict[str, str], classes: list[str], rng, 
             off_pts = off.loc[d.variant, "points"].to_numpy(float)
             keep = ~np.isnan(off_pts)
             line["points_without_clinvar"] = round(auc(y[keep], off_pts[keep]), 3)
+            no_op1 = pts - d.op1.to_numpy(float)
+            line["points_without_op1_sbp1"] = round(auc(y, no_op1), 3)
+            hot = d.hotspot.to_numpy(float)
+            line["hotspot_points_only"] = round(auc(y, hot), 3)
+            # paired against the full points: are the differences more than noise?
+            line["hotspot_only_minus_points"] = delong(y.astype(int), hot, pts)
+            line["without_op1_sbp1_minus_points"] = delong(y.astype(int), no_op1, pts)
             m = d.model.notna().to_numpy()
             if m.sum() and 0 < y[m].sum() < m.sum():
-                line["model"] = round(auc(y[m], d.model.to_numpy(float)[m]), 3)
+                mod = d.model.to_numpy(float)[m]
+                line["model"] = round(auc(y[m], mod), 3)
                 line["model_n"] = int(m.sum())
+                line["model_ci"] = ci(y[m], mod, rng, n_boot)
+                line["points_minus_model_paired"] = delong(y[m].astype(int), pts[m], mod)
             rep["auc"][f"{name} ({kind})"] = line
     for c in classes:
         cnt = Counter(on.loc[on.assay_class == c, "tier"].fillna("not assessed"))
         rep["tiers"][c] = {t: int(cnt.get(t, 0)) for t in [*TIERS, "mixed", "not assessed"] if cnt.get(t)}
+    # classes without OP1/SBP1 (as v2.4 had them in activating genes)
+    alt = (on.points - on.op1).map(lambda p: None if p != p else onco.tier(round(p)))
+    rep["tiers_without_op1_sbp1"] = {c: dict(Counter(alt[on.assay_class == c].fillna("not assessed"))) for c in classes}
+    std = on.points_standard_os1.map(lambda p: None if p is None or p != p else onco.tier(round(p)))
+    changed = on.points_standard_os1.notna() & (on.points_standard_os1 != on.points)
+    rep["standard_os1_rule"] = {
+        "variants_with_other_points": int(changed.sum()),
+        "class_changes": dict(Counter(f"{a} -> {b}" for a, b in zip(on.tier[changed], std[changed], strict=True))),
+    }
     codes = on.codes.fillna("")
     rep["civic"] = {
         "OS2": int(codes.str.contains(r"\bOS2\b").sum()),
@@ -251,9 +314,9 @@ def markdown(rep: dict, egfr_df: pd.DataFrame, tp53_df: pd.DataFrame) -> str:
         "Produced by `benchmarks/validate_oncogenicity.py`. The points follow the ClinGen/CGC/VICC standard "
         "(Horak et al., Genet Med 2022) with the criteria computed automatically (see "
         "`src/missensexplorer/oncogenicity.py`): hotspots from cancerhotspots.org, gene roles from IntOGen "
-        f"({INTOGEN_RELEASE}), ClinVar oncogenicity classifications of other variants at the residue, "
-        "functional evidence curated in CIViC (OS2/SBS2), gnomAD, and the model's call (only in genes IntOGen "
-        "does not call activating).",
+        f"({INTOGEN_RELEASE}) or UniProt keywords, ClinVar oncogenicity classifications of other variants at the "
+        "residue, functional evidence curated in CIViC (OS2/SBS2), gnomAD (OP4 only when gnomAD itself confirms "
+        "the absence), and the calibrated computational evidence (OP1/SBP1, in every gene).",
         "",
         "- **EGFR** (oncogene): Ikeuchi et al., Oncogene 2022 (CC BY 4.0): NIH-3T3 transformation "
         "(3-4 vs 1) and Ba/F3 transformation.",
@@ -332,14 +395,28 @@ def main(argv: list[str] | None = None) -> int:
             rng,
             args.bootstrap,
         ),
-        "sources": {"egfr": E.PAPER, "tp53": TP53_DB, "intogen": INTOGEN_RELEASE, "civic": onco.CIVIC_URL},
+        "sources": {
+            "egfr": E.PAPER,
+            "tp53": TP53_DB,
+            "intogen": INTOGEN_RELEASE,
+            "civic": "CIViC monthly release (see data_versions)",
+        },
+        "egfr_not_analysed": {
+            "total": len(EXCLUDED),
+            "by_kind": dict(Counter(str(x["kind"]) for x in EXCLUDED)),
+            "by_3t3_score": dict(Counter(str(x["ffa"]) for x in EXCLUDED)),
+            "baf3_transforming": int(sum(bool(x["baf3"]) for x in EXCLUDED)),
+        },
         "civic_dropped": len(dropped),
+        "data_versions": RUNS[-1] if RUNS else {},
     }
     if args.dump:
         args.dump.mkdir(parents=True, exist_ok=True)
         e.to_csv(args.dump / "egfr.csv", index=False)
         t.to_csv(args.dump / "tp53.csv", index=False)
     OUT.mkdir(exist_ok=True)
+    # EGFR per variant (Ikeuchi et al. 2022, CC BY 4.0); TP53 is not written (NCI TP53 Database terms)
+    e[e.clinvar_on].drop(columns=["clinvar_on"]).to_csv(OUT / "egfr_oncogenicity_variants.csv.gz", index=False)
     (OUT / "oncogenicity_validation.json").write_text(json.dumps(rep, indent=1))
     (OUT / "oncogenicity_validation.md").write_text(markdown(rep, e, t))
     print(json.dumps({g: rep[g]["auc"] for g in ("EGFR", "TP53")}, indent=1))

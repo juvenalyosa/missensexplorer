@@ -1,0 +1,1052 @@
+{
+ "generated": "2026-11-26T14:38:30Z",
+ "missensexplorer": "2.5.0",
+ "clinvar_file": "variant_summary.txt.gz",
+ "selected": 2296,
+ "assessed": 2283,
+ "genes": 321,
+ "overall": {
+  "n": 2283,
+  "by_clinvar": {
+   "O/LO": 1700,
+   "VUS": 575,
+   "B/LB": 8
+  },
+  "confusion (rows ClinVar, columns tool)": {
+   "B/LB": {
+    "B/LB": 4,
+    "O/LO": 0,
+    "VUS": 4
+   },
+   "O/LO": {
+    "B/LB": 1,
+    "O/LO": 997,
+    "VUS": 702
+   },
+   "VUS": {
+    "B/LB": 11,
+    "O/LO": 32,
+    "VUS": 532
+   }
+  },
+  "agreement_3class": 0.671485,
+  "olo_called_olo": [
+   997,
+   1700,
+   0.586471,
+   [
+    0.562891,
+    0.60966
+   ]
+  ],
+  "olo_called_blb": 1,
+  "blb_called_olo": 0,
+  "vus_called_olo": 32
+ },
+ "by_kind": {
+  "in-frame": {
+   "n": 91,
+   "by_clinvar": {
+    "O/LO": 37,
+    "VUS": 54
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "O/LO": 2,
+     "VUS": 35
+    },
+    "VUS": {
+     "O/LO": 0,
+     "VUS": 54
+    }
+   },
+   "agreement_3class": 0.615385,
+   "olo_called_olo": [
+    2,
+    37,
+    0.054054,
+    [
+     0.014951,
+     0.177047
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "missense": {
+   "n": 900,
+   "by_clinvar": {
+    "O/LO": 545,
+    "VUS": 350,
+    "B/LB": 5
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 4,
+     "O/LO": 0,
+     "VUS": 1
+    },
+    "O/LO": {
+     "B/LB": 1,
+     "O/LO": 138,
+     "VUS": 406
+    },
+    "VUS": {
+     "B/LB": 10,
+     "O/LO": 0,
+     "VUS": 340
+    }
+   },
+   "agreement_3class": 0.535556,
+   "olo_called_olo": [
+    138,
+    545,
+    0.253211,
+    [
+     0.218517,
+     0.29136
+    ]
+   ],
+   "olo_called_blb": 1,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "null variant": {
+   "n": 1239,
+   "by_clinvar": {
+    "O/LO": 1103,
+    "VUS": 136
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "O/LO": 857,
+     "VUS": 246
+    },
+    "VUS": {
+     "O/LO": 32,
+     "VUS": 104
+    }
+   },
+   "agreement_3class": 0.775626,
+   "olo_called_olo": [
+    857,
+    1103,
+    0.776972,
+    [
+     0.751468,
+     0.800553
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 32
+  },
+  "other": {
+   "n": 53,
+   "by_clinvar": {
+    "VUS": 35,
+    "O/LO": 15,
+    "B/LB": 3
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 0,
+     "VUS": 3
+    },
+    "O/LO": {
+     "B/LB": 0,
+     "VUS": 15
+    },
+    "VUS": {
+     "B/LB": 1,
+     "VUS": 34
+    }
+   },
+   "agreement_3class": 0.641509,
+   "olo_called_olo": [
+    0,
+    15,
+    0.0,
+    [
+     0.0,
+     0.203883
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  }
+ },
+ "by_role": {
+  "activating (IntOGen)": {
+   "n": 435,
+   "by_clinvar": {
+    "O/LO": 294,
+    "VUS": 137,
+    "B/LB": 4
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 3,
+     "O/LO": 0,
+     "VUS": 1
+    },
+    "O/LO": {
+     "B/LB": 1,
+     "O/LO": 59,
+     "VUS": 234
+    },
+    "VUS": {
+     "B/LB": 5,
+     "O/LO": 0,
+     "VUS": 132
+    }
+   },
+   "agreement_3class": 0.445977,
+   "olo_called_olo": [
+    59,
+    294,
+    0.20068,
+    [
+     0.158892,
+     0.250189
+    ]
+   ],
+   "olo_called_blb": 1,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "activating (UniProt)": {
+   "n": 38,
+   "by_clinvar": {
+    "VUS": 25,
+    "O/LO": 13
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "VUS": 13
+    },
+    "VUS": {
+     "VUS": 25
+    }
+   },
+   "agreement_3class": 0.657895,
+   "olo_called_olo": [
+    0,
+    13,
+    0.0,
+    [
+     0.0,
+     0.228095
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "ambiguous (IntOGen)": {
+   "n": 114,
+   "by_clinvar": {
+    "O/LO": 62,
+    "VUS": 52
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "B/LB": 0,
+     "VUS": 62
+    },
+    "VUS": {
+     "B/LB": 1,
+     "VUS": 51
+    }
+   },
+   "agreement_3class": 0.447368,
+   "olo_called_olo": [
+    0,
+    62,
+    0.0,
+    [
+     0.0,
+     0.058344
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "loss-of-function (IntOGen)": {
+   "n": 1558,
+   "by_clinvar": {
+    "O/LO": 1273,
+    "VUS": 281,
+    "B/LB": 4
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 1,
+     "O/LO": 0,
+     "VUS": 3
+    },
+    "O/LO": {
+     "B/LB": 0,
+     "O/LO": 923,
+     "VUS": 350
+    },
+    "VUS": {
+     "B/LB": 2,
+     "O/LO": 32,
+     "VUS": 247
+    }
+   },
+   "agreement_3class": 0.751605,
+   "olo_called_olo": [
+    923,
+    1273,
+    0.725059,
+    [
+     0.699883,
+     0.748881
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 32
+  },
+  "loss-of-function (UniProt)": {
+   "n": 26,
+   "by_clinvar": {
+    "O/LO": 20,
+    "VUS": 6
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "O/LO": 15,
+     "VUS": 5
+    },
+    "VUS": {
+     "O/LO": 0,
+     "VUS": 6
+    }
+   },
+   "agreement_3class": 0.807692,
+   "olo_called_olo": [
+    15,
+    20,
+    0.75,
+    [
+     0.531299,
+     0.888138
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "not a known cancer gene": {
+   "n": 112,
+   "by_clinvar": {
+    "O/LO": 38,
+    "VUS": 74
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "B/LB": 0,
+     "VUS": 38
+    },
+    "VUS": {
+     "B/LB": 3,
+     "VUS": 71
+    }
+   },
+   "agreement_3class": 0.633929,
+   "olo_called_olo": [
+    0,
+    38,
+    0.0,
+    [
+     0.0,
+     0.09181
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  }
+ },
+ "by_clinvar_class": {
+  "Benign": {
+   "n": 4,
+   "by_clinvar": {
+    "B/LB": 4
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 3,
+     "VUS": 1
+    }
+   },
+   "agreement_3class": 0.75,
+   "olo_called_olo": [
+    0,
+    0,
+    null,
+    [
+     null,
+     null
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "Likely benign": {
+   "n": 4,
+   "by_clinvar": {
+    "B/LB": 4
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 1,
+     "VUS": 3
+    }
+   },
+   "agreement_3class": 0.25,
+   "olo_called_olo": [
+    0,
+    0,
+    null,
+    [
+     null,
+     null
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "Likely oncogenic": {
+   "n": 1241,
+   "by_clinvar": {
+    "O/LO": 1241
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "B/LB": 1,
+     "O/LO": 723,
+     "VUS": 517
+    }
+   },
+   "agreement_3class": 0.582595,
+   "olo_called_olo": [
+    723,
+    1241,
+    0.582595,
+    [
+     0.554945,
+     0.609735
+    ]
+   ],
+   "olo_called_blb": 1,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "Oncogenic": {
+   "n": 457,
+   "by_clinvar": {
+    "O/LO": 457
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "O/LO": 272,
+     "VUS": 185
+    }
+   },
+   "agreement_3class": 0.595186,
+   "olo_called_olo": [
+    272,
+    457,
+    0.595186,
+    [
+     0.54957,
+     0.639215
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "Oncogenic/Likely oncogenic": {
+   "n": 2,
+   "by_clinvar": {
+    "O/LO": 2
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "O/LO": 2
+    }
+   },
+   "agreement_3class": 1.0,
+   "olo_called_olo": [
+    2,
+    2,
+    1.0,
+    [
+     0.34238,
+     1.0
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "Uncertain significance": {
+   "n": 575,
+   "by_clinvar": {
+    "VUS": 575
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "VUS": {
+     "B/LB": 11,
+     "O/LO": 32,
+     "VUS": 532
+    }
+   },
+   "agreement_3class": 0.925217,
+   "olo_called_olo": [
+    0,
+    0,
+    null,
+    [
+     null,
+     null
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 32
+  }
+ },
+ "by_submitter": {
+  "Center for Genomic Medicine, Rigshospitalet, Copenhagen University Hospital": {
+   "n": 2202,
+   "by_clinvar": {
+    "O/LO": 1648,
+    "VUS": 546,
+    "B/LB": 8
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 4,
+     "O/LO": 0,
+     "VUS": 4
+    },
+    "O/LO": {
+     "B/LB": 1,
+     "O/LO": 971,
+     "VUS": 676
+    },
+    "VUS": {
+     "B/LB": 9,
+     "O/LO": 32,
+     "VUS": 505
+    }
+   },
+   "agreement_3class": 0.672116,
+   "olo_called_olo": [
+    971,
+    1648,
+    0.589199,
+    [
+     0.565265,
+     0.612718
+    ]
+   ],
+   "olo_called_blb": 1,
+   "blb_called_olo": 0,
+   "vus_called_olo": 32
+  },
+  "Center for Virology of Infectious and Tropical Diseases (CVMIT), Mohammed V Military Teaching Hospital": {
+   "n": 20,
+   "by_clinvar": {
+    "VUS": 9,
+    "O/LO": 11
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "O/LO": 4,
+     "VUS": 7
+    },
+    "VUS": {
+     "O/LO": 0,
+     "VUS": 9
+    }
+   },
+   "agreement_3class": 0.65,
+   "olo_called_olo": [
+    4,
+    11,
+    0.363636,
+    [
+     0.151665,
+     0.646199
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "Dr. Guy Rouleau's laboratory, McGill University": {
+   "n": 42,
+   "by_clinvar": {
+    "O/LO": 24,
+    "VUS": 18
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "O/LO": {
+     "B/LB": 0,
+     "O/LO": 17,
+     "VUS": 7
+    },
+    "VUS": {
+     "B/LB": 1,
+     "O/LO": 0,
+     "VUS": 17
+    }
+   },
+   "agreement_3class": 0.809524,
+   "olo_called_olo": [
+    17,
+    24,
+    0.708333,
+    [
+     0.508323,
+     0.850854
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  }
+ },
+ "submitters_per_variant": {
+  "1": 2257,
+  "2": 24,
+  "3": 2
+ },
+ "without_op1_in_activating_genes": {
+  "overall": {
+   "n": 2283,
+   "by_clinvar": {
+    "O/LO": 1700,
+    "VUS": 575,
+    "B/LB": 8
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 4,
+     "O/LO": 0,
+     "VUS": 4
+    },
+    "O/LO": {
+     "B/LB": 0,
+     "O/LO": 948,
+     "VUS": 752
+    },
+    "VUS": {
+     "B/LB": 7,
+     "O/LO": 32,
+     "VUS": 536
+    }
+   },
+   "agreement_3class": 0.651774,
+   "olo_called_olo": [
+    948,
+    1700,
+    0.557647,
+    [
+     0.533934,
+     0.5811
+    ]
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 32
+  },
+  "by_kind": {
+   "in-frame": {
+    "n": 91,
+    "by_clinvar": {
+     "O/LO": 37,
+     "VUS": 54
+    },
+    "confusion (rows ClinVar, columns tool)": {
+     "O/LO": {
+      "O/LO": 2,
+      "VUS": 35
+     },
+     "VUS": {
+      "O/LO": 0,
+      "VUS": 54
+     }
+    },
+    "agreement_3class": 0.615385,
+    "olo_called_olo": [
+     2,
+     37,
+     0.054054,
+     [
+      0.014951,
+      0.177047
+     ]
+    ],
+    "olo_called_blb": 0,
+    "blb_called_olo": 0,
+    "vus_called_olo": 0
+   },
+   "missense": {
+    "n": 900,
+    "by_clinvar": {
+     "O/LO": 545,
+     "VUS": 350,
+     "B/LB": 5
+    },
+    "confusion (rows ClinVar, columns tool)": {
+     "B/LB": {
+      "B/LB": 4,
+      "O/LO": 0,
+      "VUS": 1
+     },
+     "O/LO": {
+      "B/LB": 0,
+      "O/LO": 89,
+      "VUS": 456
+     },
+     "VUS": {
+      "B/LB": 6,
+      "O/LO": 0,
+      "VUS": 344
+     }
+    },
+    "agreement_3class": 0.485556,
+    "olo_called_olo": [
+     89,
+     545,
+     0.163303,
+     [
+      0.134645,
+      0.196674
+     ]
+    ],
+    "olo_called_blb": 0,
+    "blb_called_olo": 0,
+    "vus_called_olo": 0
+   },
+   "null variant": {
+    "n": 1239,
+    "by_clinvar": {
+     "O/LO": 1103,
+     "VUS": 136
+    },
+    "confusion (rows ClinVar, columns tool)": {
+     "O/LO": {
+      "O/LO": 857,
+      "VUS": 246
+     },
+     "VUS": {
+      "O/LO": 32,
+      "VUS": 104
+     }
+    },
+    "agreement_3class": 0.775626,
+    "olo_called_olo": [
+     857,
+     1103,
+     0.776972,
+     [
+      0.751468,
+      0.800553
+     ]
+    ],
+    "olo_called_blb": 0,
+    "blb_called_olo": 0,
+    "vus_called_olo": 32
+   },
+   "other": {
+    "n": 53,
+    "by_clinvar": {
+     "VUS": 35,
+     "O/LO": 15,
+     "B/LB": 3
+    },
+    "confusion (rows ClinVar, columns tool)": {
+     "B/LB": {
+      "B/LB": 0,
+      "VUS": 3
+     },
+     "O/LO": {
+      "B/LB": 0,
+      "VUS": 15
+     },
+     "VUS": {
+      "B/LB": 1,
+      "VUS": 34
+     }
+    },
+    "agreement_3class": 0.641509,
+    "olo_called_olo": [
+     0,
+     15,
+     0.0,
+     [
+      0.0,
+      0.203883
+     ]
+    ],
+    "olo_called_blb": 0,
+    "blb_called_olo": 0,
+    "vus_called_olo": 0
+   }
+  }
+ },
+ "criteria": {
+  "OP4": 2168,
+  "OVS1": 889,
+  "OP1": 693,
+  "OP3": 236,
+  "OS3": 144,
+  "OVS1_Strong": 109,
+  "OM3": 94,
+  "OM2": 89,
+  "SBP1": 69,
+  "OVS1_Moderate": 61,
+  "OM4": 46,
+  "OS2": 30,
+  "OM4_Supporting": 19,
+  "OS1_Moderate": 9,
+  "OS1": 7,
+  "SBVS1": 4,
+  "SBS1": 1
+ },
+ "auc_olo_vs_vus": {
+  "all": {
+   "n": 2275,
+   "olo": 1700,
+   "auc": 0.8423
+  },
+  "in-frame": {
+   "n": 91,
+   "olo": 37,
+   "auc": 0.6742
+  },
+  "missense": {
+   "n": 895,
+   "olo": 545,
+   "auc": 0.8604
+  },
+  "null variant": {
+   "n": 1239,
+   "olo": 1103,
+   "auc": 0.7814
+  },
+  "other": {
+   "n": 50,
+   "olo": 15,
+   "auc": 0.5286
+  }
+ },
+ "recovered_dependence": {
+  "recovered": 997,
+  "with_os1_or_om4": 5,
+  "still_recovered_without_os1_om4": 997,
+  "with_os2": 29,
+  "still_recovered_without_os2": 987,
+  "by_kind_needing_os1_om4": {
+   "null variant": 0,
+   "missense": 0,
+   "in-frame": 0
+  },
+  "os1_om4_reference_in_this_set": 5,
+  "os1_om4_reference_in_this_set_same_submitter": 5,
+  "decisive_with_same_submitter_reference": 0
+ },
+ "standard_os1_rule": {
+  "rows_with_other_points": 11,
+  "class_changes": {
+   "Oncogenic -> Likely oncogenic": 4,
+   "VUS -> VUS": 7
+  },
+  "oncogenic_calls": {
+   "tool": 19,
+   "standard_os1_rule": 15
+  },
+  "olo_recovered": {
+   "tool": 997,
+   "standard_os1_rule": 997
+  }
+ },
+ "data_versions": {
+  "cancerhotspots.org": "cached copy retrieved 2026-11-25",
+  "IntOGen": "IntOGen-Drivers-20240920",
+  "UniProt": "cached copy retrieved 2026-11-26",
+  "CIViC": "monthly release 01-Nov-2026",
+  "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26",
+  "sources": {
+   "CIViC": "ok",
+   "ClinVar": "ok",
+   "Ensembl VEP": "ok",
+   "IntOGen": "ok",
+   "UniProt": "ok",
+   "VEP predictor plugins": "ok",
+   "cancerhotspots.org": "ok"
+  }
+ },
+ "apc_null_variants": {
+  "n": 89,
+  "ovs1": 16,
+  "ovs1_strong": 73,
+  "ovs1_moderate": 0,
+  "recovered": 16
+ },
+ "own_clinvar_classification_shown": 2265,
+ "provenance": {
+  "clinvar_file_sha256": "dcaceeef53664d137d1166da43685d46e1c5684269fc3217016c1c07607b33ac",
+  "submission_summary_sha256": "08ba0fa4e0b5d74a9c6bef3ed6cf0668e272554bd4bf45ec000eb2a76c80a2a2"
+ },
+ "landmarks": [
+  {
+   "variant": "BRAF p.Val600Glu",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "KRAS p.Gly12Cys",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "KRAS p.Gly12Asp",
+   "clinvar": "Oncogenic",
+   "tool": "VUS",
+   "points": 5,
+   "codes": "OS3 +4, OP1 +1"
+  },
+  {
+   "variant": "KRAS p.Gly12Val",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "KRAS p.Gln61Arg",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "NRAS p.Gln61Arg",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "PIK3CA p.His1047Arg",
+   "clinvar": "Oncogenic",
+   "tool": "VUS",
+   "points": 5,
+   "codes": "OS3 +4, OP4 +1"
+  },
+  {
+   "variant": "PIK3CA p.Glu545Lys",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "IDH1 p.Arg132His",
+   "clinvar": "Oncogenic",
+   "tool": "VUS",
+   "points": 5,
+   "codes": "OS3 +4, OP1 +1"
+  },
+  {
+   "variant": "EGFR p.Leu858Arg",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "CTNNB1 p.Ser33Phe",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "CTNNB1 p.Ser37Phe",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "CTNNB1 p.Ser45Phe",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "SF3B1 p.Lys700Glu",
+   "clinvar": "Oncogenic",
+   "tool": "VUS",
+   "points": 5,
+   "codes": "OS3 +4, OP1 +1"
+  },
+  {
+   "variant": "U2AF1 p.Ser34Phe",
+   "clinvar": "Oncogenic",
+   "tool": "Likely oncogenic",
+   "points": 6,
+   "codes": "OS3 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "JAK2 p.Val617Phe",
+   "clinvar": "Likely oncogenic",
+   "tool": "VUS",
+   "points": 1,
+   "codes": "OP1 +1"
+  },
+  {
+   "variant": "TP53 p.Arg175His",
+   "clinvar": "Oncogenic",
+   "tool": "Oncogenic",
+   "points": 10,
+   "codes": "OS3 +4, OS2 +4, OP1 +1, OP4 +1"
+  },
+  {
+   "variant": "TP53 p.Arg273His",
+   "clinvar": "Oncogenic",
+   "tool": "VUS",
+   "points": 5,
+   "codes": "OS3 +4, OP1 +1"
+  },
+  {
+   "variant": "H3-3A p.Lys28Met",
+   "clinvar": "Likely oncogenic",
+   "tool": "VUS",
+   "points": 4,
+   "codes": "OM3 +2, OP1 +1, OP4 +1"
+  }
+ ],
+ "seconds": 98
+}

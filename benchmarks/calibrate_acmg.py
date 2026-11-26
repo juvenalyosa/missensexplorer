@@ -25,11 +25,17 @@ Data
     pipeline, and each is scored by a model fitted without its gene (5 folds by gene over the training
     set of train_model.py), because the shipped model was trained on ClinVar variants of these genes.
   * gnomAD set: rare gnomAD v4 missense variants not in ClinVar, sampled at random from 500 genes with
-    pathogenic variants (gnomAD GraphQL API). The paper's own gnomAD set is on GRCh37; REVEL calibrated
-    with this set instead gives the same thresholds, which shows the substitution is sound.
+    pathogenic variants (gnomAD GraphQL API). The paper's own gnomAD set is on GRCh37 and much larger
+    (355,956 variants). REVEL calibrated with this smaller set and the pipeline's scores does NOT give
+    exactly the published thresholds (BP4_Supporting 0.342 against 0.290 in v2.4's run): the report
+    shows this check, so the effect of the substitution can be judged.
   * Tests (as the paper's ClinVar 2020 set): the paper's ClinVar 2020 set (Data S3), scored the same
-    way; the rare variants of this project's held-out benchmark (genes the shipped model never saw);
-    and among those, the ones labelled since 2023.
+    way; the same set scored by the shipped model after removing its training variants; the rare
+    variants of this project's held-out benchmark (genes the shipped model never saw), without those
+    that are also in the ClinVar 2019 calibration set; and among those, the ones labelled since 2023.
+    Likelihood ratios are given with Katz log intervals (0.5 added to empty cells) and the posterior
+    probability that the ratio exceeds the required one (Jeffreys priors), because several bands hold
+    very few benign variants.
   * Sensitivity: the same calibration on this project's own training data (ClinVar 2026, >= 2 review
     stars, at most 8 variants per gene and class, rare variants, scored out of fold).
 
@@ -165,6 +171,16 @@ def clinvar_scan() -> tuple[set[str], set[str]]:
 
 def to_grch38(t: pd.DataFrame) -> list[str | None]:
     """Pipeline inputs on GRCh38 for the paper's hg19 variants, through their ClinVar VariationID."""
+    return [x for x, _ in grch38_map(t)]
+
+
+@functools.lru_cache(maxsize=4)
+def _grch38_map_cached(name: str) -> tuple[tuple[str | None, str | None], ...]:
+    return tuple(grch38_map(pejaver_table(name)))
+
+
+def grch38_map(t: pd.DataFrame) -> list[tuple[str | None, str | None]]:
+    """(pipeline input on GRCh38, ClinVar VariationID) for each of the paper's hg19 variants."""
     keys = [
         (str(c), str(p), r, a)
         for c, p, r, a in zip(t["hg19_chr"], t["hg19_pos(1-based)"], t["ref"], t["alt"], strict=True)
@@ -180,7 +196,8 @@ def to_grch38(t: pd.DataFrame) -> list[str | None]:
     out = []
     for k in keys:
         c, p, r, a = g38.get(vid.get(k), (None,) * 4)
-        out.append(f"{c}:{p} {r}>{a}" if c and p and p.isdigit() and len(r) == len(a) == 1 else None)
+        inp = f"{c}:{p} {r}>{a}" if c and p and p.isdigit() and len(r) == len(a) == 1 else None
+        out.append((inp, vid.get(k)))
     return out
 
 
@@ -227,9 +244,10 @@ def pejaver_clinvar(year: str) -> pd.DataFrame:
 def held_out_scores(target: pd.DataFrame, folds: int = 5, seed: int = 7) -> np.ndarray:
     """Model score of each variant from a model fitted on the training set without the variant's gene."""
     train = pd.read_csv(T.OUT / "model_training_set.csv.gz")
-    genes = sorted(set(train["gene"]) | set(target["gene"]))
+    key = "gene_key" if "gene_key" in train else "gene"  # the gene of the ClinVar name (v2.5 on)
+    genes = sorted(set(train[key]) | set(target["gene"]))
     fold = dict(zip(genes, np.random.default_rng(seed).integers(0, folds, len(genes)), strict=True))
-    tf, gf = train["gene"].map(fold).to_numpy(), target["gene"].map(fold).to_numpy()
+    tf, gf = train[key].map(fold).to_numpy(), target["gene"].map(fold).to_numpy()
     out = np.full(len(target), np.nan)
     for k in range(folds):
         tr, sel = train[tf != k], gf == k
@@ -331,7 +349,11 @@ def benchmark_set() -> pd.DataFrame:
     """Rare variants of the held-out benchmark of clinvar_benchmark.py (genes left out of training)."""
     cands = B.load_candidates(B.download())
     old = C.labelled_in_2023()
-    items = [{**p, "extra": {"new": p["id"] not in old}} for p in B.sample(cands, 1000, 8, 42)]
+    calibration = {inp for inp, _ in _grch38_map_cached("2019") if inp}
+    items = [
+        {**p, "extra": {"new": p["id"] not in old, "in_calibration": p["input"] in calibration}}
+        for p in B.sample(cands, 1000, 8, 42)
+    ]
     df = annotate(items)
     df["model"] = model_scores(df)
     return df[df["grpmax"].fillna(0) < T.RARE].reset_index(drop=True)
@@ -484,18 +506,41 @@ def band_lrs(pts: np.ndarray, y: np.ndarray, rng: np.random.Generator, n_boot: i
 
     idx = [rng.integers(0, len(y), len(y)) for _ in range(n_boot)]
     out = {}
+    n1, n0 = int((y == 1).sum()), int((y == 0).sum())
     for k in (4, 3, 2, 1, -1, -2, -3, -4):
         if not (pts == k).any():
             continue
         bs = np.array([lr(pts[i], y[i], k) for i in idx])
+        a, b = int(((pts == k) & (y == 1)).sum()), int(((pts == k) & (y == 0)).sum())
+        # the ratio's numerator is the class the evidence points to: pathogenic for PP3, benign for BP4
+        x, nx, z, nz = (a, n1, b, n0) if k > 0 else (b, n0, a, n1)
+        req = lr_plus(abs(k))
         out[k] = {
-            "n_pathogenic": int(((pts == k) & (y == 1)).sum()),
-            "n_benign": int(((pts == k) & (y == 0)).sum()),
+            "n_pathogenic": a,
+            "n_benign": b,
             "lr": _r(lr(pts, y, k)),  # "nearest": no interpolation between infinite ratios
             "ci": [_r(np.percentile(bs, 2.5, method="nearest")), _r(np.percentile(bs, 97.5, method="nearest"))],
-            "required": round(lr_plus(abs(k)), 2),
+            "ci_katz": katz(x, nx, z, nz),
+            "p_exceeds": exceeds(x, nx, z, nz, req, rng),
+            "required": round(req, 2),
         }
     return out
+
+
+def katz(x: int, nx: int, z: int, nz: int) -> list[float]:
+    """95% Katz log interval of the ratio (x/nx)/(z/nz); 0.5 is added to every cell when one is empty."""
+    if 0 in (x, z, nx - x, nz - z):
+        x, z, nx, nz = x + 0.5, z + 0.5, nx + 1, nz + 1
+    r = (x / nx) / (z / nz)
+    se = np.sqrt(1 / x - 1 / nx + 1 / z - 1 / nz)
+    return [round(float(r * np.exp(-1.96 * se)), 2), round(float(r * np.exp(1.96 * se)), 2)]
+
+
+def exceeds(x: int, nx: int, z: int, nz: int, required: float, rng: np.random.Generator, n: int = 200_000) -> float:
+    """Posterior probability that (x/nx)/(z/nz) exceeds `required`, with Jeffreys Beta(0.5, 0.5) priors."""
+    p = rng.beta(x + 0.5, nx - x + 0.5, n)
+    q = rng.beta(z + 0.5, nz - z + 0.5, n)
+    return round(float(np.mean(p > required * q)), 3)
 
 
 def _r(v: float) -> float | str:
@@ -579,10 +624,17 @@ def main(argv=None) -> int:
 
     ours = cal["model"]
     rng = np.random.default_rng(args.seed)
+    train_ids = set(pd.read_csv(T.OUT / "model_training_set.csv.gz", dtype={"clinvar_id": str})["clinvar_id"])
+    vids = _grch38_map_cached("2020")
+    c20_shipped = c20[[vids[int(i)][1] not in train_ids for i in c20["id"]]].copy()
+    c20_shipped["model"] = model_scores(c20_shipped)
+    bench_test = bench[~bench["in_calibration"].astype(bool)]
+    print(f"benchmark rare variants also in the 2019 calibration set (left out): {len(bench) - len(bench_test)}")
     tests = {
         "ClinVar 2020 set": c20,
-        "held-out benchmark, rare variants": bench,
-        "held-out benchmark, rare variants labelled since 2023": bench[bench["new"]],
+        "ClinVar 2020 set, shipped model, training variants removed": c20_shipped,
+        "held-out benchmark, rare variants": bench_test,
+        "held-out benchmark, rare variants labelled since 2023": bench_test[bench_test["new"]],
     }
     evaluation = {k: {**_counts(d), **evaluate(d, ours, rng)} for k, d in tests.items()}
     current_gn = np.array([acmg.computational(r)[1] or 0 for r in gn.to_dict("records")], float)
@@ -680,15 +732,17 @@ def _evidence_table(ev: dict) -> list[str]:
 
 def _band_table(bands: dict, other: dict) -> list[str]:
     L = [
-        "| Band | Pathogenic | Benign | Likelihood ratio (95% CI) | Needed | Current scheme's ratio |",
-        "|---|---|---|---|---|---|",
+        "| Band | Pathogenic | Benign | Likelihood ratio (bootstrap 95% CI) | Katz 95% CI | P(ratio > needed) "
+        "| Needed | Current scheme's ratio |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for k, b in bands.items():
         code = ("PP3 " if int(k) > 0 else "BP4 ") + NAMES[abs(int(k))]
         o = other.get(k)
+        kz = b.get("ci_katz") or ["—", "—"]
         L.append(
             f"| {code} | {b['n_pathogenic']} | {b['n_benign']} | {b['lr']} ({b['ci'][0]}–{b['ci'][1]}) | "
-            f"{b['required']} | {o['lr'] if o else '—'} |"
+            f"{kz[0]}–{kz[1]} | {b.get('p_exceeds', '—')} | {b['required']} | {o['lr'] if o else '—'} |"
         )
     return L
 

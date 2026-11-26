@@ -35,6 +35,7 @@ MAX_AGE = 90 * 86400
 _sent: deque[float] = deque()  # monotonic times of the requests sent in the last RATE window
 _lock = threading.Lock()
 _FIELDS = "ac an filters populations { id ac an }"
+MIN_GROUP_AN = 2000  # BA1 needs a population with at least 2,000 observed alleles (Ghosh et al. 2018)
 
 
 def _vid(chrom: str, pos: int, ref: str, alt: str) -> str:
@@ -84,12 +85,16 @@ def _summary(v: JSON | None) -> dict[str, Any]:
                 group[p["id"]][0] += p.get("ac") or 0
                 group[p["id"]][1] += p.get("an") or 0
     afs = [a / n for a, n in group.values() if n]
+    big = [(a / n, n) for a, n in group.values() if n >= MIN_GROUP_AN]
     return {
         "found": ac > 0,
         "ac": ac,
         "an": an,
         "af": ac / an if an else None,
         "grpmax": max(afs) if afs and ac else None,
+        # BA1 counts only groups with at least 2,000 alleles (Ghosh et al. 2018): highest frequency among them
+        "grpmax_2000": max(big)[0] if big and ac else (0.0 if big else None),
+        "grpmax_2000_an": max(big)[1] if big and ac else None,
         "passes_filters": passed,
     }
 

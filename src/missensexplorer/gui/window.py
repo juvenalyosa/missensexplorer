@@ -73,7 +73,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import __version__, acmg, model
+from .. import __version__, acmg, model, vcep
 from .._types import Row
 from ..cache import Cache, default_cache_dir
 from ..inputs import vcf_samples
@@ -870,7 +870,7 @@ class MainWindow(QMainWindow):
         self.table.setItemDelegateForColumn(4, StatusDelegate(self.table))
         for c in (5, 6, 7):
             self.table.setItemDelegateForColumn(c, BarDelegate(self.table))
-        for c, w in enumerate([170, 68, 90, 130, 240, 112, 112, 112, 60, 60, 220, 84, 110]):
+        for c, w in enumerate([170, 68, 90, 130, 240, 112, 140, 140, 60, 60, 220, 84, 110]):
             self.table.setColumnWidth(c, w)
         self.table.selectionModel().currentRowChanged.connect(self._row_changed)
         tcard.lay.addWidget(self.table)
@@ -1495,6 +1495,7 @@ class MainWindow(QMainWindow):
             (t("acmg_ps1pm5"), g("acmg_ps1_pm5"), _code_points(g("acmg_ps1_pm5"))),
             (t("acmg_pm2"), g("acmg_pm2"), _code_points(g("acmg_pm2"))),
             (t("acmg_freq"), g("population_frequency"), None),
+            (t("acmg_vcep"), g("vcep_specification"), None),
         ]
         ev = [(k, v, pts) for k, v, pts in ev if v]
         if ev:
@@ -1502,6 +1503,9 @@ class MainWindow(QMainWindow):
             for k, v, pts in ev:
                 extra = f" · {t('points', n=f'{int(pts):+d}')}" if isnum(pts) and pts else ""
                 self.dl.addWidget(_rich(f"<b>{k}:</b> {html.escape(tr_text(v))}{extra}"))
+            if g("acmg_notes"):
+                items = "<br>".join("⚠ " + html.escape(tr_text(x)) for x in str(g("acmg_notes")).split(vcep.SEP))
+                self.dl.addWidget(_rich(f"<b>{t('acmg_notes')}:</b><br>{items}"))
             note = ACMG_NOTE_KEY[acmg.thresholds_used(g("acmg_pp3_bp4"))]
             self.dl.addWidget(label(t(note), "Muted", wrap=True))
             if g("acmg_ps1_pm5") or g("acmg_pm2"):

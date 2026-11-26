@@ -13,7 +13,12 @@
 4. Flags the tools trained on clinical variant labels (ClinVar, HGMD, UniProt disease variants).
    They are favoured on any ClinVar benchmark: some of the test variants may have been in their
    training data. The "new since 2023" subset limits that advantage: it keeps the variants whose
-   pathogenic/benign label did not exist yet in the January 2023 ClinVar release.
+   pathogenic/benign label did not exist yet in the January 2023 ClinVar release (it does not remove
+   variants that were in HGMD before, which REVEL's training used).
+5. Also reports the variants absent from gnomAD, those present below 0.01% (grpmax), and both together,
+   where allele frequency carries little information: there, tools that use frequency lose most of their
+   advantage if it came from frequency (the frequency-only row shows how much is left). Writes the
+   per-variant scores to tool_comparison_variants.csv.gz.
 """
 
 from __future__ import annotations
@@ -209,7 +214,7 @@ def stack_features(row: dict, grpmax) -> list[float]:
 def auc(y: np.ndarray, s: np.ndarray) -> float:
     from sklearn.metrics import roc_auc_score
 
-    return float(roc_auc_score(y, s))
+    return float(roc_auc_score(y, s)) if len(set(y)) == 2 else float("nan")
 
 
 def bootstrap(y: np.ndarray, s: np.ndarray, ref: np.ndarray, rng: np.random.Generator, n: int):
@@ -222,6 +227,8 @@ def bootstrap(y: np.ndarray, s: np.ndarray, ref: np.ndarray, rng: np.random.Gene
             d.append(a[-1] - auc(y[i], ref[i]))
 
     def pct(v: list[float]) -> list[float]:
+        if not v:
+            return [float("nan"), float("nan")]
         return [round(float(np.percentile(v, 2.5)), 4), round(float(np.percentile(v, 97.5)), 4)]
 
     return pct(a), pct(d)
@@ -293,6 +300,9 @@ def main(argv=None) -> int:
         "all": np.ones(len(rows), bool),
         "rare": grpmax < RARE,
         "new since 2023": np.array([x["id"] not in old for x in rows]),
+        "absent from gnomAD": grpmax == 0,
+        "grpmax below 0.01%": (grpmax > 0) & (grpmax < 1e-4),
+        "below 0.01% or absent": grpmax < 1e-4,
     }
     cover = np.mean(~np.isnan(S), axis=0)
     common_cols = [j for j in range(len(names)) if cover[j] >= 0.9]
@@ -344,6 +354,22 @@ def main(argv=None) -> int:
     }
 
     OUT.mkdir(exist_ok=True)
+    table = [
+        {
+            "clinvar_id": x["id"],
+            "gene": x["gene"],
+            "label": x["label"],
+            "year": x.get("year"),
+            "new_since_2023": x["id"] not in old,
+            "grpmax": grpmax[i],
+            "prediction": x["row"].get("prediction"),
+            **{n: (None if np.isnan(S[i, j]) else float(S[i, j])) for j, n in enumerate(names)},
+        }
+        for i, x in enumerate(rows)
+    ]
+    import pandas as pd
+
+    pd.DataFrame(table).to_csv(OUT / "tool_comparison_variants.csv.gz", index=False)
     (OUT / "tool_comparison.json").write_text(json.dumps(report, indent=1, default=str))
     (OUT / "tool_comparison.md").write_text(markdown(report))
     print(f"wrote {OUT / 'tool_comparison.md'}")
@@ -380,14 +406,17 @@ def markdown(rep: dict) -> str:
         "benchmark it partly reads the answer.",
         "",
     ]
-    for grp in ("all", "rare", "new since 2023"):
+    for grp in ("all", "rare", "new since 2023", "absent from gnomAD", "grpmax below 0.01%"):
         L += [
             f"## {grp[0].upper() + grp[1:]} variants",
             "",
             "| Tool | Clinical training labels | Uses allele frequency | Coverage | AUC | Δ vs ours |",
             "|---|---|---|---|---|---|",
         ]
-        items = sorted(rep["tools"].items(), key=lambda kv: -kv[1]["auc"][grp]["auc"])
+        items = sorted(
+            [kv for kv in rep["tools"].items() if kv[1]["auc"][grp]["auc"] == kv[1]["auc"][grp]["auc"]],
+            key=lambda kv: -kv[1]["auc"][grp]["auc"],
+        )
         for name, t in items:
             a = t["auc"][grp]
             d = a["auc"] - a["ours_same_variants"]

@@ -1,17 +1,17 @@
 {
  "params": {
-  "model_version": "2.3",
-  "model_trained": "2026-11-23",
-  "trained": "2026-11-23",
-  "n": 9218,
+  "model_version": "2.5",
+  "model_trained": "2026-11-26",
+  "trained": "2026-11-26",
+  "n": 9086,
   "features": [
    "logit(model score)",
    "log10(gnomAD grpmax + 1e-6)"
   ],
-  "intercept": -6.93693,
+  "intercept": -7.086583,
   "coef": [
-   0.854619,
-   -1.822034
+   0.865915,
+   -1.856843
   ],
   "af_floor": 1e-06
  },
@@ -20,21 +20,21 @@
    "variants": 1969,
    "pathogenic": 978,
    "benign": 991,
-   "model": 0.9852,
+   "model": 0.9853,
    "with_frequency": {
-    "auc": 0.9956,
-    "vs_model": 0.0104,
+    "auc": 0.9957,
+    "vs_model": 0.0103,
     "vs_model_ci": [
-     0.0073,
+     0.0072,
      0.0141
     ]
    },
    "frequency_alone": {
     "auc": 0.9782,
-    "vs_model": -0.007,
+    "vs_model": -0.0071,
     "vs_model_ci": [
      -0.0128,
-     -0.001
+     -0.0011
     ]
    },
    "MetaRNN (tool comparison)": 0.9959
@@ -43,21 +43,21 @@
    "variants": 1163,
    "pathogenic": 964,
    "benign": 199,
-   "model": 0.9741,
+   "model": 0.9742,
    "with_frequency": {
-    "auc": 0.9828,
-    "vs_model": 0.0086,
+    "auc": 0.9829,
+    "vs_model": 0.0087,
     "vs_model_ci": [
-     0.0031,
-     0.0144
+     0.0033,
+     0.0143
     ]
    },
    "frequency_alone": {
     "auc": 0.9093,
     "vs_model": -0.0649,
     "vs_model_ci": [
-     -0.0844,
-     -0.0443
+     -0.0845,
+     -0.0446
     ]
    },
    "MetaRNN (tool comparison)": 0.9832
@@ -69,18 +69,18 @@
    "model": 0.9709,
    "with_frequency": {
     "auc": 0.9822,
-    "vs_model": 0.0112,
+    "vs_model": 0.0113,
     "vs_model_ci": [
-     0.0025,
-     0.0216
+     0.0027,
+     0.0218
     ]
    },
    "frequency_alone": {
     "auc": 0.9375,
-    "vs_model": -0.0335,
+    "vs_model": -0.0334,
     "vs_model_ci": [
-     -0.0574,
-     -0.0103
+     -0.0576,
+     -0.0104
     ]
    },
    "MetaRNN (tool comparison)": 0.9829

@@ -1,0 +1,14 @@
+Per-variant results of the MissensExplorer benchmarks (redistributable subset)
+
+Written by benchmarks/public_tables.py from the full tables that the benchmark scripts produce. Columns
+with third-party scores whose terms do not allow redistribution under GPL-3.0 were dropped: REVEL, CADD,
+SpliceAI, EVE, popEVE, SIFT, PolyPhen-2 and every dbNSFP predictor, COSMIC/GENIE counts and ProteinGym
+assay values and bins; scores quoted in text columns are replaced by "[score removed]". Regenerate the
+full tables by running the scripts (see README.md).
+
+Kept, with their sources and terms:
+- variant keys, labels and dates from ClinVar (public domain) and the ClinGen Evidence Repository (CC0);
+- MissensExplorer's own scores, calls, ACMG/AMP and oncogenicity criteria and points (GPL-3.0 project);
+- AlphaMissense scores (CC BY 4.0; Cheng et al., Science 2023);
+- gnomAD allele frequencies (gnomAD, Broad Institute; free to reuse);
+- ClinGen CSpec-derived codes (CC0).

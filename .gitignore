@@ -11,3 +11,9 @@ build/
 .coverage
 .mypy_cache/
 .ruff_cache/
+
+# Full per-variant benchmark tables hold third-party scores that may not be redistributed (REVEL, CADD,
+# SpliceAI, dbNSFP, COSMIC...): regenerate them with the scripts; the shareable subset is in
+# benchmarks/results/public/ (benchmarks/public_tables.py).
+benchmarks/results/*.csv.gz
+benchmarks/results/*.csv

@@ -24,7 +24,7 @@ class ModelParams(TypedDict):
 
     Attributes:
         features: Row columns used as predictors, in the order of the lists below.
-        median: Value used for a missing predictor score.
+        fill: Value used for a missing predictor score (the training mean, so that it adds nothing).
         mean: Mean of each predictor (standardisation).
         scale: Standard deviation of each predictor (standardisation).
         coef: Logistic-regression coefficient of each standardised predictor.
@@ -34,7 +34,7 @@ class ModelParams(TypedDict):
     """
 
     features: list[str]
-    median: list[float]
+    fill: list[float]
     mean: list[float]
     scale: list[float]
     coef: list[float]
@@ -126,7 +126,9 @@ def score(row: Row, params: ModelParams | None = None) -> ModelScore | None:
 
     Args:
         row: One results row with the predictor columns (``alphamissense``, ``revel``, ...); a missing
-            score is replaced by the training median.
+            score is replaced by the model's fill value (the training mean, which adds nothing to
+            the log-odds; a fill value that differs from the mean, as in older models, adds a term
+            that is reported as a contribution of the missing predictor).
         params: Model coefficients; None for :data:`MODEL`.
 
     Returns:
@@ -139,12 +141,14 @@ def score(row: Row, params: ModelParams | None = None) -> ModelScore | None:
         return None
     z = m["intercept"]
     contrib = []
-    for f, med, mu, sd, c in zip(feats, m["median"], m["mean"], m["scale"], m["coef"], strict=True):
+    for f, fill, mu, sd, c in zip(feats, m["fill"], m["mean"], m["scale"], m["coef"], strict=True):
         v = vals[f]
-        term = c * ((med if v is None else v) - mu) / sd
+        term = c * ((fill if v is None else v) - mu) / sd
         z += term
         if v is not None:
             contrib.append((NAMES[f], term))
+        elif abs(term) >= 1e-9:  # every term of z is shown, including that of a filled-in score
+            contrib.append((f"{NAMES[f]} (missing)", term))
     contrib.sort(key=lambda x: -abs(x[1]))
     p = 1.0 / (1.0 + math.exp(-z))
     return ModelScore(p, contrib)

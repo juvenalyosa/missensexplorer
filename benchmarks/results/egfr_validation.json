@@ -7,13 +7,13 @@
   "scored": 251,
   "auc_3t3": [
    {
-    "score": "MissensExplorer v2.3",
+    "score": "MissensExplorer v2.5",
     "n": 218,
     "positives": 34,
-    "auc": 0.5425,
+    "auc": 0.5416,
     "ci95": [
-     0.433,
-     0.6418
+     0.4327,
+     0.64
     ],
     "minus_model_ci95": null
    },
@@ -27,8 +27,8 @@
      0.6455
     ],
     "minus_model_ci95": [
-     -0.0407,
-     0.0483
+     -0.0403,
+     0.0496
     ]
    },
    {
@@ -41,8 +41,8 @@
      0.6394
     ],
     "minus_model_ci95": [
-     -0.0609,
-     0.0266
+     -0.0597,
+     0.0277
     ]
    },
    {
@@ -55,8 +55,8 @@
      0.6064
     ],
     "minus_model_ci95": [
-     -0.1358,
-     0.0491
+     -0.1327,
+     0.0485
     ]
    },
    {
@@ -69,20 +69,20 @@
      0.6345
     ],
     "minus_model_ci95": [
-     -0.0482,
-     0.0396
+     -0.047,
+     0.0411
     ]
    }
   ],
   "auc_3t3_kinase": [
    {
-    "score": "MissensExplorer v2.3",
+    "score": "MissensExplorer v2.5",
     "n": 151,
     "positives": 20,
-    "auc": 0.5702,
+    "auc": 0.5687,
     "ci95": [
-     0.435,
-     0.6963
+     0.4333,
+     0.6939
     ],
     "minus_model_ci95": null
    },
@@ -96,8 +96,8 @@
      0.7301
     ],
     "minus_model_ci95": [
-     -0.025,
-     0.1134
+     -0.0233,
+     0.1167
     ]
    },
    {
@@ -110,8 +110,8 @@
      0.6957
     ],
     "minus_model_ci95": [
-     -0.0773,
-     0.0332
+     -0.0762,
+     0.0373
     ]
    },
    {
@@ -124,8 +124,8 @@
      0.6099
     ],
     "minus_model_ci95": [
-     -0.2259,
-     0.064
+     -0.2209,
+     0.0627
     ]
    },
    {
@@ -138,20 +138,20 @@
      0.6739
     ],
     "minus_model_ci95": [
-     -0.0728,
-     0.032
+     -0.0711,
+     0.033
     ]
    }
   ],
   "auc_3t3_outside": [
    {
-    "score": "MissensExplorer v2.3",
+    "score": "MissensExplorer v2.5",
     "n": 67,
     "positives": 14,
-    "auc": 0.566,
+    "auc": 0.5674,
     "ci95": [
-     0.3704,
-     0.7561
+     0.3742,
+     0.7566
     ],
     "minus_model_ci95": null
    },
@@ -165,8 +165,8 @@
      0.6812
     ],
     "minus_model_ci95": [
-     -0.1369,
-     0.0051
+     -0.1379,
+     0.0054
     ]
    },
    {
@@ -179,8 +179,8 @@
      0.7579
     ],
     "minus_model_ci95": [
-     -0.0641,
-     0.1128
+     -0.0651,
+     0.1091
     ]
    },
    {
@@ -193,8 +193,8 @@
      0.7506
     ],
     "minus_model_ci95": [
-     -0.0918,
-     0.0964
+     -0.0921,
+     0.0974
     ]
    },
    {
@@ -207,20 +207,20 @@
      0.779
     ],
     "minus_model_ci95": [
-     -0.0431,
-     0.1125
+     -0.044,
+     0.1122
     ]
    }
   ],
   "auc_baf3": [
    {
-    "score": "MissensExplorer v2.3",
+    "score": "MissensExplorer v2.5",
     "n": 251,
     "positives": 194,
-    "auc": 0.215,
+    "auc": 0.2144,
     "ci95": [
-     0.1538,
-     0.2814
+     0.1541,
+     0.28
     ],
     "minus_model_ci95": null
    },
@@ -234,8 +234,8 @@
      0.2876
     ],
     "minus_model_ci95": [
-     -0.0328,
-     0.0393
+     -0.0334,
+     0.0404
     ]
    },
    {
@@ -248,8 +248,8 @@
      0.317
     ],
     "minus_model_ci95": [
-     0.0024,
-     0.066
+     0.0025,
+     0.0662
     ]
    },
    {
@@ -262,8 +262,8 @@
      0.3745
     ],
     "minus_model_ci95": [
-     0.0171,
-     0.1508
+     0.0197,
+     0.1506
     ]
    },
    {
@@ -276,20 +276,20 @@
      0.2747
     ],
     "minus_model_ci95": [
-     -0.0422,
-     0.0223
+     -0.0417,
+     0.0225
     ]
    }
   ],
   "auc_oncokb": [
    {
-    "score": "MissensExplorer v2.3",
+    "score": "MissensExplorer v2.5",
     "n": 85,
     "positives": 72,
-    "auc": 0.6592,
+    "auc": 0.656,
     "ci95": [
-     0.4938,
-     0.8132
+     0.4897,
+     0.8107
     ],
     "minus_model_ci95": null
    },
@@ -304,7 +304,7 @@
     ],
     "minus_model_ci95": [
      -0.0926,
-     0.0514
+     0.0601
     ]
    },
    {
@@ -317,8 +317,8 @@
      0.806
     ],
     "minus_model_ci95": [
-     -0.0485,
-     0.0648
+     -0.0467,
+     0.071
     ]
    },
    {
@@ -331,8 +331,8 @@
      0.8179
     ],
     "minus_model_ci95": [
-     -0.1549,
-     0.125
+     -0.1523,
+     0.1256
     ]
    },
    {
@@ -345,8 +345,8 @@
      0.8151
     ],
     "minus_model_ci95": [
-     -0.102,
-     0.1469
+     -0.099,
+     0.1496
     ]
    }
   ],
@@ -400,8 +400,8 @@
    "3t3_score_1": 58,
    "damaging": 54,
    "kinase_domain": 51,
-   "median_model": 0.981,
-   "median_model_transformed": 0.861,
+   "median_model": 0.98,
+   "median_model_transformed": 0.856,
    "in_motifs": {
     "glycine-rich loop GSGAFG (719-724)": [
      "G721A",
@@ -463,9 +463,9 @@
  },
  "compound": 9,
  "run": {
-  "tool": "MissensExplorer 2.3.0",
-  "started_utc": "2026-11-25T08:59:26+00:00",
-  "seconds": 2.6,
+  "tool": "MissensExplorer 2.5.0",
+  "started_utc": "2026-11-26T00:02:25+00:00",
+  "seconds": 0.4,
   "assembly": "GRCh38",
   "annotation": "Ensembl VEP REST, release 116",
   "ensembl_release": 116,
@@ -502,9 +502,9 @@
    "VEP predictor plugins": "ok"
   },
   "missense_model": {
-   "version": "2.3",
-   "trained": "2026-11-23",
-   "training_variants": 9218,
+   "version": "2.5",
+   "trained": "2026-11-26",
+   "training_variants": 9086,
    "cut_offs": [
     0.3,
     0.76

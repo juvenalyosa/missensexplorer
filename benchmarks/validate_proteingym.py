@@ -1,6 +1,6 @@
 """Independent validation: MissensExplorer and other predictors against deep mutational scanning data.
 
-    python benchmarks/validate_proteingym.py [--per-assay 200]
+    python benchmarks/validate_proteingym.py [--per-assay 500]
 
 ClinVar labels are used to train and benchmark the model; this check uses none. ProteinGym
 (Notin et al., NeurIPS 2023; https://proteingym.org) collects deep mutational scanning (DMS) assays:
@@ -14,8 +14,11 @@ laboratory measurements of how each amino-acid substitution changes a protein's 
 3. Annotates a random sample of each assay with the pipeline and with dbNSFP (as compare_tools.py).
 4. Reports, per tool, the Spearman correlation between its score and the measured loss of function,
    averaged over the assays of each protein and then over proteins (ProteinGym's convention), with a
-   95% bootstrap interval over proteins and the paired difference from MissensExplorer; and the AUC
-   against ProteinGym's binary fit/unfit label.
+   95% bootstrap interval over proteins; the difference from MissensExplorer computed on exactly the
+   same variants (within each assay, the variants both score), with its bootstrap interval; the same
+   by ProteinGym's coarse selection type (activity, binding, expression, organismal fitness,
+   stability); and the AUC against ProteinGym's binary fit/unfit label. The per-variant scores are
+   written to proteingym_variants.csv.gz.
 
 DMS assays measure one molecular function in one experimental system, not disease, so correlations
 are moderate for every tool; what matters is the ranking between tools on the same variants.
@@ -176,6 +179,7 @@ def collect(ref: pd.DataFrame, genes: dict, d: Path, client: httpx.Client, per_a
                     "snv": snv,
                     "dms": m["DMS_score"],
                     "bin": m["DMS_score_bin"],
+                    "type": a.get("coarse_selection_type"),
                 }
             )
             n += 1
@@ -186,7 +190,7 @@ def collect(ref: pd.DataFrame, genes: dict, d: Path, client: httpx.Client, per_a
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--per-assay", type=int, default=200)
+    ap.add_argument("--per-assay", type=int, default=500)
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args(argv)
     d = default_cache_dir() / "validation"
@@ -202,7 +206,8 @@ def main(argv=None) -> int:
 
     res = predict(
         text="\n".join(inputs),
-        options=PredictOptions(clinvar=False, protein_context=False, sequences=False, workers=6),
+        # frequency plays no part here, so gnomAD is not asked directly (most DMS variants are not in it)
+        options=PredictOptions(clinvar=False, protein_context=False, sequences=False, gnomad_check=False, workers=6),
         progress=lambda s, k, n: print(f"  {s}: {k}/{n}", end="\r", flush=True),
     )
     print()
@@ -227,6 +232,7 @@ def main(argv=None) -> int:
 
     names = ["MissensExplorer v" + MODEL["version"], *list(C.TOOLS)]
     per_assay = defaultdict(lambda: defaultdict(list))
+    table = []
     for it in items:
         r = ann.get(it["snv"])
         if r is None:
@@ -238,8 +244,15 @@ def main(argv=None) -> int:
             vals.append(None if v is None else direction * v)
         for n, v in zip(names, vals, strict=True):
             per_assay[it["assay"]][n].append((v, it["dms"], it["bin"], vals[0]))
+        table.append({**it, **dict(zip(names, vals, strict=True))})
     protein_of = {it["assay"]: it["protein"] for it in items}
+    type_of = {it["assay"]: it["type"] for it in items}
     report = evaluate(names, per_assay, protein_of, np.random.default_rng(args.seed))
+    report["by_type"] = {
+        t: evaluate(names, {a: v for a, v in per_assay.items() if type_of[a] == t}, protein_of,
+                    np.random.default_rng(args.seed), min_proteins=5)["tools"]
+        for t in sorted({x for x in type_of.values() if isinstance(x, str)})
+    }  # fmt: skip
     report.update(
         {
             "proteingym": PG,
@@ -252,36 +265,45 @@ def main(argv=None) -> int:
         }
     )
     OUT.mkdir(exist_ok=True)
+    pd.DataFrame(table).to_csv(OUT / "proteingym_variants.csv.gz", index=False)
     (OUT / "proteingym_validation.json").write_text(json.dumps(report, indent=1, default=str))
     (OUT / "proteingym_validation.md").write_text(markdown(report))
     print((OUT / "proteingym_validation.md").read_text())
     return 0
 
 
-def evaluate(names, per_assay, protein_of, rng) -> dict:
+def evaluate(names, per_assay, protein_of, rng, min_proteins: int = 10) -> dict:
+    """Spearman per tool (assay -> protein -> mean), and its difference from ours on the same variants.
+
+    Within each assay, a tool and MissensExplorer are both correlated on the variants both score, so the
+    difference is paired by variant, not only by protein.
+    """
     from scipy.stats import spearmanr
     from sklearn.metrics import roc_auc_score
 
-    per_protein = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # tool -> protein -> metric -> values
+    # tool -> protein -> metric -> values ("rho": the tool, "rho_ours": ours on the same variants)
+    per_protein = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for assay, by_tool in per_assay.items():
         for n, vals in by_tool.items():
-            ok = [(s, dms, b) for s, dms, b, ours in vals if s is not None and ours is not None]
+            ok = [(s, dms, b, ours) for s, dms, b, ours in vals if s is not None and ours is not None]
             if len(ok) < 20:
                 continue
-            s, dms, b = (np.array(x, dtype=float) for x in zip(*ok, strict=True))
+            s, dms, b, o = (np.array(x, dtype=float) for x in zip(*ok, strict=True))
             rho = spearmanr(s, -dms).statistic  # higher score = more damaging; lower DMS score = less function
-            if rho == rho:
+            rho_o = spearmanr(o, -dms).statistic
+            if rho == rho and rho_o == rho_o:
                 per_protein[n][protein_of[assay]]["rho"].append(rho)
+                per_protein[n][protein_of[assay]]["rho_ours"].append(rho_o)
             if (b == 0).sum() >= 5 and (b == 1).sum() >= 5:
                 per_protein[n][protein_of[assay]]["auc"].append(roc_auc_score(1 - b, s))
-    ours = {p: np.mean(m["rho"]) for p, m in per_protein[names[0]].items() if m["rho"]}
     tools = {}
     for n in names:
-        prot = {p: np.mean(m["rho"]) for p, m in per_protein[n].items() if m["rho"]}
-        common = sorted(set(prot) & set(ours))
-        if len(common) < 10:
+        prot = {p: (np.mean(m["rho"]), np.mean(m["rho_ours"])) for p, m in per_protein[n].items() if m["rho"]}
+        common = sorted(prot)
+        if len(common) < min_proteins:
             continue
-        a, o = np.array([prot[p] for p in common]), np.array([ours[p] for p in common])
+        a = np.array([prot[p][0] for p in common])
+        o = np.array([prot[p][1] for p in common])
         idx = [rng.integers(0, len(a), len(a)) for _ in range(2000)]
         aucs = [np.mean(per_protein[n][p]["auc"]) for p in common if per_protein[n][p]["auc"]]
         tools[n] = {
@@ -289,6 +311,7 @@ def evaluate(names, per_assay, protein_of, rng) -> dict:
             "proteins": len(common),
             "spearman": round(float(a.mean()), 4),
             "ci": [round(float(np.percentile([a[i].mean() for i in idx], q)), 4) for q in (2.5, 97.5)],
+            "ours_same_variants": round(float(o.mean()), 4),
             "difference": round(float((a - o).mean()), 4),
             "difference_ci": [
                 round(float(np.percentile([(a[i] - o[i]).mean() for i in idx], q)), 4) for q in (2.5, 97.5)
@@ -309,8 +332,8 @@ def markdown(rep: dict) -> str:
         "",
         "- **Spearman**: correlation between the tool's score and the measured loss of function, averaged over "
         "the assays of each protein and then over proteins. 95% bootstrap interval over proteins.",
-        "- **Δ vs ours**: the tool's mean minus MissensExplorer's on the same proteins and variants; an interval "
-        "that excludes 0 is a real difference.",
+        "- **Δ vs ours**: the tool's mean minus MissensExplorer's, both computed within each assay on the "
+        "variants both score (paired by variant); an interval that excludes 0 is a real difference.",
         "- **AUC**: against ProteinGym's binary label (fit/unfit), same averaging.",
         "- DMS assays measure one molecular function in one experimental system, not disease, so every tool's "
         "correlation is moderate. VARITY used some DMS data in training.",
@@ -326,6 +349,15 @@ def markdown(rep: dict) -> str:
             f"| {bold}{n}{bold} | {t['labels']} | {t['proteins']} | {t['spearman']:.3f} "
             f"[{t['ci'][0]:.3f}–{t['ci'][1]:.3f}] | {delta} | {auc} |"
         )
+    for t, tools in rep.get("by_type", {}).items():
+        L += ["", f"### {t}", "", "| Tool | Proteins | Spearman | Δ vs ours |", "|---|---|---|---|"]
+        for n, x in tools.items():
+            d = (
+                "—"
+                if n.startswith("MissensExplorer")
+                else f"{x['difference']:+.3f} [{x['difference_ci'][0]:+.3f}, {x['difference_ci'][1]:+.3f}]"
+            )
+            L.append(f"| {n} | {x['proteins']} | {x['spearman']:.3f} | {d} |")
     L += [
         "",
         f"Assays left out ({len(rep['skipped'])}): their sequence does not occur exactly in the gene's "

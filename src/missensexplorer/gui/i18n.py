@@ -53,10 +53,12 @@ S: dict[str, tuple[str, str]] = {
     "opt_noncoding": ("Incluir variantes no codificantes", "Include non-coding variants"),
     "opt_oncogenicity": ("Oncogenicidad somática (tumores)", "Somatic oncogenicity (tumours)"),
     "opt_oncogenicity_tip": (
-        "Puntos de oncogenicidad ClinGen/CGC/VICC para variantes de tumores, con hotspots de cancerhotspots.org, "
-        "el papel del gen en IntOGen y las clasificaciones de oncogenicidad de ClinVar.",
-        "ClinGen/CGC/VICC oncogenicity points for tumour variants, from cancerhotspots.org hotspots, the gene's "
-        "role in IntOGen and ClinVar oncogenicity classifications.",
+        "Puntos de oncogenicidad ClinGen/CGC/VICC para variantes de tumores: hotspots de cancerhotspots.org, el "
+        "papel del gen (IntOGen, o UniProt cuando IntOGen no decide), clasificaciones de oncogenicidad de ClinVar, "
+        "estudios funcionales de CIViC, gnomAD y la evidencia computacional calibrada.",
+        "ClinGen/CGC/VICC oncogenicity points for tumour variants: cancerhotspots.org hotspots, the gene's role "
+        "(IntOGen, or UniProt when IntOGen does not decide), ClinVar oncogenicity classifications, CIViC functional "
+        "studies, gnomAD and the calibrated computational evidence.",
     ),
     "workers": ("Peticiones en paralelo", "Parallel requests"),
     "freq_rule": ("Frecuencia", "Frequency"),
@@ -197,6 +199,8 @@ S: dict[str, tuple[str, str]] = {
     "acmg_pp3": ("Computacional PP3/BP4", "Computational PP3/BP4"),
     "acmg_freq": ("Frecuencia poblacional", "Population frequency"),
     "acmg_codes": ("Criterios", "Criteria"),
+    "acmg_vcep": ("Especificación del panel de ClinGen", "ClinGen expert panel specification"),
+    "acmg_notes": ("Avisos sobre estos criterios", "Notes on these criteria"),
     "with_freq_tip": (
         "Puntaje del modelo combinado con la frecuencia en gnomAD, para ordenar las variantes de una muestra. "
         "Una variante ausente de gnomAD puntúa alto casi siempre. No es evidencia ACMG: la frecuencia ya "
@@ -260,15 +264,17 @@ S: dict[str, tuple[str, str]] = {
     "somatic_clinical": ("Evidencia clínica (CIViC)", "Clinical evidence (CIViC)"),
     "somatic_note": (
         "Norma ClinGen/CGC/VICC (Horak et al. 2022) con los criterios que se calculan solos: hotspots de "
-        "cancerhotspots.org, papel del gen en IntOGen, otras variantes del residuo en ClinVar, estudios funcionales "
-        "curados en CIViC (OS2/SBS2), gnomAD y el modelo (solo en genes que no son activadores). CIViC cubre pocos "
+        "cancerhotspots.org, papel del gen (IntOGen, o UniProt cuando IntOGen no decide), otras variantes del "
+        "residuo en ClinVar, estudios funcionales curados en CIViC (OS2/SBS2), gnomAD (OP4 solo con ausencia "
+        "confirmada) y la evidencia computacional calibrada (OP1/SBP1, en todos los genes). CIViC cubre pocos "
         "estudios funcionales: revisa la literatura. La evidencia clínica de CIViC (fármacos, pronóstico) no suma "
         "puntos, y la clasificación de ClinVar de esta misma variante se muestra aparte y no cuenta como evidencia.",
         "ClinGen/CGC/VICC standard (Horak et al. 2022) with the criteria that can be computed: hotspots from "
-        "cancerhotspots.org, the gene's role in IntOGen, other ClinVar variants at the residue, functional studies "
-        "curated in CIViC (OS2/SBS2), gnomAD and the model (only in genes that are not activating). CIViC covers few "
-        "functional studies: check the literature. CIViC's clinical evidence (drugs, prognosis) adds no points, and "
-        "ClinVar's classification of this very variant is shown apart and does not count as evidence.",
+        "cancerhotspots.org, the gene's role (IntOGen, or UniProt when IntOGen does not decide), other ClinVar "
+        "variants at the residue, functional studies curated in CIViC (OS2/SBS2), gnomAD (OP4 only on confirmed "
+        "absence) and the calibrated computational evidence (OP1/SBP1, in every gene). CIViC covers few functional "
+        "studies: check the literature. CIViC's clinical evidence (drugs, prognosis) adds no points, and ClinVar's "
+        "classification of this very variant is shown apart and does not count as evidence.",
     ),
     "conditions": ("Condiciones", "Conditions"),
     "gnomad": ("Frecuencia en gnomAD", "gnomAD allele frequency"),
@@ -431,6 +437,14 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     ),
     (r"^common: BA1 \(grpmax (\S+)\)$", r"común: BA1 (grpmax \1)"),
     (
+        r"^common: BA1 \(grpmax (\S+); allele numbers not checked in gnomAD\)$",
+        r"común: BA1 (grpmax \1; números de alelos no comprobados en gnomAD)",
+    ),
+    (
+        r"^frequent: BS1 candidate \(grpmax (\S+)\); BA1 not met: the gene's expert panel sets BA1 above (\S+)$",
+        r"frecuente: posible BS1 (grpmax \1); BA1 no cumplido: el panel experto del gen fija BA1 por encima de \2",
+    ),
+    (
         r"^frequent, but on the ClinGen BA1 exception list \(grpmax (\S+)\)$",
         r"frecuente, pero está en la lista de excepciones a BA1 de ClinGen (grpmax \1)",
     ),
@@ -475,8 +489,94 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"same change by (c\.\S+?):", r"mismo cambio por \1:"),
     (r": Pathogenic, (\d)★", r": patogénica, \1★"),
     (r": Likely pathogenic, (\d)★", r": probablemente patogénica, \1★"),
-    (r"; and (\d+) more\)$", r"; y \1 más)"),
+    (r"; and (\d+) more(?=[);])", r"; y \1 más"),
     (r"^none \((.+), indeterminate\)$", r"ninguna (\1, indeterminado)"),
+    # ClinGen expert panel notes (vcep.py): one note per specification, its parts separated by "; ".
+    # The patterns never cross a "; " or a " | ", so every note and every part of a cell is translated.
+    (
+        r"allows (PP3|BP4|PS1|PM5|PM2) up to ([A-Za-z+ ]+?): the tool's (\S+) \((\d) points\) is stronger",
+        r"admite \1 hasta \2: el \3 de la herramienta (\4 puntos) es más fuerte",
+    ),
+    (
+        r"uses (PP3|BP4|PS1|PM5|PM2) only at ([^:;|]+): the tool's (\S+) is weaker",
+        r"usa \1 solo con fuerza \2: el \3 de la herramienta es más débil",
+    ),
+    (
+        r"has no (\d)-point (PP3|BP4|PS1|PM5|PM2) \(([^)]+)\): the tool's (\S+) is not one of them",
+        r"no tiene \2 de \1 puntos (\3): el \4 de la herramienta no es ninguna de ellas",
+    ),
+    (r"does not use (PP3|BP4) for missense variants \(“", r"no usa \1 en variantes missense (“"),
+    (r"does not use (PP3|BP4|PS1|PM5|PM2)(?=; | \(http|$)", r"no usa \1"),
+    (
+        r"it sets its own predictor and thresholds for PP3/BP4 \(the tool's PP3/BP4 is its own calibration\)",
+        r"fija su propio predictor y sus umbrales para PP3/BP4 (el PP3/BP4 de la herramienta es su propia calibración)",
+    ),
+    (r"its rules give neither PP3 nor BP4 \(REVEL", r"sus reglas no dan ni PP3 ni BP4 (REVEL"),
+    (r"its rules give ", r"sus reglas dan "),
+    (r"no PP3/BP4 for missense variants", r"sin PP3/BP4 en variantes missense"),
+    (r"PP3/BP4 not evaluated \(no REVEL score\)", r"PP3/BP4 no evaluado (sin puntuación REVEL)"),
+    (r"\bPM2 not met\b", r"PM2 no cumplido"),
+    (r"\b(PM2|BA1) met\b", r"\1 cumplido"),
+    (
+        r"BA1 only (>=?) ([\d.e+-]+%): grpmax ([\d.e+-]+%) does not meet it",
+        r"BA1 solo \1 \2: el grpmax \3 no lo cumple",
+    ),
+    (
+        r"grpmax ([\d.e+-]+%) meets its BA1 threshold \((>=?) ([\d.e+-]+%)\)",
+        r"el grpmax \1 cumple su umbral de BA1 (\2 \3)",
+    ),
+    (r" \(it applies it to the filtering allele frequency\)", r" (lo aplica a la frecuencia alélica de filtrado)"),
+    (r"its own BA1 rule: “", r"su propia regla de BA1: “"),
+    (r"(^|; |: )on (PP3|BP4|PS1|PM5|PM2): “", r"\1sobre \2: “"),
+    (
+        r"(^|; |: )on (PP3|BP4|PS1|PM5|PM2): (\d+) more conditions in the specification",
+        r"\1sobre \2: \3 condiciones más en la especificación",
+    ),
+    (
+        r"does not use (PS1|PM5) below (\w+): with a likely pathogenic or single-star reference, its (?:PS1|PM5) would "
+        r"not apply",
+        r"no usa \1 por debajo de \2: con una referencia probablemente patogénica o de una estrella, su \1 no se "
+        r"aplicaría",
+    ),
+    (r"uses (PP3|BP4) only at ([^:;|]+?) \(its own thresholds\)", r"usa \1 solo con fuerza \2 (sus propios umbrales)"),
+    (
+        r"grpmax allele frequency ([\d.e+-]+%) is above its BA1 threshold \((>=?) ([\d.e+-]+%)\), which it applies "
+        r"to the filtering allele frequency \(not computed here\): check the filtering allele frequency before BA1",
+        r"la frecuencia alélica grpmax \1 supera su umbral de BA1 (\2 \3), que aplica a la frecuencia alélica de "
+        r"filtrado (no calculada aquí): compruebe la frecuencia de filtrado antes de aplicar BA1",
+    ),
+    (r"\b(?<=[(,] )autosomal dominant(?= ?[;)]| or)", "autosómica dominante"),
+    (r"\b(?<=[(,] )autosomal recessive(?=[;)])", "autosómica recesiva"),
+    (r"(?<=or )autosomal recessive(?=[;)])", "autosómica recesiva"),
+    (r"(?<=[(,] )x-linked(?=[;)])", "ligada al X"),
+    (r"(?<=[(,] )semidominant(?=[;)])", "semidominante"),
+    (
+        r"; no SpliceAI score: check that neither variant acts on splicing\)",
+        r"; sin puntuación de SpliceAI: compruebe que ninguna de las dos variantes actúe sobre el splicing)",
+    ),
+    (
+        r"^none \((.+); (BP4\S*) withheld: SpliceAI (\S+) does not rule out a splicing effect\)$",
+        r"ninguna (\1; \2 retenido: SpliceAI \3 no descarta un efecto sobre el splicing)",
+    ),
+    (
+        r"^none \((.+); (BP4\S*) withheld: no SpliceAI score to rule out a splicing effect\)$",
+        r"ninguna (\1; \2 retenido: no hay puntuación de SpliceAI para descartar un efecto sobre el splicing)",
+    ),
+    (
+        r"^none \(only single-star likely pathogenic variants at this residue: ",
+        r"ninguna (en este residuo solo hay variantes probablemente patogénicas de una estrella: ",
+    ),
+    (
+        r"^frequent: BS1 candidate \(grpmax (\S+)\); BA1 not met: (\S+) at most in the gnomAD groups with >= 2,000 "
+        r"alleles$",
+        r"frecuente: posible BS1 (grpmax \1); no cumple BA1: como máximo \2 en los grupos de gnomAD con ≥ 2.000 alelos",
+    ),
+    (
+        r"PP3 \((\d) points\) and (PS1\S*|PM5\S*) may partly reflect the same residue-level information \(Pejaver et "
+        r"al\. 2022\): weigh their combination with care; if PM1 is added, PP3 \+ PM1 should not exceed 4 points",
+        r"PP3 (\1 puntos) y \2 pueden reflejar en parte la misma información del residuo (Pejaver et al. 2022): "
+        r"valore su combinación con cuidado; si se añade PM1, PP3 + PM1 no debe superar 4 puntos",
+    ),
     (
         r"frameshift: downstream sequence changes, not reconstructed",
         "cambio del marco de lectura: la secuencia posterior cambia y no se reconstruye",
@@ -658,24 +758,96 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"same change by (\S+): ", r"mismo cambio por \1: "),
     (r"the MissensExplorer model calls it damaging", "el modelo de MissensExplorer la llama dañina"),
     (r"the MissensExplorer model calls it benign", "el modelo de MissensExplorer la llama benigna"),
+    (r"calibrated computational evidence reaches (PP3|BP4)", r"la evidencia computacional calibrada alcanza \1"),
+    (
+        r"in an activating gene, a damage prediction does not tell activation from inactivation",
+        "en un gen activador, una predicción de daño no distingue activación de inactivación",
+    ),
     (r"null variant in a loss-of-function gene", "variante nula en un gen de pérdida de función"),
+    (
+        r"truncating variant expected to undergo nonsense-mediated decay",
+        "variante truncante que se espera degradada por NMD",
+    ),
+    (
+        r"the truncation removes (\d+)% of the protein \(ClinGen LoF guidance: > 10% strong\)",
+        r"el truncamiento elimina el \1 % de la proteína (guía LoF de ClinGen: > 10 %, fuerte)",
+    ),
+    (r"the share of the protein removed is unknown", "se desconoce qué parte de la proteína se elimina"),
+    (
+        r"start codon lost: another in-frame start codon may be used \(ClinGen LoF guidance\)",
+        "codón de inicio perdido: puede usarse otro codón de inicio en fase (guía LoF de ClinGen)",
+    ),
+    (
+        r"canonical splice site; whether skipping the exon keeps the frame is unknown",
+        "sitio de empalme canónico; se desconoce si saltar el exón mantiene la fase",
+    ),
+    (
+        r"canonical splice site; skipping exon (\d+) would shift the reading frame",
+        r"sitio de empalme canónico; saltar el exón \1 desplazaría la fase de lectura",
+    ),
+    (
+        r"canonical splice site; skipping exon (\d+) would remove (\d+)% of the coding sequence in frame",
+        r"sitio de empalme canónico; saltar el exón \1 eliminaría en fase el \2 % de la secuencia codificante",
+    ),
+    (r"OVS1 not applied \(not a loss-of-function gene: ", "OVS1 no aplicado (no es un gen de pérdida de función: "),
+    (
+        r"CIViC oncogenic evidence from clinical observations \(not functional studies\) not used",
+        "evidencia oncogénica de CIViC de observaciones clínicas (no estudios funcionales) no usada",
+    ),
     (r"in-frame change in a cancer gene \(", "cambio en fase en un gen del cáncer ("),
     (r"stop lost in a loss-of-function gene", "codón de parada perdido en un gen de pérdida de función"),
     (
-        r"\b(activating|loss-of-function|ambiguous) in (\d+) of (\d+) IntOGen cohorts",
+        r"\b(activating|loss-of-function|ambiguous) \(UniProt: (tumour suppressor and proto-oncogene|tumour suppressor"
+        r"|proto-oncogene)\)",
         lambda m: (
             {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
-            + f" en {m[2]} de {m[3]} cohortes de IntOGen"
+            + " (UniProt: "
+            + {
+                "tumour suppressor": "supresor tumoral",
+                "proto-oncogene": "protooncogén",
+                "tumour suppressor and proto-oncogene": "supresor tumoral y protooncogén",
+            }[m[2]]
+            + ")"
         ),
     ),
-    (r"(\S+) is not an IntOGen driver gene", r"\1 no es un gen impulsor en IntOGen"),
     (
-        r"OP1/SBP1 not applied \(activating gene: the model measures damage to the protein, not activation\)",
-        "OP1/SBP1 no aplicados (gen activador: el modelo mide el daño a la proteína, no la activación)",
+        r"\b(activating|loss-of-function|ambiguous) \(IntOGen: (\d+)% loss-of-function in (\d+) samples of cohorts "
+        r"with a role, (\d+) cohorts?\)",
+        lambda m: (
+            {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
+            + f" (IntOGen: {m[2]} % de pérdida de función en {m[3]} muestras de cohortes con papel, {m[4]} cohortes)"
+        ),
     ),
     (
-        r"not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2",
-        "no evaluados automáticamente: estudios funcionales fuera de CIViC, OM1 dominio funcional, OP2",
+        r"\b(activating|loss-of-function|ambiguous) \(IntOGen: (\d+) of (\d+) mutated samples in cohorts of "
+        r"ambiguous role\)",
+        lambda m: (
+            {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
+            + f" (IntOGen: {m[2]} de {m[3]} muestras mutadas en cohortes de papel ambiguo)"
+        ),
+    ),
+    (
+        r"\b(activating|loss-of-function|ambiguous) \(IntOGen: (\d+)% loss-of-function in (\d+) samples, (\d+) "
+        r"cohorts?; UniProt: (tumour suppressor|proto-oncogene): they disagree\)",
+        lambda m: (
+            {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
+            + f" (IntOGen: {m[2]} % de pérdida de función en {m[3]} muestras, {m[4]} cohortes; UniProt: "
+            + {"tumour suppressor": "supresor tumoral", "proto-oncogene": "protooncogén"}[m[5]]
+            + ": no coinciden)"
+        ),
+    ),
+    (
+        r"UniProt keywords unavailable: gene roles from IntOGen only",
+        "palabras clave de UniProt no disponibles: papeles de los genes solo de IntOGen",
+    ),
+    (r"the standard's rule for OS1 would give (-?\d+) points", r"la regla de la norma para OS1 daría \1 puntos"),
+    (
+        r"(\S+) is not a known cancer gene \(UniProt, IntOGen\)",
+        r"\1 no es un gen del cáncer conocido (UniProt, IntOGen)",
+    ),
+    (
+        r"not assessed automatically: functional studies beyond CIViC, OM1 functional domain, OP2, tumour type",
+        "no evaluados automáticamente: estudios funcionales fuera de CIViC, OM1 dominio funcional, OP2, tipo de tumor",
     ),
     (r"OS2/SBS2 not checked \(CIViC unavailable\)", "OS2/SBS2 no comprobados (CIViC no disponible)"),
     (
@@ -687,8 +859,28 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         "OS2/SBS2 no aplicados (la evidencia funcional de CIViC es contradictoria)",
     ),
     (
-        r"OS2 not applied \(OS1 already uses this amino-acid change\)",
-        "OS2 no aplicado (OS1 ya usa este cambio de aminoácido)",
+        r"((?:OS3|OM3|OP3|OS2)(?:, (?:OS3|OM3|OP3|OS2))*) not counted \((OS1\S*) uses this amino-acid change\)",
+        r"\1 no contado (\2 usa este cambio de aminoácido)",
+    ),
+    (
+        r"(OS1\S*) not counted \((.+?); ([A-Z0-9 +]+) for this change is stronger\)",
+        r"\1 no contado (\2; \3 para este cambio es más fuerte)",
+    ),
+    (
+        r"OP4 not checked \(absence from gnomAD not confirmed\)",
+        "OP4 no comprobado (ausencia en gnomAD no confirmada)",
+    ),
+    (
+        r"OP4 not applied \(absent from gnomAD, but few reads there\)",
+        "OP4 no aplicado (ausente de gnomAD, pero con pocas lecturas)",
+    ),
+    (
+        r"\b(activating|loss-of-function|ambiguous) \(IntOGen: (\d+) cohorts?, (\d+) mutated samples: too few to "
+        r"decide\)",
+        lambda m: (
+            {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
+            + f" (IntOGen: {m[2]} cohorte, {m[3]} muestras mutadas: demasiado pocas para decidir)"
+        ),
     ),
     (r"\bDominant Negative\b", "dominante negativa"),
     (r"\bGain of Function\b", "ganancia de función"),
@@ -712,7 +904,7 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"Poor Outcome", "mal pronóstico"),
     (r"Better Outcome", "mejor pronóstico"),
     (r" in ([^()]+) \(EID(\d+)\)$", r" en \1 (EID\2)"),
-    (r"OP4 \(absent from gnomAD\)", "OP4 (ausente de gnomAD)"),
+    (r"OP4 \(absent from (gnomAD[^)]*)\)", r"OP4 (ausente de \1)"),
     (r"gnomAD frequency (\S+) < 1e-5", r"frecuencia en gnomAD \1 < 1e-5"),
     (r"gnomAD grpmax (\S+) > (\d+)%", r"grpmax de gnomAD \1 > \2 %"),
     (
@@ -720,24 +912,13 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         "OS1/OM4 no comprobados (búsqueda de oncogenicidad en ClinVar no disponible)",
     ),
     (
-        r"hotspot not counted \(OS1 already uses this amino-acid change\)",
-        "hotspot no contado (OS1 ya usa este cambio de aminoácido)",
-    ),
-    (
         r"OM4 not applied \(this change is milder than the oncogenic ones at the residue\)",
         "OM4 no aplicado (este cambio es más leve que los oncogénicos del residuo)",
     ),
+    (r"\bnot a known cancer gene\)", "no es un gen del cáncer conocido)"),
     (
-        r"OVS1 not applied \(the gene is not a loss-of-function driver in IntOGen\)",
-        "OVS1 no aplicado (el gen no es impulsor de pérdida de función en IntOGen)",
-    ),
-    (
-        r"OVS1 not applied \((.+?): the truncated protein may keep its function\)",
-        r"OVS1 no aplicado (\1: la proteína truncada puede conservar su función)",
-    ),
-    (
-        r"OM2 not applied \(not a known cancer gene in IntOGen\)",
-        "OM2 no aplicado (no es un gen del cáncer conocido en IntOGen)",
+        r"OM2 not applied \(not a known cancer gene: UniProt, IntOGen\)",
+        "OM2 no aplicado (no es un gen del cáncer conocido: UniProt, IntOGen)",
     ),
     (
         r"(OM4\S*) not used \((p\.\S+): (.+?); the hotspot criterion OM3 is stronger\)",

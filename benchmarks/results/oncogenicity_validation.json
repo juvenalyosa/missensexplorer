@@ -6,61 +6,231 @@
    "3T3 (missense)": {
     "n": 225,
     "positives": 38,
-    "points": 0.729,
+    "points": 0.693,
     "points_ci": [
-     0.62,
-     0.823
+     0.581,
+     0.797
     ],
-    "points_without_clinvar": 0.732,
-    "model": 0.543,
-    "model_n": 218
+    "points_without_clinvar": 0.697,
+    "points_without_op1_sbp1": 0.729,
+    "hotspot_points_only": 0.742,
+    "hotspot_only_minus_points": {
+     "auc_a": 0.741768,
+     "auc_b": 0.693287,
+     "difference": 0.04848,
+     "ci": [
+      -0.025886,
+      0.122847
+     ],
+     "p": 0.2013489873990001
+    },
+    "without_op1_sbp1_minus_points": {
+     "auc_a": 0.72875,
+     "auc_b": 0.693287,
+     "difference": 0.035463,
+     "ci": [
+      -0.02196,
+      0.092886
+     ],
+     "p": 0.2261164025872051
+    },
+    "model": 0.542,
+    "model_n": 218,
+    "model_ci": [
+     0.439,
+     0.646
+    ],
+    "points_minus_model_paired": {
+     "auc_a": 0.694853,
+     "auc_b": 0.54156,
+     "difference": 0.153293,
+     "ci": [
+      0.073985,
+      0.232601
+     ],
+     "p": 0.00015163106787492383
+    }
    },
    "3T3 (all)": {
     "n": 243,
     "positives": 46,
-    "points": 0.743,
+    "points": 0.723,
     "points_ci": [
-     0.658,
-     0.834
+     0.619,
+     0.813
     ],
-    "points_without_clinvar": 0.745,
-    "model": 0.543,
-    "model_n": 218
+    "points_without_clinvar": 0.726,
+    "points_without_op1_sbp1": 0.748,
+    "hotspot_points_only": 0.762,
+    "hotspot_only_minus_points": {
+     "auc_a": 0.761587,
+     "auc_b": 0.723461,
+     "difference": 0.038126,
+     "ci": [
+      -0.022715,
+      0.098967
+     ],
+     "p": 0.21936340889637018
+    },
+    "without_op1_sbp1_minus_points": {
+     "auc_a": 0.747683,
+     "auc_b": 0.723461,
+     "difference": 0.024222,
+     "ci": [
+      -0.02156,
+      0.070004
+     ],
+     "p": 0.2997504675765009
+    },
+    "model": 0.542,
+    "model_n": 218,
+    "model_ci": [
+     0.44,
+     0.649
+    ],
+    "points_minus_model_paired": {
+     "auc_a": 0.694853,
+     "auc_b": 0.54156,
+     "difference": 0.153293,
+     "ci": [
+      0.073985,
+      0.232601
+     ],
+     "p": 0.00015163106787492383
+    }
    },
    "Ba/F3 (missense)": {
     "n": 258,
     "positives": 200,
-    "points": 0.557,
+    "points": 0.396,
     "points_ci": [
-     0.507,
-     0.608
+     0.341,
+     0.45
     ],
-    "points_without_clinvar": 0.555,
-    "model": 0.215,
-    "model_n": 251
+    "points_without_clinvar": 0.395,
+    "points_without_op1_sbp1": 0.557,
+    "hotspot_points_only": 0.586,
+    "hotspot_only_minus_points": {
+     "auc_a": 0.58569,
+     "auc_b": 0.396422,
+     "difference": 0.189267,
+     "ci": [
+      0.140634,
+      0.2379
+     ],
+     "p": 2.3895324712022988e-14
+    },
+    "without_op1_sbp1_minus_points": {
+     "auc_a": 0.556552,
+     "auc_b": 0.396422,
+     "difference": 0.160129,
+     "ci": [
+      0.118473,
+      0.201786
+     ],
+     "p": 4.9123140901370595e-14
+    },
+    "model": 0.214,
+    "model_n": 251,
+    "model_ci": [
+     0.156,
+     0.282
+    ],
+    "points_minus_model_paired": {
+     "auc_a": 0.396998,
+     "auc_b": 0.214415,
+     "difference": 0.182583,
+     "ci": [
+      0.119148,
+      0.246018
+     ],
+     "p": 1.68781426818607e-08
+    }
    },
    "Ba/F3 (all)": {
     "n": 279,
     "positives": 212,
-    "points": 0.513,
+    "points": 0.393,
     "points_ci": [
-     0.447,
-     0.574
+     0.335,
+     0.454
     ],
-    "points_without_clinvar": 0.511,
-    "model": 0.215,
-    "model_n": 251
+    "points_without_clinvar": 0.39,
+    "points_without_op1_sbp1": 0.517,
+    "hotspot_points_only": 0.548,
+    "hotspot_only_minus_points": {
+     "auc_a": 0.548015,
+     "auc_b": 0.392812,
+     "difference": 0.155203,
+     "ci": [
+      0.111449,
+      0.198956
+     ],
+     "p": 3.5919783835851077e-12
+    },
+    "without_op1_sbp1_minus_points": {
+     "auc_a": 0.517002,
+     "auc_b": 0.392812,
+     "difference": 0.12419,
+     "ci": [
+      0.08559,
+      0.16279
+     ],
+     "p": 2.8649354832244727e-10
+    },
+    "model": 0.214,
+    "model_n": 251,
+    "model_ci": [
+     0.155,
+     0.277
+    ],
+    "points_minus_model_paired": {
+     "auc_a": 0.396998,
+     "auc_b": 0.214415,
+     "difference": 0.182583,
+     "ci": [
+      0.119148,
+      0.246018
+     ],
+     "p": 1.68781426818607e-08
+    }
    }
   },
   "tiers": {
+   "4": {
+    "Likely oncogenic": 1,
+    "VUS": 17,
+    "Likely benign": 1,
+    "not assessed": 38
+   },
+   "3": {
+    "Likely oncogenic": 2,
+    "VUS": 24,
+    "Likely benign": 1,
+    "not assessed": 22
+   },
+   "2": {
+    "VUS": 34,
+    "Likely benign": 1,
+    "Benign": 1,
+    "not assessed": 3
+   },
+   "1": {
+    "Likely oncogenic": 3,
+    "VUS": 187,
+    "Likely benign": 7,
+    "not assessed": 3
+   }
+  },
+  "tiers_without_op1_sbp1": {
    "4": {
     "VUS": 19,
     "not assessed": 38
    },
    "3": {
-    "Likely oncogenic": 2,
+    "not assessed": 22,
     "VUS": 25,
-    "not assessed": 22
+    "Likely oncogenic": 2
    },
    "2": {
     "VUS": 35,
@@ -68,9 +238,15 @@
     "not assessed": 3
    },
    "1": {
-    "Likely oncogenic": 1,
     "VUS": 196,
-    "not assessed": 3
+    "not assessed": 3,
+    "Likely oncogenic": 1
+   }
+  },
+  "standard_os1_rule": {
+   "variants_with_other_points": 1,
+   "class_changes": {
+    "VUS -> VUS": 1
    }
   },
   "civic": {
@@ -91,35 +267,107 @@
    "Kato (missense)": {
     "n": 1724,
     "positives": 493,
-    "points": 0.932,
+    "points": 0.931,
     "points_ci": [
-     0.917,
-     0.946
+     0.916,
+     0.947
     ],
     "points_without_clinvar": 0.928,
-    "model": 0.928,
-    "model_n": 1724
+    "points_without_op1_sbp1": 0.868,
+    "hotspot_points_only": 0.834,
+    "hotspot_only_minus_points": {
+     "auc_a": 0.833791,
+     "auc_b": 0.931179,
+     "difference": -0.097389,
+     "ci": [
+      -0.114896,
+      -0.079881
+     ],
+     "p": 1.1201340534859757e-27
+    },
+    "without_op1_sbp1_minus_points": {
+     "auc_a": 0.867662,
+     "auc_b": 0.931179,
+     "difference": -0.063517,
+     "ci": [
+      -0.078211,
+      -0.048824
+     ],
+     "p": 2.3987036336558188e-17
+    },
+    "model": 0.927,
+    "model_n": 1724,
+    "model_ci": [
+     0.911,
+     0.943
+    ],
+    "points_minus_model_paired": {
+     "auc_a": 0.931179,
+     "auc_b": 0.92737,
+     "difference": 0.00381,
+     "ci": [
+      -0.003285,
+      0.010904
+     ],
+     "p": 0.2926029590764474
+    }
    },
    "Giacomelli (missense)": {
     "n": 2158,
     "positives": 570,
-    "points": 0.842,
+    "points": 0.847,
     "points_ci": [
-     0.82,
-     0.864
+     0.826,
+     0.868
     ],
-    "points_without_clinvar": 0.839,
-    "model": 0.841,
-    "model_n": 2158
+    "points_without_clinvar": 0.845,
+    "points_without_op1_sbp1": 0.782,
+    "hotspot_points_only": 0.75,
+    "hotspot_only_minus_points": {
+     "auc_a": 0.749819,
+     "auc_b": 0.84749,
+     "difference": -0.097672,
+     "ci": [
+      -0.11469,
+      -0.080653
+     ],
+     "p": 2.3559073737302007e-29
+    },
+    "without_op1_sbp1_minus_points": {
+     "auc_a": 0.781698,
+     "auc_b": 0.84749,
+     "difference": -0.065792,
+     "ci": [
+      -0.08082,
+      -0.050765
+     ],
+     "p": 9.407044522308536e-18
+    },
+    "model": 0.84,
+    "model_n": 2158,
+    "model_ci": [
+     0.818,
+     0.861
+    ],
+    "points_minus_model_paired": {
+     "auc_a": 0.84749,
+     "auc_b": 0.83987,
+     "difference": 0.00762,
+     "ci": [
+      -0.001851,
+      0.017092
+     ],
+     "p": 0.1148285273993785
+    }
    }
   },
   "tiers": {
    "non-functional": {
-    "Oncogenic": 1,
+    "Oncogenic": 2,
     "Likely oncogenic": 90,
-    "VUS": 398,
+    "VUS": 399,
     "Likely benign": 1,
-    "mixed": 3
+    "mixed": 1
    },
    "partially functional": {
     "Likely oncogenic": 5,
@@ -128,13 +376,37 @@
     "mixed": 1
    },
    "functional": {
-    "VUS": 1121,
-    "Likely benign": 22,
-    "mixed": 4
+    "VUS": 1123,
+    "Likely benign": 21,
+    "mixed": 3
    },
    "supertrans": {
     "VUS": 80,
     "Likely benign": 4
+   }
+  },
+  "tiers_without_op1_sbp1": {
+   "non-functional": {
+    "VUS": 487,
+    "Likely oncogenic": 6
+   },
+   "partially functional": {
+    "VUS": 581,
+    "Likely oncogenic": 1
+   },
+   "functional": {
+    "VUS": 1147
+   },
+   "supertrans": {
+    "VUS": 83,
+    "Likely benign": 1
+   }
+  },
+  "standard_os1_rule": {
+   "variants_with_other_points": 3,
+   "class_changes": {
+    "VUS -> VUS": 2,
+    "Oncogenic -> Likely oncogenic": 1
    }
   },
   "civic": {
@@ -152,7 +424,37 @@
   "egfr": "Ikeuchi et al., Oncogene 2022, doi:10.1038/s41388-022-02263-4 (Supplementary Table 4)",
   "tp53": "https://tp53.cancer.gov/static/data/MutationView_r21.csv",
   "intogen": "IntOGen-Drivers-20240920",
-  "civic": "https://civicdb.org/downloads/nightly/nightly-ClinicalEvidenceSummaries.tsv"
+  "civic": "CIViC monthly release (see data_versions)"
  },
- "civic_dropped": 78
+ "egfr_not_analysed": {
+  "total": 11,
+  "by_kind": {
+   "nonsense": 2,
+   "compound": 9
+  },
+  "by_3t3_score": {
+   "1": 2,
+   "4": 8,
+   "3": 1
+  },
+  "baf3_transforming": 9
+ },
+ "civic_dropped": 78,
+ "data_versions": {
+  "data_versions": {
+   "cancerhotspots.org": "cached copy retrieved 2026-11-25",
+   "IntOGen": "IntOGen-Drivers-20240920",
+   "UniProt": "cached copy retrieved 2026-11-26",
+   "CIViC": "monthly release 01-Nov-2026",
+   "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
+  },
+  "sources": {
+   "CIViC": "ok",
+   "Ensembl VEP": "ok",
+   "IntOGen": "ok",
+   "UniProt": "ok",
+   "VEP predictor plugins": "ok",
+   "cancerhotspots.org": "ok"
+  }
+ }
 }
