@@ -22,5 +22,6 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
+      # the benchmark extra lets the tests of the benchmark helpers (tests/test_benchmark_helpers.py) run
+      - run: pip install -e ".[dev,benchmark]"
       - run: pytest -q --cov --cov-report=term:skip-covered

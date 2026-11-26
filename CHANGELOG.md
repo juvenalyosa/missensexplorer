@@ -101,7 +101,7 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   tables without the third-party scores that may not be redistributed (`benchmarks/results/public/`);
   the full tables are git-ignored (the two that 2.4 tracked, `model_training_set.csv.gz` and
   `egfr_validation.csv`, leave the index with this release). `benchmarks/requirements-lock.txt` lists the
-  exact package versions of the analysis environment.
+  exact package versions of the analysis environment. The `benchmark` extra now includes SciPy, which the scripts need.
 
 ### Changed
 - The `acmg_notes` column is new and sits after `vcep_specification`; the overlap and expert-panel
