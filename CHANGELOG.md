@@ -111,8 +111,8 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   the full tables are git-ignored (the two that 2.4 tracked, `model_training_set.csv.gz` and
   `egfr_validation.csv`, leave the index with this release); scores and cancerhotspots.org tumour counts
   quoted in text columns are removed, `NOTICE.txt` lists each kept source and its terms, and the files are
-  byte-for-byte reproducible. `benchmarks/requirements-lock.txt` lists the
-  exact package versions of the analysis environment. The `benchmark` extra now includes SciPy, which the scripts need.
+  byte-for-byte reproducible. `benchmarks/requirements-lock.txt` lists the exact package versions of the
+  analysis environment, and the `benchmark` extra now includes SciPy, which the scripts need.
 
 ### Changed
 - The `acmg_notes` column is new and sits after `vcep_specification`; the overlap and expert-panel
