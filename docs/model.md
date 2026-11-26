@@ -304,7 +304,8 @@ so it never adds oncogenicity points.
    OS2 or OM4 with OS1 (OM3 and OP3 combine with it). Here OS1 with OM3 or OP3 and the excluded evidence
    with OM3 or OP3 are weighed and the stronger is kept, so a ClinVar reference never lowers the points;
    when the standard's rule would give other points, the evidence says so. OM3 and OM4 are never combined
-   (the stronger is kept), and OM3 comes back when OS1 replaces OM4.
+   (the stronger is kept), and OM3 comes back when OS1 replaces OM4. OS1_Moderate (a likely oncogenic
+   reference, the tool's own level) is not combined with OM3 or OP3 and gives way to them on a tie.
 
 **Validation on laboratory assays** (AUC; ties count half; CIViC items citing the assays left out):
 
@@ -324,12 +325,13 @@ so it never adds oncogenicity points.
   transform 3T3 cells.
 
 **Against ClinVar oncogenicity classifications** (`benchmarks/validate_clinvar_oncogenicity.py`;
-2,283 variants, almost all from one submitting laboratory): 994 of 1,700 oncogenic or likely
-oncogenic variants called oncogenic or likely oncogenic (58.5%); null variants 77.4%, missense 25.3%
-(16.0% with the version 2.4 rule), in-frame 2 of 37; loss-of-function genes 72.4%, activating genes
-17.4%. Two opposite-direction calls (likely benign on SBP1 alone); 33 variants that ClinVar calls
-uncertain are called likely oncogenic (52 with version 2.4). Most oncogenic APC truncations lie in the
-last exon and get OVS1_Strong (5 points with OP4: VUS).
+2,283 variants, almost all from one submitting laboratory; numbers from
+`benchmarks/results/clinvar_oncogenicity_validation.json`): 995 of 1,700 oncogenic or likely oncogenic
+variants called oncogenic or likely oncogenic (58.5%); null variants 77.5%, missense 25.3% (16.3% without
+OP1 in activating genes), in-frame 2 of 37; loss-of-function genes 72.8%, activating genes 19.7%, none in
+genes of ambiguous or unknown role. One opposite-direction call (likely benign on SBP1 alone); 32 variants
+that ClinVar calls uncertain are called likely oncogenic, all null variants in loss-of-function genes.
+Most oncogenic APC truncations lie in the last exon and get OVS1_Strong (5 points with OP4: VUS).
 
 - **Use:** the points rank and document the evidence; they do not replace curation.
   - A *VUS* here means "not enough automatic evidence", not "probably harmless".

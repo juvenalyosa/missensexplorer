@@ -35,7 +35,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.163,
                               'op': '>',
                               'faf': False,
-                              'quote': 'Gprmax allele frequency cutoff of greater than 0.163 in gnomAD.'},
+                              'quote': 'Gprmax allele frequency cutoff of greater than 0.163 in gnomAD.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['ABCA4-related retinopathy']}],
            'ABCD1': [{'panel': 'Peroxisomal Disorders Variant Curation Expert Panel ',
@@ -59,7 +61,18 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Use a Total Grpmax filtering allele frequency (FAF) cutoff of '
                                        '≥0.017% (0.00017) from the most resent version of gnomAD. This '
                                        'frequency was calculated using the Whiffen-Ware calculator with a '
-                                       'prevalenc'},
+                                       'prevalence estimated at 1 in 5000 (actual prevalence in hemizygotes '
+                                       'and heterozygotes is reported to be 1 in 16800, GeneReviews, Bezman '
+                                       'et al 2001; however, a more conservative BA1 was designated based on '
+                                       'a value 1 order of magnitude higher than the BS1 cut-off), '
+                                       'penetrance at 60% (based on penetrance in heterozygotes by expert '
+                                       'judgment, maximum allelic contribution and maximum genetic '
+                                       'contribution at 100%).',
+                              'conditions': ['This frequency was calculated using the Whiffen-Ware '
+                                             'calculator with a prevalence estimated at 1 in 5000 (actual '
+                                             'prevalence in hemizygotes and heterozygotes is reported to be '
+                                             '1 in 16800, GeneReviews, Bezman et al 2001;…'],
+                              'excluded': []},
                       'inheritance': 'X-linked',
                       'diseases': ['adrenoleukodystrophy']}],
            'ACADVL': [{'panel': 'ACADVL Variant Curation Expert Panel',
@@ -90,7 +103,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Variants with a highest population minor allele frequency (MAF) '
                                         '≥0.007 (0.7%) in any continental population with >2000 alleles in '
                                         'gnomAD will meet BA1. Calculated using the Prevalence of 1:30,000, '
-                                        'All'},
+                                        'Allelic Contribution of 1, Genetic Contribution of 1, and '
+                                        'Penetrance of 0.75 to allow for mild VLCADD that may develop in '
+                                        'adulthood.',
+                               'conditions': ['Variants with a highest population minor allele frequency '
+                                              '(MAF) ≥0.007 (0.7%) in any continental population with >2000 '
+                                              'alleles in gnomAD will meet BA1.'],
+                               'excluded': []},
                        'inheritance': 'autosomal recessive',
                        'diseases': ['very long chain acyl-CoA dehydrogenase deficiency']}],
            'ACTA1': [{'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -111,7 +130,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': True,
                               'quote': 'The minor allele frequency using the filtering allele frequency of '
                                        'either exomes or genomes in gnomAD is ≥0.0000781 for AD variants. '
-                                       'All continental populations in gnomAD used should have at least 200'},
+                                       'All continental populations in gnomAD used should have at least 2000 '
+                                       'alleles and >1 observation.',
+                              'conditions': ['All continental populations in gnomAD used should have at '
+                                             'least 2000 alleles and >1 observation.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['alpha-actinopathy']},
                      {'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -132,7 +155,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': True,
                               'quote': 'The minor allele frequency using the filtering allele frequency of '
                                        'either exomes or genomes in gnomAD is ≥0.0025 for AR variants. All '
-                                       'continental populations in gnomAD used should have at least 2000 a'},
+                                       'continental populations in gnomAD used should have at least 2000 '
+                                       'alleles and >1 observation. BA1 exclusion variants (well-known '
+                                       'pathogenic variants that are above the specified BA1 threshold) are '
+                                       'as follows: NM001100.4(ACTA1):c.541del (p.Asp181fs) '
+                                       'NM001100.4(ACTA1):c.121C>T(p.Arg41)',
+                              'conditions': ['All continental populations in gnomAD used should have at '
+                                             'least 2000 alleles and >1 observation.',
+                                             'BA1 exclusion variants: c.541del (p.Asp181fs), c.121C>T '
+                                             '(p.Arg41*)'],
+                              'excluded': ['c.541del', 'p.Asp181fs', 'c.121C>T', 'p.Arg41*']},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['alpha-actinopathy']}],
            'ACTC1': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -163,7 +195,36 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                        '(FAF) in gnomAD in the subpopulation with the highest frequency '
                                        '(popmax). The values used to calculate the BA1 threshold were '
-                                       'derived'},
+                                       'derived from studies in Northern European populations that have been '
+                                       'relatively well-characterized with regards to disease prevalence and '
+                                       'variant spectrum. These thresholds can be applied to any population '
+                                       'where disease prevalence is considered comparable (1/300 or lower). '
+                                       'The threshold is applicable when assessing variants in the context '
+                                       'of autosomal dominant cardiomyopathy. gnomAD is the preferred '
+                                       'database for this calculation. If a subpopulation specific FAF other '
+                                       'than the popmax is needed, this value can be calculated using the '
+                                       'AlleleFrequencyApp on the CardioDB website. 1. Using the Inverse AF '
+                                       'tab, enter in the population size and the number of alleles '
+                                       'identified and it will calculate the FAF. 2. Set confidence to 0.95 '
+                                       '(95%). 3. If the FAF is ≥0.001, this rule can be applied. The FAF by '
+                                       'platform (e.g., exome vs. genome; v.2.1.1 vs. v.3.1.1) should be '
+                                       'considered, the larger population is most likely to have the most '
+                                       'accurate representation of “true” population allele frequency. '
+                                       'Caution is needed when considering any population cohorts that are '
+                                       'smaller than the smallest subpopulations within gnomAD v.2.1.1 '
+                                       '(e.g., ~5000 individuals or ~10,000 alleles). Despite this '
+                                       'conservative nature of this threshold and approach, in smaller '
+                                       'cohorts, the observed allele frequency may less accurately reflect '
+                                       'the true allele frequency. Traditionally, once a variant is '
+                                       'classified as Benign, it is rarely re-evaluated and so the highest '
+                                       'confidence is needed to establish that classification on an allele '
+                                       'frequency alone.',
+                              'conditions': ['Using the Inverse AF tab, enter in the population size and the '
+                                             'number of alleles identified and it will calculate the FAF.',
+                                             'Caution is needed when considering any population cohorts that '
+                                             'are smaller than the smallest subpopulations within gnomAD '
+                                             'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['hypertrophic cardiomyopathy']}],
            'ACVRL1': [{'panel': 'Hereditary Hemorrhagic Telangiectasia Variant Curation Expert Panel',
@@ -188,7 +249,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'op': '>=',
                                'faf': True,
                                'quote': 'Allele frequency is ≥1% in general population databases (e.g. '
-                                        'gnomAD) based on Popmax FAF.'},
+                                        'gnomAD) based on Popmax FAF.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['telangiectasia, hereditary hemorrhagic, type 2']}],
            'ADA': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -217,7 +280,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.00721,
                             'op': '>',
                             'faf': True,
-                            'quote': 'gnomAD popmax filtering allele frequency >0.00721.'},
+                            'quote': 'gnomAD popmax filtering allele frequency >0.00721.',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['severe combined immunodeficiency, autosomal recessive, T cell-negative, B '
                                  'cell-negative, NK cell-negative, due to adenosine deaminase deficiency']}],
@@ -246,7 +311,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '>=',
                               'faf': True,
                               'quote': 'Use gnomAD Grpmax FAF if available, cutoff of ≥0.0057 Use large '
-                                       'population databases (i.e. gnomAD).'},
+                                       'population databases (i.e. gnomAD).',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['AIPL1-related retinopathy']}],
            'AKT3': [{'panel': 'Brain Malformations Variant Curation Expert Panel',
@@ -270,7 +337,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Allele frequency (>0.0926%). An allele frequency (>0.0926%) was '
                                       'approved. Note: this was adjusted from ACMG Guidelines due to '
                                       'maintaining the 5x threshold for benign (consistent with previously '
-                                      'establ'},
+                                      'established guidelines)',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['cerebral malformation']}],
            'ANO5': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -306,7 +375,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                       'confidence interval of the maximum credible genetic ancestry group '
                                       'allele frequency) is >0.003. This value can be taken directly from '
-                                      'gnomAD'},
+                                      'gnomAD, but do not use data for which the variant does not pass '
+                                      'quality control filters. See supplementary file “benign frequency '
+                                      'exceptions” for a list of variants defined as exceptions to the '
+                                      'benign frequency rules. Ongoing updates to this list will be '
+                                      'available at the LGMD VCEP webpage: '
+                                      'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                      'frequency may not be reliable (e.g., variants that may reflect a '
+                                      'sequencing artifact) should be critically evaluated and brought to '
+                                      'the attention of the LGMD VCEP.',
+                             'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                            'data for which the variant does not pass quality control '
+                                            'filters.',
+                                            'See supplementary file “benign frequency exceptions” for a list '
+                                            'of variants defined as exceptions to the benign frequency '
+                                            'rules.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'APC': [{'panel': 'InSiGHT Hereditary Colorectal Cancer/Polyposis Variant Curation Expert Panel',
@@ -328,7 +412,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.001,
                             'op': '>=',
                             'faf': True,
-                            'quote': 'GnomAD Popmax Filtering Allele Frequency (AF) ≥ 0.1% (0.001).'},
+                            'quote': 'GnomAD Popmax Filtering Allele Frequency (AF) ≥ 0.1% (0.001).',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': None,
                     'diseases': ['familial adenomatous polyposis 1']}],
            'ATM': [{'panel': 'Hereditary Breast, Ovarian and Pancreatic Cancer Variant Curation Expert Panel',
@@ -348,7 +434,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.005,
                             'op': '>',
                             'faf': True,
-                            'quote': 'Grpmax Filtering AF >.5% in gnomAD'},
+                            'quote': 'Grpmax Filtering AF >.5% in gnomAD',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal dominant or autosomal recessive',
                     'diseases': ['ATM-related cancer predisposition',
                                  'ataxia telangiectasia',
@@ -370,7 +458,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '>',
                               'faf': False,
                               'quote': 'Allele frequency is above 1% in gnomAD, including any sub-population '
-                                       'with at least 1,000 allele counts.'},
+                                       'with at least 1,000 allele counts.',
+                              'conditions': ['Allele frequency is above 1% in gnomAD, including any '
+                                             'sub-population with at least 1,000 allele counts.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['pulmonary arterial hypertension']}],
            'BRAF': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -389,7 +480,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'BRCA1': [{'panel': 'ENIGMA BRCA1 and BRCA2 Variant Curation Expert Panel',
@@ -410,8 +503,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': True,
                               'quote': 'Filter allele frequency (FAF) is above 0.1% (FAF > 0.001) in gnomAD '
                                        'v2.1 (non-cancer, exome only subset) and/or gnomAD v3.1 '
-                                       '(non-cancer), non-founder population(s). See Appendix G for '
-                                       'details.'},
+                                       '(non-cancer), non-founder population(s). See Appendix G for details.',
+                              'conditions': ['Filter allele frequency (FAF) is above 0.1% (FAF > 0.001) in '
+                                             'gnomAD v2.1 (non-cancer, exome only subset) and/or gnomAD v3.1 '
+                                             '(non-cancer), non-founder population(s).'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['BRCA1-related cancer predisposition']}],
            'BRCA2': [{'panel': 'ENIGMA BRCA1 and BRCA2 Variant Curation Expert Panel',
@@ -432,8 +528,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': True,
                               'quote': 'Filter allele frequency (FAF) is above 0.1% (FAF > 0.001) in gnomAD '
                                        'v2.1 (non-cancer, exome only subset) and/or gnomAD v3.1 '
-                                       '(non-cancer), non-founder population(s). See Appendix G for '
-                                       'details.'},
+                                       '(non-cancer), non-founder population(s). See Appendix G for details.',
+                              'conditions': ['Filter allele frequency (FAF) is above 0.1% (FAF > 0.001) in '
+                                             'gnomAD v2.1 (non-cancer, exome only subset) and/or gnomAD v3.1 '
+                                             '(non-cancer), non-founder population(s).'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['BRCA2-related cancer predisposition']}],
            'CAPN3': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -469,7 +568,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                        'confidence interval of the maximum credible genetic ancestry group '
                                        'allele frequency) is >0.003. This value can be taken directly from '
-                                       'gnomAD'},
+                                       'gnomAD, but do not use data for which the variant does not pass '
+                                       'quality control filters. See supplementary file “benign frequency '
+                                       'exceptions” for a list of variants defined as exceptions to the '
+                                       'benign frequency rules. Ongoing updates to this list will be '
+                                       'available at the LGMD VCEP webpage: '
+                                       'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                       'frequency may not be reliable (e.g., variants that may reflect a '
+                                       'sequencing artifact) should be critically evaluated and brought to '
+                                       'the attention of the LGMD VCEP.',
+                              'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                             'data for which the variant does not pass quality control '
+                                             'filters.',
+                                             'See supplementary file “benign frequency exceptions” for a '
+                                             'list of variants defined as exceptions to the benign frequency '
+                                             'rules.'],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'CDH1': [{'panel': 'Gastric Cancer Variant Curation Expert Panel',
@@ -489,7 +603,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                       'PP3': 'At least three in silico splicing predictors in agreement '
                                              '(SpliceAI, MaxEntScan, SSF, GeneSplicer, HSF, TraP, varSEAK).'},
                      'conditions': {},
-                     'ba1': {'value': 0.002, 'op': '>', 'faf': False, 'quote': 'MAF cutoff of 0.2%.'},
+                     'ba1': {'value': 0.002,
+                             'op': '>',
+                             'faf': False,
+                             'quote': 'MAF cutoff of 0.2%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['hereditary diffuse gastric adenocarcinoma']}],
            'CDH23': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -510,7 +629,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '',
                               'faf': False,
                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                       'for autosomal dominant.'},
+                                       'for autosomal dominant.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['Usher syndrome', 'nonsyndromic genetic hearing loss']}],
            'CDKL5': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
@@ -534,7 +655,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Allele frequency above 0.05%. Use large population databases (i.e. '
                                        'gnomAD). Use if variant is present at ≥0.000083 (0.0083%) in any '
                                        'sub-population. Use if allele frequency is met in any general '
-                                       'contin'},
+                                       'continental population dataset of at least 2,000 observed alleles.',
+                              'conditions': ['Use if allele frequency is met in any general continental '
+                                             'population dataset of at least 2,000 observed alleles.'],
+                              'excluded': []},
                       'inheritance': 'X-linked',
                       'diseases': ['CDKL5 disorder']}],
            'CEP290': [{'panel': 'Leber Congenital Amaurosis/early onset Retinal Dystrophy Variant Curation '
@@ -562,7 +686,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'op': '>',
                                'faf': True,
                                'quote': 'Use gnomAD Grpmax FAF if available, cutoff of >0.016 Use large '
-                                        'population databases (i.e. gnomAD).'},
+                                        'population databases (i.e. gnomAD).',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal recessive',
                        'diseases': ['CEP290-related ciliopathy']}],
            'COCH': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -583,7 +709,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '',
                              'faf': False,
                              'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                      'for autosomal dominant.'},
+                                      'for autosomal dominant.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['nonsyndromic genetic hearing loss']}],
            'CTLA4': [{'panel': 'Antibody Deficiencies Variant Curation Expert Panel',
@@ -609,14 +737,25 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                              'without using PM5.',
                                              'The variant of interest must have an equal or higher Grantham '
                                              'score than the Pathogenic / Likely Pathogenic comparison '
-                                             'variant…']},
+                                             'variant '
+                                             "(https://en.wikipedia.org/wiki/Aminoacidreplacement#Grantham'sdistance)."]},
                       'ba1': {'value': 1.1100000000000002e-05,
                               'op': '>=',
                               'faf': True,
                               'quote': 'Met for GrpMax Filtering Allele Frequency greater than or equal to '
-                                       '1.11 x 10<sup>-5</sup> (0.0000111) in gnomAD, with at least 5 '
-                                       'alleles total across all populations in gnomAD (gnomAD v4.1.0). '
-                                       'Thresho'},
+                                       '1.11 x 10^-5 (0.0000111) in gnomAD, with at least 5 alleles total '
+                                       'across all populations in gnomAD (gnomAD v4.1.0). Threshold is based '
+                                       'on the experts’ estimate of CTLA-4 insufficiency prevalence of '
+                                       '1/200,000 – 1/1,000,000 people and 45-70% penetrance. A higher '
+                                       'prevalence estimate (1 in 100,000) and the lower end of the '
+                                       'penetrance estimate (45%) were used for this calculation. Allelic '
+                                       'heterogeneity of 1 and genetic heterogeneity of 1 were also assumed '
+                                       'for the calculation.',
+                              'conditions': ['Met for GrpMax Filtering Allele Frequency greater than or '
+                                             'equal to 1.11 x 10^-5 (0.0000111) in gnomAD, with at least 5 '
+                                             'alleles total across all populations in gnomAD (gnomAD '
+                                             'v4.1.0).'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['autoimmune lymphoproliferative syndrome due to CTLA4 '
                                    'haploinsufficiency']}],
@@ -636,7 +775,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'ba1': {'value': 0.05,
                                'op': '>=',
                                'faf': False,
-                               'quote': 'Allele frequency ≥ 0.05 in population databases.'},
+                               'quote': 'Allele frequency ≥ 0.05 in population databases.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal recessive',
                        'diseases': ['CYP1B1-related glaucoma with or without anterior segment dysgenesis']}],
            'DCLRE1C': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -669,7 +810,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                         'ba1': {'value': 0.00346,
                                 'op': '>',
                                 'faf': True,
-                                'quote': 'gnomAD popmax filtering allele frequency >0.00346.'},
+                                'quote': 'gnomAD popmax filtering allele frequency >0.00346.',
+                                'conditions': [],
+                                'excluded': []},
                         'inheritance': 'autosomal recessive',
                         'diseases': ['severe combined immunodeficiency due to DCLRE1C deficiency']}],
            'DDC': [{'panel': 'Dopa Decarboxylase (Aromatic L-Amino Acid Decarboxylase) Variant Curation '
@@ -704,7 +847,15 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'faf': False,
                             'quote': 'A “stand-alone” criterion -10 points - automatically classified as '
                                      'benign. An allele frequency of ≥0.004 (0.4%) in any continental '
-                                     'population in gnomAD v2.1.1 or v4.0 with >2000 alleles as a cutoff fo'},
+                                     'population in gnomAD v2.1.1 or v4.0 with >2000 alleles as a cutoff for '
+                                     'stand-alone benign criteria which is calculated using 100% genetic '
+                                     'heterogeneity, because DDC variants are the only known genetic cause '
+                                     'of AADC deficiency, and full penetrance.',
+                            'conditions': ['An allele frequency of ≥0.004 (0.4%) in any continental '
+                                           'population in gnomAD v2.1.1 or v4.0 with >2000 alleles as a '
+                                           'cutoff for stand-alone benign criteria which is calculated using '
+                                           '100% genetic heterogeneity, because…'],
+                            'excluded': []},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['aromatic L-amino acid decarboxylase deficiency']}],
            'DDX41': [{'panel': 'Myeloid Malignancy Variant Curation Expert Panel',
@@ -741,7 +892,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'BA1: Minor allele frequency ≥ 0.0274 (2.74%) in any general '
                                        'continental population dataset with ≥ 2,000 alleles tested and '
-                                       'variant present in ≥ 5 alleles.'},
+                                       'variant present in ≥ 5 alleles.',
+                              'conditions': ['BA1: Minor allele frequency ≥ 0.0274 (2.74%) in any general '
+                                             'continental population dataset with ≥ 2,000 alleles tested and '
+                                             'variant present in ≥ 5 alleles.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['DDX41-related hematologic malignancy predisposition syndrome']}],
            'DICER1': [{'panel': 'DICER1 and miRNA-Processing Gene Variant Curation Expert Panel',
@@ -769,8 +924,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'op': '>',
                                'faf': False,
                                'quote': 'Frequency >0.003 (0.3%) in gnomAD subpopulations. Subpopulations '
-                                        'must have >2,000 alleles tested and a minimum of 5 alleles '
-                                        'present.'},
+                                        'must have >2,000 alleles tested and a minimum of 5 alleles present.',
+                               'conditions': ['Subpopulations must have >2,000 alleles tested and a minimum '
+                                              'of 5 alleles present.'],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['DICER1-related tumor predisposition']}],
            'DNAH5': [{'panel': 'Motile Ciliopathy Variant Curation Expert Panel ',
@@ -862,7 +1019,14 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Met by Grpmax filtering allele frequency greater than or equal to '
                                        '0.006 in gnomAD v4.1.1 or the most up-to-date version of gnomAD. '
                                        'This threshold was calculated based on the Whiffen-Ware calculator, '
-                                       'e'},
+                                       'estimating the allele frequency at which 25% of the prevalence of '
+                                       'the disorder (conservatively estimated at 1 in 10,000) could be '
+                                       'explained by a single variant in a single gene, with 100% percent '
+                                       'penetrance. Subsequent adjustment was made to ensure that the most '
+                                       'frequent known disease-causing variant did not fall within the BS1 '
+                                       'range.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['primary ciliary dyskinesia 3']}],
            'DNM2': [{'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -883,7 +1047,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'The minor allele frequency using the filtering allele frequency of '
                                       'either exomes or genomes in gnomAD is ≥0.0000015. All continental '
-                                      'populations used in gnomAD should have at least 2000 alleles and >1'},
+                                      'populations used in gnomAD should have at least 2000 alleles and >1 '
+                                      'observation.',
+                             'conditions': ['All continental populations used in gnomAD should have at least '
+                                            '2000 alleles and >1 observation.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['centronuclear myopathy']}],
            'DYSF': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -919,7 +1087,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                       'confidence interval of the maximum credible genetic ancestry group '
                                       'allele frequency) is >0.003. This value can be taken directly from '
-                                      'gnomAD'},
+                                      'gnomAD, but do not use data for which the variant does not pass '
+                                      'quality control filters. See supplementary file “benign frequency '
+                                      'exceptions” for a list of variants defined as exceptions to the '
+                                      'benign frequency rules. Ongoing updates to this list will be '
+                                      'available at the LGMD VCEP webpage: '
+                                      'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                      'frequency may not be reliable (e.g., variants that may reflect a '
+                                      'sequencing artifact) should be critically evaluated and brought to '
+                                      'the attention of the LGMD VCEP.',
+                             'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                            'data for which the variant does not pass quality control '
+                                            'filters.',
+                                            'See supplementary file “benign frequency exceptions” for a list '
+                                            'of variants defined as exceptions to the benign frequency '
+                                            'rules.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'ENG': [{'panel': 'Hereditary Hemorrhagic Telangiectasia Variant Curation Expert Panel',
@@ -942,7 +1125,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'op': '>=',
                             'faf': True,
                             'quote': 'Allele frequency is ≥1% in general population databases (e.g. gnomAD) '
-                                     'based on Popmax FAF.'},
+                                     'based on Popmax FAF.',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal dominant',
                     'diseases': ['telangiectasia, hereditary hemorrhagic, type 1']}],
            'ETHE1': [{'panel': 'Mitochondrial Diseases Variant Curation Expert Panel',
@@ -958,7 +1143,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PM5': ['Moderate']},
                       'not_missense': {},
                       'conditions': {},
-                      'ba1': {'value': 0.001, 'op': '>', 'faf': False, 'quote': '>0.001 (>0.1%)'},
+                      'ba1': {'value': 0.001,
+                              'op': '>',
+                              'faf': False,
+                              'quote': '>0.001 (>0.1%)',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['ethylmalonic encephalopathy']}],
            'F8': [{'panel': 'Coagulation Factor Deficiency Variant Curation Expert Panel',
@@ -992,7 +1182,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                    'ba1': {'value': 0.000333,
                            'op': '>=',
                            'faf': False,
-                           'quote': 'MAF cutoff of greater or equal to 0.0333% (or 0.000333).'},
+                           'quote': 'MAF cutoff of greater or equal to 0.0333% (or 0.000333).',
+                           'conditions': [],
+                           'excluded': []},
                    'inheritance': 'X-linked',
                    'diseases': ['hemophilia A']}],
            'F9': [{'panel': 'Coagulation Factor Deficiency Variant Curation Expert Panel',
@@ -1026,7 +1218,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                    'ba1': {'value': 5.56e-05,
                            'op': '>=',
                            'faf': False,
-                           'quote': 'MAF cutoff of greater than or equal to 0.0000556 (or 0.00556%).'},
+                           'quote': 'MAF cutoff of greater than or equal to 0.0000556 (or 0.00556%).',
+                           'conditions': [],
+                           'excluded': []},
                    'inheritance': 'X-linked',
                    'diseases': ['hemophilia B']}],
            'FBN1': [{'panel': 'FBN1 Variant Curation Expert Panel',
@@ -1051,7 +1245,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Allele frequency above 0.1% in ExAc and gnomAD Use the ethnic '
                                       'population with the highest allele frequency. Caveat: Do not use '
                                       'Finnish, Ashkenazi Jewish, or “Other” populations in gnomAD. Minimum '
-                                      'amou'},
+                                      'amount of studied alleles should be 2000.',
+                             'conditions': ['Allele frequency above 0.1% in ExAc and gnomAD',
+                                            'Minimum amount of studied alleles should be 2000.'],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['Marfan syndrome']}],
            'FOXG1': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
@@ -1074,8 +1271,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Use large population databases (i.e. gnomAD). Use if variant is '
                                        'present at ≥0.000083 (0.0083%) in any sub-population. Use if allele '
-                                       'frequency is met in any general continental population dataset of '
-                                       'at'},
+                                       'frequency is met in any general continental population dataset of at '
+                                       'least 2,000 observed alleles.',
+                              'conditions': ['Use if allele frequency is met in any general continental '
+                                             'population dataset of at least 2,000 observed alleles.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['FOXG1 disorder']}],
            'FOXN1': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -1114,7 +1314,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.00447,
                               'op': '>',
                               'faf': True,
-                              'quote': 'gnomAD Grpmax filtering allele frequency >0.00447'},
+                              'quote': 'gnomAD Grpmax filtering allele frequency >0.00447',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'semidominant',
                       'diseases': ['T-cell immunodeficiency, congenital alopecia, and nail dystrophy']}],
            'GAA': [{'panel': 'Lysosomal Diseases Variant Curation Expert Panel',
@@ -1134,7 +1336,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'op': '>',
                             'faf': False,
                             'quote': 'Common in population databases. Highest minor allele frequency >0.01 '
-                                     '(>1%) in any continental population in gnomAD with >2000 alleles.'},
+                                     '(>1%) in any continental population in gnomAD with >2000 alleles.',
+                            'conditions': ['Highest minor allele frequency >0.01 (>1%) in any continental '
+                                           'population in gnomAD with >2000 alleles.'],
+                            'excluded': []},
                     'inheritance': None,
                     'diseases': ['glycogen storage disease II']}],
            'GALT': [{'panel': 'Galactosemia Variant Curation Expert Panel ',
@@ -1161,8 +1366,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Use a minor allele frequency cutoff of ≥0.01 (1%) (use PopMax FAF in '
                                       'gnomAD). This frequency was calculated using the Whiffen-Ware '
-                                      'calculator with a prevalence estimated at 1 in 10,000, penetrance '
-                                      'at '},
+                                      'calculator with a prevalence estimated at 1 in 10,000, penetrance at '
+                                      '100%, maximum allelic contribution and maximum genetic contribution '
+                                      'at 100%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['galactosemia']}],
            'GAMT': [{'panel': 'Cerebral Creatine Deficiency Syndromes Variant Curation Expert Panel',
@@ -1198,7 +1406,20 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': False,
                              'quote': 'Allele frequency >0.003 (0.3%) in gnomAD v4.0 in any continental '
                                       'population with >2000 alleles (based on the estimated prevalence 1 in '
-                                      '114,000, PMID 24071436) in gnomAD v4.0 (max allelic contribution '},
+                                      '114,000, PMID 24071436) in gnomAD v4.0 (max allelic contribution = '
+                                      '100%; max genetic contribution = 100%). Use the highest population '
+                                      'minor allele frequency (MAF) in any given continental population with '
+                                      '>2,000 alleles (European non-Finnish, African, East Asian, South '
+                                      'Asian, Latino) (PMID 30311383).',
+                             'conditions': ['Allele frequency >0.003 (0.3%) in gnomAD v4.0 in any '
+                                            'continental population with >2000 alleles (based on the '
+                                            'estimated prevalence 1 in 114,000, PMID 24071436) in gnomAD '
+                                            'v4.0 (max allelic contribution = 100%; max…',
+                                            'Use the highest population minor allele frequency (MAF) in any '
+                                            'given continental population with >2,000 alleles (European '
+                                            'non-Finnish, African, East Asian, South Asian, Latino) (PMID '
+                                            '30311383).'],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['guanidinoacetate methyltransferase deficiency']}],
            'GATM': [{'panel': 'Cerebral Creatine Deficiency Syndromes Variant Curation Expert Panel',
@@ -1219,7 +1440,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'GrpMax >0.0005 (0.05%) in gnomAD Any variant with a GrpMax (lower '
                                       'bound 95%ile) >0.0005 in gnomAD. Use the current version recommended '
-                                      'by SVI; version number will be stated in classification summary. '},
+                                      'by SVI; version number will be stated in classification summary. '
+                                      'Threshold based on (max allelic contribution = 100% and max genetic '
+                                      'contribution = 100% based on estimated prevalence of 1 in 3,450,000 '
+                                      '(PMID 27233232), and penetrance of 100%) (PMID 30311383) (see '
+                                      'Appendix 3)',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['AGAT deficiency']}],
            'GCK': [{'panel': 'Monogenic Diabetes Variant Curation Expert Panel',
@@ -1249,7 +1476,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.0001,
                             'op': '>=',
                             'faf': True,
-                            'quote': 'gnomAD Grpmax FAF ≥ 1:10,000 (≥ 0.01% or 0.0001)'},
+                            'quote': 'gnomAD Grpmax FAF ≥ 1:10,000 (≥ 0.01% or 0.0001)',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'semidominant',
                     'diseases': ['monogenic diabetes']}],
            'GFAP': [{'panel': 'Leukodystrophy and Leukoencephalopathy Variant Curation Expert Panel',
@@ -1269,7 +1498,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0001,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD (v4.1.0) filtering allele frequency ≥0.01%'},
+                             'quote': 'GnomAD (v4.1.0) filtering allele frequency ≥0.01%',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['Alexander disease']}],
            'GJB2': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -1290,7 +1521,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '',
                              'faf': False,
                              'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                      'for autosomal dominant.'},
+                                      'for autosomal dominant.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['nonsyndromic genetic hearing loss']}],
            'GP1BA': [{'panel': 'Platelet Disorders Variant Curation Expert Panel',
@@ -1320,7 +1553,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.001,
                               'op': '>=',
                               'faf': False,
-                              'quote': 'gnomAD MAF of greater than or equal to 0.001 (or 0.1%).'},
+                              'quote': 'gnomAD MAF of greater than or equal to 0.001 (or 0.1%).',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['Bernard-Soulier syndrome']}],
            'GP1BB': [{'panel': 'Platelet Disorders Variant Curation Expert Panel',
@@ -1350,7 +1585,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.001,
                               'op': '>=',
                               'faf': False,
-                              'quote': 'gnomAD MAF greater than or equal to 0.001 (or 0.1%) in gnomAD.'},
+                              'quote': 'gnomAD MAF greater than or equal to 0.001 (or 0.1%) in gnomAD.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['Bernard-Soulier syndrome']}],
            'GP9': [{'panel': 'Platelet Disorders Variant Curation Expert Panel',
@@ -1380,7 +1617,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.001,
                             'op': '>=',
                             'faf': False,
-                            'quote': 'gnomAD MAF of greater than or equal to 0.001 (or 0.1%).'},
+                            'quote': 'gnomAD MAF of greater than or equal to 0.001 (or 0.1%).',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['Bernard-Soulier syndrome']}],
            'GUCY2D': [{'panel': 'Leber Congenital Amaurosis/early onset Retinal Dystrophy Variant Curation '
@@ -1408,7 +1647,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'op': '>',
                                'faf': True,
                                'quote': 'Use gnomAD Grpmax FAF if available, cutoff of >0.016 Use large '
-                                        'population databases (i.e. gnomAD).'},
+                                        'population databases (i.e. gnomAD).',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal recessive',
                        'diseases': ['GUCY2D-related recessive retinopathy']}],
            'HBA2': [{'panel': 'Hemoglobinopathy Variant Curation Expert Panel',
@@ -1428,7 +1669,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '>=',
                              'faf': False,
                              'quote': 'Allele frequency ≥0.005 (0.5%) in a studied general population with '
-                                      '≥2000 alleles and variant present in ≥5 alleles.'},
+                                      '≥2000 alleles and variant present in ≥5 alleles.',
+                             'conditions': ['Allele frequency ≥0.005 (0.5%) in a studied general population '
+                                            'with ≥2000 alleles and variant present in ≥5 alleles.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['HBA2-related alpha thalassemia spectrum']}],
            'HBB': [{'panel': 'Hemoglobinopathy Variant Curation Expert Panel',
@@ -1448,7 +1692,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'op': '>=',
                             'faf': False,
                             'quote': 'Allele frequency ≥0.005 (0.5%) in a studied general population with '
-                                     '≥2000 alleles and variant present in ≥5 alleles.'},
+                                     '≥2000 alleles and variant present in ≥5 alleles.',
+                            'conditions': ['Allele frequency ≥0.005 (0.5%) in a studied general population '
+                                           'with ≥2000 alleles and variant present in ≥5 alleles.'],
+                            'excluded': []},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['beta-thalassemia HBB/LCRB']}],
            'HNF1A': [{'panel': 'Monogenic Diabetes Variant Curation Expert Panel',
@@ -1478,7 +1725,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.0001,
                               'op': '>=',
                               'faf': True,
-                              'quote': 'gnomAD Grpmax FAF ≥ 1:10,000 (≥ 0.01% or 0.0001)'},
+                              'quote': 'gnomAD Grpmax FAF ≥ 1:10,000 (≥ 0.01% or 0.0001)',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['monogenic diabetes']}],
            'HNF4A': [{'panel': 'Monogenic Diabetes Variant Curation Expert Panel',
@@ -1508,7 +1757,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.0001,
                               'op': '>=',
                               'faf': True,
-                              'quote': 'gnomAD Grpmax FAF ≥ 1:10,000 (≥ 0.01% or 0.0001).'},
+                              'quote': 'gnomAD Grpmax FAF ≥ 1:10,000 (≥ 0.01% or 0.0001).',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['monogenic diabetes']}],
            'HRAS': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -1527,7 +1778,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'IDUA': [{'panel': 'Lysosomal Diseases Variant Curation Expert Panel',
@@ -1548,7 +1801,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Any variant with Grpmax >0.005 in the most recent version of gnomAD '
                                       '(95% confidence interval, lower bound) (version # will be stated in '
-                                      'the written summary) BA1 minor allele frequency cut-off calculat'},
+                                      'the written summary) BA1 minor allele frequency cut-off calculated '
+                                      'using http://cardiodb.org/allelefrequencyapp with prevalence = 1 in '
+                                      '40,000 (PMID: 33208168), genetic heterogeneity = 1.0 (IDUA is the '
+                                      'only gene known to cause MPS1), allelic heterogeneity = 1.0, and '
+                                      'penetrance = 1.0.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['mucopolysaccharidosis type 1']}],
            'IL2RG': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -1575,7 +1834,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.0111,
                               'op': '>',
                               'faf': True,
-                              'quote': 'gnomAD popmax filtering allele frequency >0.01110.'},
+                              'quote': 'gnomAD popmax filtering allele frequency >0.01110.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'X-linked',
                       'diseases': ['T-B+ severe combined immunodeficiency due to gamma chain deficiency']}],
            'IL7R': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -1604,7 +1865,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.00566,
                              'op': '>',
                              'faf': True,
-                             'quote': 'gnomAD popmax filtering allele frequency >0.00566.'},
+                             'quote': 'gnomAD popmax filtering allele frequency >0.00566.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['immunodeficiency 104']}],
            'ITGA2B': [{'panel': 'Platelet Disorders Variant Curation Expert Panel',
@@ -1624,7 +1887,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'op': '>',
                                'faf': True,
                                'quote': 'Frequency cutoff of 0.24% (>0.0024 at 99.99% CI w/subpopulation '
-                                        'w/min of 5 alleles).'},
+                                        'w/min of 5 alleles).',
+                               'conditions': ['Frequency cutoff of 0.24% (>0.0024 at 99.99% CI '
+                                              'w/subpopulation w/min of 5 alleles).'],
+                               'excluded': []},
                        'inheritance': None,
                        'diseases': ['Glanzmann thrombasthenia']}],
            'ITGB3': [{'panel': 'Platelet Disorders Variant Curation Expert Panel',
@@ -1644,7 +1910,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '>',
                               'faf': True,
                               'quote': 'Frequency cutoff of 0.24% (>0.0024 at 99.99% CI w/subpopulation '
-                                       'w/min of 5 alleles).'},
+                                       'w/min of 5 alleles).',
+                              'conditions': ['Frequency cutoff of 0.24% (>0.0024 at 99.99% CI '
+                                             'w/subpopulation w/min of 5 alleles).'],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['Glanzmann thrombasthenia']}],
            'JAK3': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -1673,7 +1942,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.00447,
                              'op': '>',
                              'faf': True,
-                             'quote': 'gnomAD popmax filtering allele frequency >0.00447'},
+                             'quote': 'gnomAD popmax filtering allele frequency >0.00447',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['T-B+ severe combined immunodeficiency due to JAK3 deficiency']}],
            'KCNQ1': [{'panel': 'Potassium Channel Arrhythmia Variant Curation Expert Panel',
@@ -1713,7 +1984,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Allele frequency is above 5% in Exome Sequencing Project, 1000 '
                                        'Genomes or Exome Aggregation Consortium. Maximum allele frequency in '
                                        'gnomAD (in one of the 5 continental populations; '
-                                       'African/African-Ame'},
+                                       'African/African-American, East Asian, European non-Finnish, '
+                                       'Latino/Admixed-American, or South Asian) greater than or equal to '
+                                       '0.004 (0.4%).',
+                              'conditions': ['Allele frequency is above 5% in Exome Sequencing Project, 1000 '
+                                             'Genomes or Exome Aggregation Consortium.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant or autosomal recessive',
                       'diseases': ['long QT syndrome 1']}],
            'KCNQ4': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -1734,7 +2010,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '',
                               'faf': False,
                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                       'for autosomal dominant.'},
+                                       'for autosomal dominant.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['nonsyndromic genetic hearing loss']}],
            'KRAS': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -1753,7 +2031,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'LDLR': [{'panel': 'Familial Hypercholesterolemia Variant Curation Expert Panel',
@@ -1782,7 +2062,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'Variant has a PopMax FAF ≥0.005 (0.5%) in gnomAD.'},
+                             'quote': 'Variant has a PopMax FAF ≥0.005 (0.5%) in gnomAD.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['hypercholesterolemia, familial, 1']}],
            'LZTR1': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -1801,7 +2083,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.0005,
                               'op': '>=',
                               'faf': True,
-                              'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                              'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant or autosomal recessive',
                       'diseases': ['RASopathy']}],
            'MAP2K1': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -1820,7 +2104,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'ba1': {'value': 0.0005,
                                'op': '>=',
                                'faf': True,
-                               'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                               'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['RASopathy']}],
            'MAP2K2': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -1839,7 +2125,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'ba1': {'value': 0.0005,
                                'op': '>=',
                                'faf': True,
-                               'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                               'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['RASopathy']}],
            'MECP2': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
@@ -1862,8 +2150,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Use large population databases (i.e. gnomAD). Use if variant is '
                                        'present at ≥0.000083 (0.0083%) in any sub-population. Use if allele '
-                                       'frequency is met in any general continental population dataset of '
-                                       'at'},
+                                       'frequency is met in any general continental population dataset of at '
+                                       'least 2,000 observed alleles.',
+                              'conditions': ['Use if allele frequency is met in any general continental '
+                                             'population dataset of at least 2,000 observed alleles.'],
+                              'excluded': []},
                       'inheritance': 'X-linked',
                       'diseases': ['Rett syndrome']}],
            'MLH1': [{'panel': 'InSiGHT Hereditary Colorectal Cancer/Polyposis Variant Curation Expert Panel',
@@ -1889,7 +2180,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '>=',
                              'faf': True,
                              'quote': 'GnomAD v4 Grpmax filtering allele frequency ≥ 0.001 (0.1%) and '
-                                      'variant is excluded as founder pathogenic variant.'},
+                                      'variant is excluded as founder pathogenic variant.',
+                             'conditions': ['GnomAD v4 Grpmax filtering allele frequency ≥ 0.001 (0.1%) and '
+                                            'variant is excluded as founder pathogenic variant.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant or autosomal recessive',
                      'diseases': ['Lynch syndrome 2', 'mismatch repair cancer syndrome 1']}],
            'MRAS': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -1908,7 +2202,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'MSH2': [{'panel': 'InSiGHT Hereditary Colorectal Cancer/Polyposis Variant Curation Expert Panel',
@@ -1934,7 +2230,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '>=',
                              'faf': True,
                              'quote': 'GnomAD v4 Grpmax filtering allele frequency ≥ 0.001 (0.1%) and '
-                                      'variant is excluded as founder pathogenic variant.'},
+                                      'variant is excluded as founder pathogenic variant.',
+                             'conditions': ['GnomAD v4 Grpmax filtering allele frequency ≥ 0.001 (0.1%) and '
+                                            'variant is excluded as founder pathogenic variant.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant or autosomal recessive',
                      'diseases': ['Lynch syndrome 1', 'mismatch repair cancer syndrome 1']}],
            'MSH6': [{'panel': 'InSiGHT Hereditary Colorectal Cancer/Polyposis Variant Curation Expert Panel',
@@ -1960,7 +2259,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '>=',
                              'faf': True,
                              'quote': 'GnomAD v4 Grpmax filtering allele frequency ≥ 0.0022 (0.22%) and '
-                                      'variant is excluded as founder pathogenic variant.'},
+                                      'variant is excluded as founder pathogenic variant.',
+                             'conditions': ['GnomAD v4 Grpmax filtering allele frequency ≥ 0.0022 (0.22%) '
+                                            'and variant is excluded as founder pathogenic variant.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant or autosomal recessive',
                      'diseases': ['Lynch syndrome', 'mismatch repair cancer syndrome 1']}],
            'MTM1': [{'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -1981,7 +2283,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'The minor allele frequency using the filtering allele frequency of '
                                       'either exomes or genomes in gnomAD is ≥0.000016. All continental '
-                                      'gnomAD populations used should have at least 2000 alleles and >1 obs'},
+                                      'gnomAD populations used should have at least 2000 alleles and >1 '
+                                      'observation.',
+                             'conditions': ['All continental gnomAD populations used should have at least '
+                                            '2000 alleles and >1 observation.'],
+                             'excluded': []},
                      'inheritance': 'X-linked',
                      'diseases': ['centronuclear myopathy']}],
            'MTOR': [{'panel': 'Brain Malformations Variant Curation Expert Panel',
@@ -2005,7 +2311,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Allele frequency (>0.0926%). An allele frequency (>0.0926%) was '
                                       'approved. Note: this was adjusted from ACMG Guidelines due to '
                                       'maintaining the 5x threshold for benign (consistent with previously '
-                                      'establ'},
+                                      'established guidelines)',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['cerebral malformation']}],
            'MYBPC3': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -2037,7 +2345,37 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                         '(FAF) in gnomAD in the subpopulation with the highest frequency '
                                         '(popmax). The values used to calculate the BA1 threshold were '
-                                        'derived'},
+                                        'derived from studies in Northern European populations that have '
+                                        'been relatively well-characterized with regards to disease '
+                                        'prevalence and variant spectrum. These thresholds can be applied to '
+                                        'any population where disease prevalence is considered comparable '
+                                        '(1/300 or lower). The threshold is applicable when assessing '
+                                        'variants in the context of autosomal dominant cardiomyopathy. '
+                                        'gnomAD is the preferred database for this calculation. If a '
+                                        'subpopulation specific FAF other than the popmax is needed, this '
+                                        'value can be calculated using the AlleleFrequencyApp on the '
+                                        'CardioDB website. 1. Using the Inverse AF tab, enter in the '
+                                        'population size and the number of alleles identified and it will '
+                                        'calculate the FAF. 2. Set confidence to 0.95 (95%). 3. If the FAF '
+                                        'is ≥0.001, this rule can be applied. The FAF by platform (e.g., '
+                                        'exome vs. genome; v.2.1.1 vs. v.3.1.1) should be considered, the '
+                                        'larger population is most likely to have the most accurate '
+                                        'representation of “true” population allele frequency. Caution is '
+                                        'needed when considering any population cohorts that are smaller '
+                                        'than the smallest subpopulations within gnomAD v.2.1.1 (e.g., ~5000 '
+                                        'individuals or ~10,000 alleles). Despite this conservative nature '
+                                        'of this threshold and approach, in smaller cohorts, the observed '
+                                        'allele frequency may less accurately reflect the true allele '
+                                        'frequency. Traditionally, once a variant is classified as Benign, '
+                                        'it is rarely re-evaluated and so the highest confidence is needed '
+                                        'to establish that classification on an allele frequency alone.',
+                               'conditions': ['Using the Inverse AF tab, enter in the population size and '
+                                              'the number of alleles identified and it will calculate the '
+                                              'FAF.',
+                                              'Caution is needed when considering any population cohorts '
+                                              'that are smaller than the smallest subpopulations within '
+                                              'gnomAD v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['hypertrophic cardiomyopathy']}],
            'MYH7': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -2067,8 +2405,36 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                       '(FAF) in gnomAD in the subpopulation with the highest frequency '
-                                      '(popmax). The values used to calculate the BA1 threshold were '
-                                      'derived'},
+                                      '(popmax). The values used to calculate the BA1 threshold were derived '
+                                      'from studies in Northern European populations that have been '
+                                      'relatively well-characterized with regards to disease prevalence and '
+                                      'variant spectrum. These thresholds can be applied to any population '
+                                      'where disease prevalence is considered comparable (1/300 or lower). '
+                                      'The threshold is applicable when assessing variants in the context of '
+                                      'autosomal dominant cardiomyopathy. gnomAD is the preferred database '
+                                      'for this calculation. If a subpopulation specific FAF other than the '
+                                      'popmax is needed, this value can be calculated using the '
+                                      'AlleleFrequencyApp on the CardioDB website. 1. Using the Inverse AF '
+                                      'tab, enter in the population size and the number of alleles '
+                                      'identified and it will calculate the FAF. 2. Set confidence to 0.95 '
+                                      '(95%). 3. If the FAF is ≥0.001, this rule can be applied. The FAF by '
+                                      'platform (e.g., exome vs. genome; v.2.1.1 vs. v.3.1.1) should be '
+                                      'considered, the larger population is most likely to have the most '
+                                      'accurate representation of “true” population allele frequency. '
+                                      'Caution is needed when considering any population cohorts that are '
+                                      'smaller than the smallest subpopulations within gnomAD v.2.1.1 (e.g., '
+                                      '~5000 individuals or ~10,000 alleles). Despite this conservative '
+                                      'nature of this threshold and approach, in smaller cohorts, the '
+                                      'observed allele frequency may less accurately reflect the true allele '
+                                      'frequency. Traditionally, once a variant is classified as Benign, it '
+                                      'is rarely re-evaluated and so the highest confidence is needed to '
+                                      'establish that classification on an allele frequency alone.',
+                             'conditions': ['Using the Inverse AF tab, enter in the population size and the '
+                                            'number of alleles identified and it will calculate the FAF.',
+                                            'Caution is needed when considering any population cohorts that '
+                                            'are smaller than the smallest subpopulations within gnomAD '
+                                            'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['dilated cardiomyopathy', 'hypertrophic cardiomyopathy']}],
            'MYL2': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -2098,8 +2464,44 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                       '(FAF) in gnomAD in the subpopulation with the highest frequency '
-                                      '(popmax). The values used to calculate the BA1 threshold were '
-                                      'derived'},
+                                      '(popmax). The values used to calculate the BA1 threshold were derived '
+                                      'from studies in Northern European populations that have been '
+                                      'relatively well-characterized with regards to disease prevalence and '
+                                      'variant spectrum. These thresholds can be applied to any population '
+                                      'where disease prevalence is considered comparable (1/300 or lower). '
+                                      'The threshold is applicable when assessing variants in the context of '
+                                      'autosomal dominant cardiomyopathy. Caution should be applied when '
+                                      'assessing variants in the MYL2 and MYL3 genes, as homozygous or '
+                                      'compound heterozygous variants have been reported to cause a '
+                                      'recessive HCM and heterozygous individuals show no sign of disease. '
+                                      'gnomAD is the preferred database for this calculation. If a '
+                                      'subpopulation specific FAF other than the popmax is needed, this '
+                                      'value can be calculated using the AlleleFrequencyApp on the CardioDB '
+                                      'website. 1. Using the Inverse AF tab, enter in the population size '
+                                      'and the number of alleles identified and it will calculate the FAF. '
+                                      '2. Set confidence to 0.95 (95%). 3. If the FAF is ≥0.001, this rule '
+                                      'can be applied. The FAF by platform (e.g., exome vs. genome; v.2.1.1 '
+                                      'vs. v.3.1.1) should be considered, the larger population is most '
+                                      'likely to have the most accurate representation of “true” population '
+                                      'allele frequency. Caution is needed when considering any population '
+                                      'cohorts that are smaller than the smallest subpopulations within '
+                                      'gnomAD v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles). Despite '
+                                      'this conservative nature of this threshold and approach, in smaller '
+                                      'cohorts, the observed allele frequency may less accurately reflect '
+                                      'the true allele frequency. Traditionally, once a variant is '
+                                      'classified as Benign, it is rarely re-evaluated and so the highest '
+                                      'confidence is needed to establish that classification on an allele '
+                                      'frequency alone.',
+                             'conditions': ['Caution should be applied when assessing variants in the MYL2 '
+                                            'and MYL3 genes, as homozygous or compound heterozygous variants '
+                                            'have been reported to cause a recessive HCM and heterozygous '
+                                            'individuals show no sign of…',
+                                            'Using the Inverse AF tab, enter in the population size and the '
+                                            'number of alleles identified and it will calculate the FAF.',
+                                            'Caution is needed when considering any population cohorts that '
+                                            'are smaller than the smallest subpopulations within gnomAD '
+                                            'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['hypertrophic cardiomyopathy']}],
            'MYL3': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -2129,8 +2531,44 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                       '(FAF) in gnomAD in the subpopulation with the highest frequency '
-                                      '(popmax). The values used to calculate the BA1 threshold were '
-                                      'derived'},
+                                      '(popmax). The values used to calculate the BA1 threshold were derived '
+                                      'from studies in Northern European populations that have been '
+                                      'relatively well-characterized with regards to disease prevalence and '
+                                      'variant spectrum. These thresholds can be applied to any population '
+                                      'where disease prevalence is considered comparable (1/300 or lower). '
+                                      'The threshold is applicable when assessing variants in the context of '
+                                      'autosomal dominant cardiomyopathy. Caution should be applied when '
+                                      'assessing variants in the MYL2 and MYL3 genes, as homozygous or '
+                                      'compound heterozygous variants have been reported to cause a '
+                                      'recessive HCM and heterozygous individuals show no sign of disease. '
+                                      'gnomAD is the preferred database for this calculation. If a '
+                                      'subpopulation specific FAF other than the popmax is needed, this '
+                                      'value can be calculated using the AlleleFrequencyApp on the CardioDB '
+                                      'website. 1. Using the Inverse AF tab, enter in the population size '
+                                      'and the number of alleles identified and it will calculate the FAF. '
+                                      '2. Set confidence to 0.95 (95%). 3. If the FAF is ≥0.001, this rule '
+                                      'can be applied. The FAF by platform (e.g., exome vs. genome; v.2.1.1 '
+                                      'vs. v.3.1.1) should be considered, the larger population is most '
+                                      'likely to have the most accurate representation of “true” population '
+                                      'allele frequency. Caution is needed when considering any population '
+                                      'cohorts that are smaller than the smallest subpopulations within '
+                                      'gnomAD v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles). Despite '
+                                      'this conservative nature of this threshold and approach, in smaller '
+                                      'cohorts, the observed allele frequency may less accurately reflect '
+                                      'the true allele frequency. Traditionally, once a variant is '
+                                      'classified as Benign, it is rarely re-evaluated and so the highest '
+                                      'confidence is needed to establish that classification on an allele '
+                                      'frequency alone.',
+                             'conditions': ['Caution should be applied when assessing variants in the MYL2 '
+                                            'and MYL3 genes, as homozygous or compound heterozygous variants '
+                                            'have been reported to cause a recessive HCM and heterozygous '
+                                            'individuals show no sign of…',
+                                            'Using the Inverse AF tab, enter in the population size and the '
+                                            'number of alleles identified and it will calculate the FAF.',
+                                            'Caution is needed when considering any population cohorts that '
+                                            'are smaller than the smallest subpopulations within gnomAD '
+                                            'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['hypertrophic cardiomyopathy']}],
            'MYO15A': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -2150,7 +2588,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'ba1': {'value': 0.005,
                                'op': '>=',
                                'faf': False,
-                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive.'},
+                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal recessive',
                        'diseases': ['nonsyndromic genetic hearing loss']}],
            'MYO6': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -2171,7 +2611,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '',
                              'faf': False,
                              'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                      'for autosomal dominant.'},
+                                      'for autosomal dominant.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['nonsyndromic genetic hearing loss']}],
            'MYO7A': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -2192,7 +2634,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '',
                               'faf': False,
                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                       'for autosomal dominant.'},
+                                       'for autosomal dominant.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['Usher syndrome', 'nonsyndromic genetic hearing loss']}],
            'MYOC': [{'panel': 'Glaucoma Variant Curation Expert Panel',
@@ -2211,7 +2655,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.01,
                              'op': '>=',
                              'faf': False,
-                             'quote': 'Allele frequency ≥ 0.01 in population databases.'},
+                             'quote': 'Allele frequency ≥ 0.01 in population databases.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['open-angle glaucoma']}],
            'NEB': [{'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -2232,7 +2678,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'faf': True,
                             'quote': 'The minor allele frequency using the filtering allele frequency of '
                                      'either exomes or genomes in gnomAD is ≥0.00559. All populations used '
-                                     'should have at least 2000 alleles and >1 observation. The Ashken'},
+                                     'should have at least 2000 alleles and >1 observation. The Ashkenazi '
+                                     'Jewish, European Finnish, and Other populations in gnomAD will not be '
+                                     'used for BA1 application. BA1 exclusion variants (well-known '
+                                     'pathogenic variants that are above the specified BA1 threshold) are as '
+                                     'follows: Exon 55 deletion common in the AJ population '
+                                     '(NM001271208.2:c.7431+19197536+374del) NM001271208.2:c.19097G>T '
+                                     '(p.Ser6366Ile) NM001271208.2:c.22249A>C (p.Thr7417Pro)',
+                            'conditions': ['All populations used should have at least 2000 alleles and >1 '
+                                           'observation.',
+                                           'BA1 exclusion variants: c.7431+1919_7536+374del, c.19097G>T '
+                                           '(p.Ser6366Ile), c.22249A>C (p.Thr7417Pro)'],
+                            'excluded': ['c.7431+1919_7536+374del',
+                                         'c.19097G>T',
+                                         'p.Ser6366Ile',
+                                         'c.22249A>C',
+                                         'p.Thr7417Pro']},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['nemaline myopathy']}],
            'NF1': [{'panel': 'Neurofibromatosis and Schwannomatosis Variant Curation Expert Panel',
@@ -2251,7 +2712,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.0002,
                             'op': '>',
                             'faf': False,
-                            'quote': 'An allele frequency greater than 0.0002.'},
+                            'quote': 'An allele frequency greater than 0.0002.',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal dominant',
                     'diseases': ['neurofibromatosis type 1']}],
            'NRAS': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -2270,7 +2733,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'OTC': [{'panel': 'Urea Cycle Disorders Variant Curation Expert Panel',
@@ -2300,7 +2765,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'faf': True,
                             'quote': 'Allele frequency above 0.010000 (1.0%), Grpmax Filtering Allele '
                                      'Frequency OR ≥10 (female) homozygotes or (male) hemizygotes in the '
-                                     'most current version of gnomAD available at the time of curation.'},
+                                     'most current version of gnomAD available at the time of curation.',
+                            'conditions': ['Allele frequency above 0.010000 (1.0%), Grpmax Filtering Allele '
+                                           'Frequency OR ≥10 (female) homozygotes or (male) hemizygotes in '
+                                           'the most current version of gnomAD available at the time of '
+                                           'curation.'],
+                            'excluded': []},
                     'inheritance': 'X-linked',
                     'diseases': ['ornithine carbamoyltransferase deficiency']}],
            'OTOF': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -2320,7 +2790,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.005,
                              'op': '>=',
                              'faf': False,
-                             'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive.'},
+                             'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['nonsyndromic genetic hearing loss']}],
            'PAH': [{'panel': 'Phenylketonuria Variant Curation Expert Panel',
@@ -2341,7 +2813,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                             'faf': False,
                             'quote': 'An allele frequency ≥0.015 (1.5%), which is calculated with genetic '
                                      'heterogeneity of 90% to account for defects of BH4 metabolism, and '
-                                     'penetrance of 80% to account for individuals who come to attentio'},
+                                     'penetrance of 80% to account for individuals who come to attention '
+                                     'after becoming clinically symptomatic.',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['phenylketonuria']}],
            'PALB2': [{'panel': 'Hereditary Breast, Ovarian and Pancreatic Cancer Variant Curation Expert '
@@ -2363,7 +2838,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.001,
                               'op': '>',
                               'faf': True,
-                              'quote': 'Grpmax Filtering AF >.1% in gnomAD'},
+                              'quote': 'Grpmax Filtering AF >.1% in gnomAD',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant or autosomal recessive',
                       'diseases': ['PALB2-related cancer predisposition',
                                    'Fanconi anemia complementation group N']}],
@@ -2401,7 +2878,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Apply to variants with a Total Grpmax filtering allele frequency of '
                                       '≥0.0001 in the most recent version of gnomAD population database - '
-                                      'population codes are NOT MET if both genomes and exomes fail gnom'},
+                                      'population codes are NOT MET if both genomes and exomes fail gnomAD '
+                                      'QC metrics',
+                             'conditions': ['Apply to variants with a Total Grpmax filtering allele '
+                                            'frequency of ≥0.0001 in the most recent version of gnomAD '
+                                            'population database - population codes are NOT MET if both '
+                                            'genomes and exomes fail gnomAD QC metrics'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['PAX6-related ocular dysgenesis']}],
            'PDHA1': [{'panel': 'Mitochondrial Diseases Variant Curation Expert Panel',
@@ -2417,7 +2900,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PM5': ['Moderate']},
                       'not_missense': {},
                       'conditions': {},
-                      'ba1': {'value': 0.00092, 'op': '>', 'faf': False, 'quote': '>0.00092 (>0.092%)'},
+                      'ba1': {'value': 0.00092,
+                              'op': '>',
+                              'faf': False,
+                              'quote': '>0.00092 (>0.092%)',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['pyruvate dehydrogenase deficiency']}],
            'PIK3CA': [{'panel': 'Brain Malformations Variant Curation Expert Panel',
@@ -2441,7 +2929,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Allele frequency (>0.0926%). An allele frequency (>0.0926%) was '
                                         'approved. Note: this was adjusted from ACMG Guidelines due to '
                                         'maintaining the 5x threshold for benign (consistent with previously '
-                                        'establ'},
+                                        'established guidelines)',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': None,
                        'diseases': ['cerebral malformation']}],
            'PIK3CD': [{'panel': 'Antibody Deficiencies Variant Curation Expert Panel',
@@ -2486,7 +2976,24 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Applicable to variants with a GrpMax filtering allele frequency '
                                         'greater than or equal to 0.00316 in gnomAD v4.1.0. If GrpMax '
                                         'filtering allele frequency is not listed for the variant, this code '
-                                        'is appl'},
+                                        'is applicable to the maximum allele frequency among the five major '
+                                        'continental populations (African / African-American, East Asian, '
+                                        'European non-Finnish, Latino / Admixed-American, or South Asian). '
+                                        'Maximum credible population allele frequency threshold determined '
+                                        'using Whiffin/Ware calculator '
+                                        '(https://www.cardiodb.org/allelefrequencyapp/) and the following '
+                                        'estimated parameters (with the prevalence estimated for '
+                                        'PIK3CD-related immune disease and the inheritance tailored to the '
+                                        'autosomal recessive rather than autosomal dominant mode of '
+                                        'inheritance, associated with complete penetrance): Inheritance: '
+                                        'biallelic Prevalence: 1 in 100,000 (calculated at 1 in 7,500,000 '
+                                        'based on the USIDNET cohort, PMID: 34352450, but adjusted based on '
+                                        'expectation that cases are actually more common, resulting in a '
+                                        'much more frequent / more aggressive prevalence estimate of 1 in '
+                                        '100,000 in order to generate a more conservative estimate) Allelic '
+                                        'heterogeneity: 1 Genetic heterogeneity: 1 Penetrance: 1',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['immunodeficiency 14']}],
            'PIK3R1': [{'panel': 'Antibody Deficiencies Variant Curation Expert Panel',
@@ -2526,7 +3033,28 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Applicable to variants with a GrpMax filtering allele frequency '
                                         'greater than or equal to 0.00316 in gnomAD v4.1.0. If GrpMax '
                                         'filtering allele frequency is not listed for the variant, this code '
-                                        'is appl'},
+                                        'is applicable to the maximum allele frequency among the five major '
+                                        'continental populations (African / African-American, East Asian, '
+                                        'European non-Finnish, Latino / Admixed-American, or South Asian). '
+                                        'Maximum credible population allele frequency threshold determined '
+                                        'using Whiffin/Ware calculator '
+                                        '(https://www.cardiodb.org/allelefrequencyapp/) and the following '
+                                        'estimated parameters: Inheritance: biallelic (in order to generate '
+                                        'a higher / more stringent threshold that would rule out a variant '
+                                        'as a credible cause of either autosomal dominant or autosomal '
+                                        'recessive disease) Prevalence: 1 in 100,000 (calculated at 1 in '
+                                        '7,500,000 based on the USIDNET cohort, PMID: 34352450, but adjusted '
+                                        'based on expectation that cases are actually more common, resulting '
+                                        'in a much more frequent / more aggressive prevalence estimate of 1 '
+                                        'in 100,000 in order to generate a more conservative estimate) '
+                                        'Allelic heterogeneity: 1 Genetic heterogeneity: 1 Penetrance: 1 '
+                                        'Please note that the values cited above (e.g. complete penetrance) '
+                                        'are not asserted to be true for this condition. Rather, they are '
+                                        'used in order to derive the most rigorous thresholds possible for a '
+                                        'disease for which there are incomplete population epidemiology '
+                                        'data.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['PIK3R1-related immunodeficiency and SHORT syndrome']}],
            'PIK3R2': [{'panel': 'Brain Malformations Variant Curation Expert Panel',
@@ -2550,7 +3078,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Allele frequency (>0.0926%). An allele frequency (>0.0926%) was '
                                         'approved. Note: this was adjusted from ACMG Guidelines due to '
                                         'maintaining the 5x threshold for benign (consistent with previously '
-                                        'establ'},
+                                        'established guidelines)',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': None,
                        'diseases': ['cerebral malformation']}],
            'PMS2': [{'panel': 'InSiGHT Hereditary Colorectal Cancer/Polyposis Variant Curation Expert Panel',
@@ -2576,7 +3106,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'op': '>=',
                              'faf': True,
                              'quote': 'GnomAD v4 Grpmax filtering allele frequency ≥ 0.0028 (0.28%) and '
-                                      'variant is excluded as founder pathogenic variant.'},
+                                      'variant is excluded as founder pathogenic variant.',
+                             'conditions': ['GnomAD v4 Grpmax filtering allele frequency ≥ 0.0028 (0.28%) '
+                                            'and variant is excluded as founder pathogenic variant.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant or autosomal recessive',
                      'diseases': ['Lynch syndrome 4', 'mismatch repair cancer syndrome 1']}],
            'POLG': [{'panel': 'Mitochondrial Diseases Variant Curation Expert Panel',
@@ -2592,7 +3125,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PM5': ['Moderate']},
                      'not_missense': {},
                      'conditions': {},
-                     'ba1': {'value': 0.01, 'op': '>', 'faf': False, 'quote': '>0.01 (>1%)'},
+                     'ba1': {'value': 0.01,
+                             'op': '>',
+                             'faf': False,
+                             'quote': '>0.01 (>1%)',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['mitochondrial disease']}],
            'PPP1CB': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -2611,7 +3149,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'ba1': {'value': 0.0005,
                                'op': '>=',
                                'faf': True,
-                               'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                               'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['RASopathy']}],
            'PTEN': [{'panel': 'PTEN Variant Curation Expert Panel',
@@ -2630,7 +3170,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.00056,
                              'op': '>',
                              'faf': True,
-                             'quote': 'gnomAD Filtering allele frequency >0.00056 (0.056%)'},
+                             'quote': 'gnomAD Filtering allele frequency >0.00056 (0.056%)',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['PTEN hamartoma tumor syndrome']}],
            'PTPN11': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -2649,7 +3191,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'ba1': {'value': 0.0005,
                                'op': '>=',
                                'faf': True,
-                               'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                               'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                               'conditions': [],
+                               'excluded': []},
                        'inheritance': 'autosomal dominant',
                        'diseases': ['RASopathy']}],
            'RAF1': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -2668,7 +3212,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'RAG1': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -2697,7 +3243,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.00872,
                              'op': '>',
                              'faf': True,
-                             'quote': 'gnomAD popmax filtering allele frequency >0.00872.'},
+                             'quote': 'gnomAD popmax filtering allele frequency >0.00872.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['recombinase activating gene 1 deficiency']}],
            'RAG2': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -2726,7 +3274,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.00872,
                              'op': '>',
                              'faf': True,
-                             'quote': 'gnomAD popmax filtering allele frequency >0.00872'},
+                             'quote': 'gnomAD popmax filtering allele frequency >0.00872',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['recombinase activating gene 2 deficiency']}],
            'RIT1': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -2745,7 +3295,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'RMRP': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
@@ -2775,7 +3327,21 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Common in population databases. gnomAD popmax filtering allele '
                                       'frequency >0.00400 Maximum credible population allele frequency '
                                       'threshold determined using Whiffin/Ware calculator '
-                                      '([https://www.cardiodb'},
+                                      '(https://www.cardiodb.org/allelefrequencyapp/) and the following '
+                                      'parameters: Prevalence: 1:5,000 Allelic heterogeneity: 1 Genetic '
+                                      'heterogeneity: 0.04 (based on the contribution of RMRP variants to '
+                                      'total SCID in the PIDTC 6901 cohort reported in Dvorak et al., 2019 '
+                                      '(PMID: 30193840, Table 1): 3.6%, rounded to 4%) Penetrance: 50% Use '
+                                      'caution when applying BA1 based on allele frequencies derived from '
+                                      'gnomAD exome sequencing given the reduced coverage of certain regions '
+                                      'of RMRP. Ensure at least 20X read depth for allele frequencies '
+                                      'derived from exome sequencing.',
+                             'conditions': ['Use caution when applying BA1 based on allele frequencies '
+                                            'derived from gnomAD exome sequencing given the reduced coverage '
+                                            'of certain regions of RMRP.',
+                                            'Ensure at least 20X read depth for allele frequencies derived '
+                                            'from exome sequencing.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['cartilage-hair hypoplasia']}],
            'RPE65': [{'panel': 'Leber Congenital Amaurosis/early onset Retinal Dystrophy Variant Curation '
@@ -2802,8 +3368,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.008,
                               'op': '>=',
                               'faf': True,
-                              'quote': 'Use gnomAD PopMax FAF if available, cutoff of ≥8 x 10<sup>-3</sup> '
-                                       'Use large population databases (i.e. gnomAD).'},
+                              'quote': 'Use gnomAD PopMax FAF if available, cutoff of ≥8 x 10^-3 Use large '
+                                       'population databases (i.e. gnomAD).',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal recessive',
                       'diseases': ['RPE65-related recessive retinopathy']}],
            'RPGR': [{'panel': 'X-linked Inherited Retinal Disease Variant Curation Expert Panel',
@@ -2834,7 +3402,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': False,
                              'quote': 'Allele frequency in males is above 5% in Exome Sequencing Project, '
                                       '1000 Genomes or Exome Aggregation Consortium in the subpopulation '
-                                      'with the highest frequency.'},
+                                      'with the highest frequency.',
+                             'conditions': ['Allele frequency in males is above 5% in Exome Sequencing '
+                                            'Project, 1000 Genomes or Exome Aggregation Consortium in the '
+                                            'subpopulation with the highest frequency.'],
+                             'excluded': []},
                      'inheritance': 'X-linked',
                      'diseases': ['RPGR-related retinopathy']}],
            'RRAS2': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -2853,7 +3425,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.0005,
                               'op': '>=',
                               'faf': True,
-                              'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                              'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['RASopathy']}],
            'RS1': [{'panel': 'X-linked Inherited Retinal Disease Variant Curation Expert Panel',
@@ -2886,9 +3460,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.0002,
                             'op': '>=',
                             'faf': False,
-                            'quote': 'Allele frequency ≥ 2x10<sup>-4</sup> in males in population databases '
-                                     '(Exome Sequencing Project, 1000 Genomes or Exome Aggregation '
-                                     'Consortium) in the subpopulation with the highest frequency.'},
+                            'quote': 'Allele frequency ≥ 2x10^-4 in males in population databases (Exome '
+                                     'Sequencing Project, 1000 Genomes or Exome Aggregation Consortium) in '
+                                     'the subpopulation with the highest frequency.',
+                            'conditions': ['Allele frequency ≥ 2x10^-4 in males in population databases '
+                                           '(Exome Sequencing Project, 1000 Genomes or Exome Aggregation '
+                                           'Consortium) in the subpopulation with the highest frequency.'],
+                            'excluded': []},
                     'inheritance': 'X-linked',
                     'diseases': ['X-linked retinoschisis']}],
            'RUNX1': [{'panel': 'Myeloid Malignancy Variant Curation Expert Panel',
@@ -2919,7 +3497,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'RUNX1 Specification: BA1: Minor allele frequency ≥ 0.0015 (0.15%) in '
                                        'any general continental population dataset with ≥ 2,000 alleles '
-                                       'tested and variant present in ≥ 5 alleles.'},
+                                       'tested and variant present in ≥ 5 alleles.',
+                              'conditions': ['BA1: Minor allele frequency ≥ 0.0015 (0.15%) in any general '
+                                             'continental population dataset with ≥ 2,000 alleles tested and '
+                                             'variant present in ≥ 5 alleles.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['hereditary thrombocytopenia and hematologic cancer predisposition '
                                    'syndrome']}],
@@ -2951,7 +3533,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0038,
                              'op': '>',
                              'faf': False,
-                             'quote': 'Popmax allele frequency >0.0038 (0.38%)'},
+                             'quote': 'Popmax allele frequency >0.0038 (0.38%)',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': None,
                      'diseases': ['malignant hyperthermia of anesthesia']},
                     {'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -2972,7 +3556,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'The minor allele frequency using the filtering allele frequency of '
                                       'either exomes or genomes of continental populations in gnomAD is '
-                                      '≥0.0000486 for AD variants. All populations used should have at leas'},
+                                      '≥0.0000486 for AD variants. All populations used should have at least '
+                                      '2000 alleles and >1 observation. BA1 exclusion variants (well-known '
+                                      'pathogenic variants that are above the specified BA1 or BS1 '
+                                      'threshold) are as follows: NM000540.3:c.14524G>A (p.Val4842Met) '
+                                      'NM000540.3:c.325C>T (p.Arg109Trp)',
+                             'conditions': ['All populations used should have at least 2000 alleles and >1 '
+                                            'observation.',
+                                            'BA1 exclusion variants: c.14524G>A (p.Val4842Met), c.325C>T '
+                                            '(p.Arg109Trp)'],
+                             'excluded': ['c.14524G>A', 'p.Val4842Met', 'c.325C>T', 'p.Arg109Trp']},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RYR1-related myopathy']},
                     {'panel': 'Congenital Myopathies Variant Curation Expert Panel',
@@ -2993,7 +3586,15 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'The minor allele frequency using the filtering allele frequency of '
                                       'either exomes or genomes of continental populations in gnomAD is '
-                                      '≥0.00697 for AR variants. All populations used should have at least '},
+                                      '≥0.00697 for AR variants. All populations used should have at least '
+                                      '2000 alleles and >1 observation. BA1 exclusion variants (well-known '
+                                      'pathogenic variants that are above the specified BA1 or BS1 '
+                                      'threshold) are as follows: NM000540.3:c.6721C>T (p.Arg2241Ter) '
+                                      'NM000540.3:c.10348-6C>G',
+                             'conditions': ['All populations used should have at least 2000 alleles and >1 '
+                                            'observation.',
+                                            'BA1 exclusion variants: c.6721C>T (p.Arg2241Ter), c.10348-6C>G'],
+                             'excluded': ['c.6721C>T', 'p.Arg2241Ter', 'c.10348-6C>G']},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['RYR1-related myopathy']}],
            'SCN1A': [{'panel': 'Epilepsy Sodium Channel Variant Curation Expert Panel',
@@ -3014,7 +3615,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Allele frequency is above 0.02% in GnomAD or other large population '
                                        'database, must be greater than or equal to 5 alleles if a minimum of '
-                                       '10,000 alleles was assessed.'},
+                                       '10,000 alleles was assessed.',
+                              'conditions': ['Allele frequency is above 0.02% in GnomAD or other large '
+                                             'population database, must be greater than or equal to 5 '
+                                             'alleles if a minimum of 10,000 alleles was assessed.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['Dravet syndrome',
                                    'generalized epilepsy with febrile seizures plus',
@@ -3037,7 +3642,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Allele frequency is above 0.3% in GnomAD or other large population '
                                        'database, must be greater than or equal to 5 alleles if a minimum of '
-                                       '10,000 alleles was assessed.'},
+                                       '10,000 alleles was assessed.',
+                              'conditions': ['Allele frequency is above 0.3% in GnomAD or other large '
+                                             'population database, must be greater than or equal to 5 '
+                                             'alleles if a minimum of 10,000 alleles was assessed.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant or autosomal recessive',
                       'diseases': ['generalized epilepsy with febrile seizures plus',
                                    'genetic developmental and epileptic encephalopathy']}],
@@ -3059,7 +3668,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Allele frequency is above 0.01% is gnomAD or other large population '
                                        'databases, must be greater than or equal to 5 alleles if a minimum '
-                                       'of 10,000 alleles was assessed.'},
+                                       'of 10,000 alleles was assessed.',
+                              'conditions': ['Allele frequency is above 0.01% is gnomAD or other large '
+                                             'population databases, must be greater than or equal to 5 '
+                                             'alleles if a minimum of 10,000 alleles was assessed.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['complex neurodevelopmental disorder']}],
            'SCN3A': [{'panel': 'Epilepsy Sodium Channel Variant Curation Expert Panel',
@@ -3080,7 +3693,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Allele frequency is above 0.01% is gnomAD or other large population '
                                        'databases, must be greater than or equal to 5 alleles if a minimum '
-                                       'of 10,000 alleles was assessed.'},
+                                       'of 10,000 alleles was assessed.',
+                              'conditions': ['Allele frequency is above 0.01% is gnomAD or other large '
+                                             'population databases, must be greater than or equal to 5 '
+                                             'alleles if a minimum of 10,000 alleles was assessed.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['genetic developmental and epileptic encephalopathy']}],
            'SCN8A': [{'panel': 'Epilepsy Sodium Channel Variant Curation Expert Panel',
@@ -3101,7 +3718,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Allele frequency is above 0.01% is gnomAD or other large population '
                                        'databases, must be greater than or equal to 5 alleles if a minimum '
-                                       'of 10,000 alleles was assessed.'},
+                                       'of 10,000 alleles was assessed.',
+                              'conditions': ['Allele frequency is above 0.01% is gnomAD or other large '
+                                             'population databases, must be greater than or equal to 5 '
+                                             'alleles if a minimum of 10,000 alleles was assessed.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['complex neurodevelopmental disorder']}],
            'SERPINC1': [{'panel': 'Thrombosis Variant Curation Expert Panel ',
@@ -3132,7 +3753,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'op': '>=',
                                  'faf': False,
                                  'quote': 'Appropriate to use for variants with a popmax MAF of greater than '
-                                          'or equal to 0.002 in gnomAD.'},
+                                          'or equal to 0.002 in gnomAD.',
+                                 'conditions': [],
+                                 'excluded': []},
                          'inheritance': 'autosomal dominant',
                          'diseases': ['hereditary antithrombin deficiency']}],
            'SGCA': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -3168,7 +3791,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                       'confidence interval of the maximum credible genetic ancestry group '
                                       'allele frequency) is >0.002. This value can be taken directly from '
-                                      'gnomAD'},
+                                      'gnomAD, but do not use data for which the variant does not pass '
+                                      'quality control filters. See supplementary file “benign frequency '
+                                      'exceptions” for a list of variants defined as exceptions to the '
+                                      'benign frequency rules. Ongoing updates to this list will be '
+                                      'available at the LGMD VCEP webpage: '
+                                      'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                      'frequency may not be reliable (e.g., variants that may reflect a '
+                                      'sequencing artifact) should be critically evaluated and brought to '
+                                      'the attention of the LGMD VCEP.',
+                             'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                            'data for which the variant does not pass quality control '
+                                            'filters.',
+                                            'See supplementary file “benign frequency exceptions” for a list '
+                                            'of variants defined as exceptions to the benign frequency '
+                                            'rules.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'SGCB': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -3204,7 +3842,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                       'confidence interval of the maximum credible genetic ancestry group '
                                       'allele frequency) is >0.002. This value can be taken directly from '
-                                      'gnomAD'},
+                                      'gnomAD, but do not use data for which the variant does not pass '
+                                      'quality control filters. See supplementary file “benign frequency '
+                                      'exceptions” for a list of variants defined as exceptions to the '
+                                      'benign frequency rules. Ongoing updates to this list will be '
+                                      'available at the LGMD VCEP webpage: '
+                                      'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                      'frequency may not be reliable (e.g., variants that may reflect a '
+                                      'sequencing artifact) should be critically evaluated and brought to '
+                                      'the attention of the LGMD VCEP.',
+                             'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                            'data for which the variant does not pass quality control '
+                                            'filters.',
+                                            'See supplementary file “benign frequency exceptions” for a list '
+                                            'of variants defined as exceptions to the benign frequency '
+                                            'rules.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'SGCD': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -3240,7 +3893,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                       'confidence interval of the maximum credible genetic ancestry group '
                                       'allele frequency) is >0.002. This value can be taken directly from '
-                                      'gnomAD'},
+                                      'gnomAD, but do not use data for which the variant does not pass '
+                                      'quality control filters. See supplementary file “benign frequency '
+                                      'exceptions” for a list of variants defined as exceptions to the '
+                                      'benign frequency rules. Ongoing updates to this list will be '
+                                      'available at the LGMD VCEP webpage: '
+                                      'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                      'frequency may not be reliable (e.g., variants that may reflect a '
+                                      'sequencing artifact) should be critically evaluated and brought to '
+                                      'the attention of the LGMD VCEP.',
+                             'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                            'data for which the variant does not pass quality control '
+                                            'filters.',
+                                            'See supplementary file “benign frequency exceptions” for a list '
+                                            'of variants defined as exceptions to the benign frequency '
+                                            'rules.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'SGCG': [{'panel': 'Limb Girdle Muscular Dystrophy Variant Curation Expert Panel',
@@ -3276,7 +3944,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Apply if the variant Grpmax FAF (the lower bound of the 95% '
                                       'confidence interval of the maximum credible genetic ancestry group '
                                       'allele frequency) is >0.002. This value can be taken directly from '
-                                      'gnomAD'},
+                                      'gnomAD, but do not use data for which the variant does not pass '
+                                      'quality control filters. See supplementary file “benign frequency '
+                                      'exceptions” for a list of variants defined as exceptions to the '
+                                      'benign frequency rules. Ongoing updates to this list will be '
+                                      'available at the LGMD VCEP webpage: '
+                                      'https://clinicalgenome.org/affiliation/50061/. Variants whose '
+                                      'frequency may not be reliable (e.g., variants that may reflect a '
+                                      'sequencing artifact) should be critically evaluated and brought to '
+                                      'the attention of the LGMD VCEP.',
+                             'conditions': ['This value can be taken directly from gnomAD, but do not use '
+                                            'data for which the variant does not pass quality control '
+                                            'filters.',
+                                            'See supplementary file “benign frequency exceptions” for a list '
+                                            'of variants defined as exceptions to the benign frequency '
+                                            'rules.'],
+                             'excluded': []},
                      'inheritance': 'autosomal recessive',
                      'diseases': ['autosomal recessive limb-girdle muscular dystrophy']}],
            'SHOC2': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -3295,7 +3978,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'ba1': {'value': 0.0005,
                               'op': '>=',
                               'faf': True,
-                              'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                              'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['RASopathy']}],
            'SLC19A3': [{'panel': 'Mitochondrial Diseases Variant Curation Expert Panel',
@@ -3311,7 +3996,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                     'BS1': ['Strong']},
                         'not_missense': {},
                         'conditions': {},
-                        'ba1': {'value': 0.001, 'op': '>', 'faf': False, 'quote': '>0.001 (>0.1%)'},
+                        'ba1': {'value': 0.001,
+                                'op': '>',
+                                'faf': False,
+                                'quote': '>0.001 (>0.1%)',
+                                'conditions': [],
+                                'excluded': []},
                         'inheritance': None,
                         'diseases': ['biotin-responsive basal ganglia disease']}],
            'SLC26A4': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -3332,7 +4022,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                 'op': '',
                                 'faf': False,
                                 'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                         'for autosomal dominant.'},
+                                         'for autosomal dominant.',
+                                'conditions': [],
+                                'excluded': []},
                         'inheritance': None,
                         'diseases': ['Pendred syndrome']}],
            'SLC6A8': [{'panel': 'Cerebral Creatine Deficiency Syndromes Variant Curation Expert Panel',
@@ -3354,7 +4046,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Applicable when Grpmax Filtering Allele Frequency is ≥0.002 (0.2%) '
                                         'OR ≥10 homo- or hemizygotes (or the sum of total hemi- and '
                                         'homozygotes) are present in the most current version of gnomAD '
-                                        'available a'},
+                                        'available at the time of curation.',
+                               'conditions': ['Applicable when Grpmax Filtering Allele Frequency is ≥0.002 '
+                                              '(0.2%) OR ≥10 homo- or hemizygotes (or the sum of total hemi- '
+                                              'and homozygotes) are present in the most current version of '
+                                              'gnomAD available at the time of…'],
+                               'excluded': []},
                        'inheritance': 'X-linked',
                        'diseases': ['creatine transporter deficiency']}],
            'SLC9A6': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
@@ -3378,7 +4075,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'quote': 'Use large population databases (i.e. gnomAD). Use if variant is '
                                         'present at ≥0.000083 (0.0083%) in any sub-population. Use if allele '
                                         'frequency is met in any general continental population dataset of '
-                                        'at'},
+                                        'at least 2,000 observed alleles.',
+                               'conditions': ['Use if allele frequency is met in any general continental '
+                                              'population dataset of at least 2,000 observed alleles.'],
+                               'excluded': []},
                        'inheritance': 'X-linked',
                        'diseases': ['Christianson syndrome']}],
            'SOS1': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -3397,7 +4097,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'SOS2': [{'panel': 'RASopathy Variant Curation Expert Panel',
@@ -3416,7 +4118,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'ba1': {'value': 0.0005,
                              'op': '>=',
                              'faf': True,
-                             'quote': 'GnomAD filtering allele frequency ≥0.05%.'},
+                             'quote': 'GnomAD filtering allele frequency ≥0.05%.',
+                             'conditions': [],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['RASopathy']}],
            'TCF4': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
@@ -3439,7 +4143,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': False,
                              'quote': 'Allele frequency above 0.05%. Use large population databases (i.e. '
                                       'gnomAD). Use if variant is present at ≥0.000083 (0.0083%) in any '
-                                      'sub-population. Use if allele frequency is met in any general contin'},
+                                      'sub-population. Use if allele frequency is met in any general '
+                                      'continental population dataset of at least 2,000 observed alleles.',
+                             'conditions': ['Use if allele frequency is met in any general continental '
+                                            'population dataset of at least 2,000 observed alleles.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['Pitt-Hopkins syndrome']}],
            'TECTA': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -3460,7 +4168,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '',
                               'faf': False,
                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                       'for autosomal dominant.'},
+                                       'for autosomal dominant.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['nonsyndromic genetic hearing loss']}],
            'TNNI3': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -3491,7 +4201,36 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                        '(FAF) in gnomAD in the subpopulation with the highest frequency '
                                        '(popmax). The values used to calculate the BA1 threshold were '
-                                       'derived'},
+                                       'derived from studies in Northern European populations that have been '
+                                       'relatively well-characterized with regards to disease prevalence and '
+                                       'variant spectrum. These thresholds can be applied to any population '
+                                       'where disease prevalence is considered comparable (1/300 or lower). '
+                                       'The threshold is applicable when assessing variants in the context '
+                                       'of autosomal dominant cardiomyopathy. gnomAD is the preferred '
+                                       'database for this calculation. If a subpopulation specific FAF other '
+                                       'than the popmax is needed, this value can be calculated using the '
+                                       'AlleleFrequencyApp on the CardioDB website. 1. Using the Inverse AF '
+                                       'tab, enter in the population size and the number of alleles '
+                                       'identified and it will calculate the FAF. 2. Set confidence to 0.95 '
+                                       '(95%). 3. If the FAF is ≥0.001, this rule can be applied. The FAF by '
+                                       'platform (e.g., exome vs. genome; v.2.1.1 vs. v.3.1.1) should be '
+                                       'considered, the larger population is most likely to have the most '
+                                       'accurate representation of “true” population allele frequency. '
+                                       'Caution is needed when considering any population cohorts that are '
+                                       'smaller than the smallest subpopulations within gnomAD v.2.1.1 '
+                                       '(e.g., ~5000 individuals or ~10,000 alleles). Despite this '
+                                       'conservative nature of this threshold and approach, in smaller '
+                                       'cohorts, the observed allele frequency may less accurately reflect '
+                                       'the true allele frequency. Traditionally, once a variant is '
+                                       'classified as Benign, it is rarely re-evaluated and so the highest '
+                                       'confidence is needed to establish that classification on an allele '
+                                       'frequency alone.',
+                              'conditions': ['Using the Inverse AF tab, enter in the population size and the '
+                                             'number of alleles identified and it will calculate the FAF.',
+                                             'Caution is needed when considering any population cohorts that '
+                                             'are smaller than the smallest subpopulations within gnomAD '
+                                             'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['hypertrophic cardiomyopathy']}],
            'TNNT2': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -3522,7 +4261,36 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                        '(FAF) in gnomAD in the subpopulation with the highest frequency '
                                        '(popmax). The values used to calculate the BA1 threshold were '
-                                       'derived'},
+                                       'derived from studies in Northern European populations that have been '
+                                       'relatively well-characterized with regards to disease prevalence and '
+                                       'variant spectrum. These thresholds can be applied to any population '
+                                       'where disease prevalence is considered comparable (1/300 or lower). '
+                                       'The threshold is applicable when assessing variants in the context '
+                                       'of autosomal dominant cardiomyopathy. gnomAD is the preferred '
+                                       'database for this calculation. If a subpopulation specific FAF other '
+                                       'than the popmax is needed, this value can be calculated using the '
+                                       'AlleleFrequencyApp on the CardioDB website. 1. Using the Inverse AF '
+                                       'tab, enter in the population size and the number of alleles '
+                                       'identified and it will calculate the FAF. 2. Set confidence to 0.95 '
+                                       '(95%). 3. If the FAF is ≥0.001, this rule can be applied. The FAF by '
+                                       'platform (e.g., exome vs. genome; v.2.1.1 vs. v.3.1.1) should be '
+                                       'considered, the larger population is most likely to have the most '
+                                       'accurate representation of “true” population allele frequency. '
+                                       'Caution is needed when considering any population cohorts that are '
+                                       'smaller than the smallest subpopulations within gnomAD v.2.1.1 '
+                                       '(e.g., ~5000 individuals or ~10,000 alleles). Despite this '
+                                       'conservative nature of this threshold and approach, in smaller '
+                                       'cohorts, the observed allele frequency may less accurately reflect '
+                                       'the true allele frequency. Traditionally, once a variant is '
+                                       'classified as Benign, it is rarely re-evaluated and so the highest '
+                                       'confidence is needed to establish that classification on an allele '
+                                       'frequency alone.',
+                              'conditions': ['Using the Inverse AF tab, enter in the population size and the '
+                                             'number of alleles identified and it will calculate the FAF.',
+                                             'Caution is needed when considering any population cohorts that '
+                                             'are smaller than the smallest subpopulations within gnomAD '
+                                             'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['hypertrophic cardiomyopathy', 'dilated cardiomyopathy']}],
            'TP53': [{'panel': 'TP53 Variant Curation Expert Panel',
@@ -3552,7 +4320,30 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'Filtering allele frequency (FAF) of ≥ 0.001 or 0.1% in gnomAD '
                                       'continental subpopulations of a single genetic ancestry group '
                                       '(excluding genetic ancestry groups influenced by founder effects, '
-                                      'such as As'},
+                                      'such as Ashkenazi Jewish, Finnish, Amish, Middle Eastern, and '
+                                      '“Remaining”). Genetic ancestry group must have ≥2,000 alleles tested '
+                                      'and a minimum of 2 alleles present. Caution should be exerted if the '
+                                      'majority of alleles have a variant allele fraction ("allele balance" '
+                                      'in gnomAD) below 0.35. To set the stand-alone benign FAF cutoff, we '
+                                      'used the FAF cutoff established for BS1 (0.0003) and increased this '
+                                      'cutoff by one order of magnitude to come to a value of 0.001. In '
+                                      'general, the most recent version of gnomAD should be used when '
+                                      'available; however, other population databases or earlier versions of '
+                                      'gnomAD may be utilized if they are able to provide information the '
+                                      'curator deems necessary for optimal variant classification (e.g, they '
+                                      'would provide superior information for a particular variant type; '
+                                      'have a larger sample size; or better representation for certain '
+                                      'subpopulations, etc.)',
+                             'conditions': ['Filtering allele frequency (FAF) of ≥ 0.001 or 0.1% in gnomAD '
+                                            'continental subpopulations of a single genetic ancestry group '
+                                            '(excluding genetic ancestry groups influenced by founder '
+                                            'effects, such as Ashkenazi Jewish,…',
+                                            'Genetic ancestry group must have ≥2,000 alleles tested and a '
+                                            'minimum of 2 alleles present.',
+                                            'Caution should be exerted if the majority of alleles have a '
+                                            'variant allele fraction ("allele balance" in gnomAD) below '
+                                            '0.35.'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['Li-Fraumeni syndrome']}],
            'TPM1': [{'panel': 'Cardiomyopathy Variant Curation Expert Panel',
@@ -3582,8 +4373,36 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'faf': True,
                              'quote': 'Allele frequency is ≥0.001 based on the filtering allele frequency '
                                       '(FAF) in gnomAD in the subpopulation with the highest frequency '
-                                      '(popmax). The values used to calculate the BA1 threshold were '
-                                      'derived'},
+                                      '(popmax). The values used to calculate the BA1 threshold were derived '
+                                      'from studies in Northern European populations that have been '
+                                      'relatively well-characterized with regards to disease prevalence and '
+                                      'variant spectrum. These thresholds can be applied to any population '
+                                      'where disease prevalence is considered comparable (1/300 or lower). '
+                                      'The threshold is applicable when assessing variants in the context of '
+                                      'autosomal dominant cardiomyopathy. gnomAD is the preferred database '
+                                      'for this calculation. If a subpopulation specific FAF other than the '
+                                      'popmax is needed, this value can be calculated using the '
+                                      'AlleleFrequencyApp on the CardioDB website. 1. Using the Inverse AF '
+                                      'tab, enter in the population size and the number of alleles '
+                                      'identified and it will calculate the FAF. 2. Set confidence to 0.95 '
+                                      '(95%). 3. If the FAF is ≥0.001, this rule can be applied. The FAF by '
+                                      'platform (e.g., exome vs. genome; v.2.1.1 vs. v.3.1.1) should be '
+                                      'considered, the larger population is most likely to have the most '
+                                      'accurate representation of “true” population allele frequency. '
+                                      'Caution is needed when considering any population cohorts that are '
+                                      'smaller than the smallest subpopulations within gnomAD v.2.1.1 (e.g., '
+                                      '~5000 individuals or ~10,000 alleles). Despite this conservative '
+                                      'nature of this threshold and approach, in smaller cohorts, the '
+                                      'observed allele frequency may less accurately reflect the true allele '
+                                      'frequency. Traditionally, once a variant is classified as Benign, it '
+                                      'is rarely re-evaluated and so the highest confidence is needed to '
+                                      'establish that classification on an allele frequency alone.',
+                             'conditions': ['Using the Inverse AF tab, enter in the population size and the '
+                                            'number of alleles identified and it will calculate the FAF.',
+                                            'Caution is needed when considering any population cohorts that '
+                                            'are smaller than the smallest subpopulations within gnomAD '
+                                            'v.2.1.1 (e.g., ~5000 individuals or ~10,000 alleles).'],
+                             'excluded': []},
                      'inheritance': 'autosomal dominant',
                      'diseases': ['hypertrophic cardiomyopathy']}],
            'UBE3A': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
@@ -3606,8 +4425,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'faf': False,
                               'quote': 'Use large population databases (i.e. gnomAD). Use if variant is '
                                        'present at ≥0.000083 (0.0083%) in any sub-population. Use if allele '
-                                       'frequency is met in any general continental population dataset of '
-                                       'at'},
+                                       'frequency is met in any general continental population dataset of at '
+                                       'least 2,000 observed alleles.',
+                              'conditions': ['Use if allele frequency is met in any general continental '
+                                             'population dataset of at least 2,000 observed alleles.'],
+                              'excluded': []},
                       'inheritance': 'autosomal dominant',
                       'diseases': ['Angelman syndrome']}],
            'USH2A': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
@@ -3628,7 +4450,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '',
                               'faf': False,
                               'quote': 'MAF of ≥0.005 (0.5%) for autosomal recessive; MAF of ≥0.001 (0.1%) '
-                                       'for autosomal dominant.'},
+                                       'for autosomal dominant.',
+                              'conditions': [],
+                              'excluded': []},
                       'inheritance': None,
                       'diseases': ['Usher syndrome']}],
            'VHL': [{'panel': 'VHL Variant Curation Expert Panel',
@@ -3654,12 +4478,14 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'The Grantham distance should be used to compare variants.',
                                            'The variant under consideration must be equal or a larger '
                                            'distance than the classified pathogenic variant (Grantham, 1974, '
-                                           'Table 2 [<sup>16</sup>](#pmid4843792) ).']},
+                                           'Table 2 ).']},
                     'ba1': {'value': 0.000156,
                             'op': '>=',
                             'faf': True,
                             'quote': 'Use a BA1 cut off of >=0.000156 (0.0156%) GroupMax Filtering Allele '
-                                     'Frequency in gnomAD (based on gnomAD v4 release).'},
+                                     'Frequency in gnomAD (based on gnomAD v4 release).',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal dominant',
                     'diseases': ['von Hippel-Lindau disease']}],
            'VWF': [{'panel': 'von Willebrand Disease  Variant Curation Expert Panel',
@@ -3689,7 +4515,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.1,
                             'op': '>',
                             'faf': False,
-                            'quote': 'Appropriate to use for variants with a Popmax MAF of >0.1 in gnomAD.'},
+                            'quote': 'Appropriate to use for variants with a Popmax MAF of >0.1 in gnomAD.',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal dominant',
                     'diseases': ['von Willebrand disease type 2A',
                                  'von Willebrand disease type 2B',
@@ -3723,6 +4551,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'ba1': {'value': 0.1,
                             'op': '>',
                             'faf': False,
-                            'quote': 'Appropriate to use for variants with a Popmax MAF of >0.1 in gnomAD.'},
+                            'quote': 'Appropriate to use for variants with a Popmax MAF of >0.1 in gnomAD.',
+                            'conditions': [],
+                            'excluded': []},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['von Willebrand disease type 2N']}]}}

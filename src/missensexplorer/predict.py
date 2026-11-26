@@ -620,7 +620,8 @@ def apply_frequency(label: str, basis: str, grpmax: float | None, common_af: flo
 def _nmd(exon: str | None, terms: set[str]) -> str | None:
     """Return the expected nonsense-mediated decay outcome of a stop-gain or frameshift, from VEP's exon ('3/10').
 
-    A change spanning exons ('9-10/10') is judged by its last exon, where the new stop codon lies or after it.
+    A change that spans exons ('9-10/10') also crosses an exon-intron boundary and removes splice sites, so the
+    fate of the transcript cannot be told from the position of the new stop codon: NMD is uncertain.
     """
     if not exon or not terms & {"stop_gained", "frameshift_variant"}:
         return None
@@ -629,6 +630,8 @@ def _nmd(exon: str | None, terms: set[str]) -> str | None:
         a, b = int(first.split("-")[-1]), int(total)
     except ValueError:
         return None
+    if "-" in first:
+        return "NMD uncertain (the change spans an exon-intron boundary)"
     if b == 1:
         return "NMD escape likely (single-exon gene)"
     if a == b:
@@ -957,6 +960,7 @@ class _Context:
         assembly: genome build in use (may change after the REF allele check).
         hint: genome build named in a VCF header, if any.
         release: Ensembl release of the REST server, if known.
+        cache_only: Ensembl could not be reached and the cache held earlier answers: the run uses them only.
         local_version: local VEP version, if known.
         n_unique: unique VEP queries, for the statistics.
         n_no_protein: valid inputs that gave no row, for the statistics.
@@ -979,6 +983,7 @@ class _Context:
     assembly: str = "GRCh38"
     hint: str | None = None
     release: int | None = None
+    cache_only: bool = False
     local_version: str | None = None
     n_unique: int = 0
     n_no_protein: int = 0
@@ -1131,7 +1136,9 @@ def _check_connection(ctx: _Context) -> None:
         ensembl_release(ctx.http, ctx.cache, "GRCh38")
     except OfflineError as e:
         if not ctx.local and any(ctx.cache.get(f"ensembl_release|{a}", max_age=0) for a in ("GRCh38", "GRCh37")):
-            # a cache filled by earlier runs (a rerun of a published analysis): use what it holds
+            # a cache filled by earlier runs (a rerun of a published analysis): use what it holds, whatever its age
+            ctx.cache.freeze()
+            ctx.cache_only = True
             ctx.warnings.append("Ensembl cannot be reached: only answers already in the cache are used")
             return
         if not ctx.local:
@@ -1230,6 +1237,9 @@ def _release(ctx: _Context) -> int | None:
     """Return the Ensembl release of the REST server for the build in use; None offline or on failure."""
     if not ctx.net:
         return None
+    if ctx.cache_only:  # the release of the cached answers (their keys name it)
+        rel = ctx.cache.get(f"ensembl_release|{ctx.assembly}", max_age=0)
+        return int(rel) if rel else None
     try:
         return ensembl_release(ctx.http, ctx.cache, ctx.assembly)
     except ApiError as e:
@@ -2007,6 +2017,7 @@ def _run_record(ctx: _Context, seconds: float) -> dict[str, Any]:
             else f"Ensembl VEP REST, release {ctx.release or 'unknown'}"
         ),
         "ensembl_release": ctx.release,
+        "cache_only": ctx.cache_only,  # Ensembl could not be reached: every answer came from the cache
         "options": {k: v for k, v in asdict(ctx.opt).items() if k not in ("cache_path",)},
         "inputs": {
             "text_lines": len([x for x in (ctx.text or "").splitlines() if x.strip()]),

@@ -43,6 +43,7 @@ class Cache:
     Attributes:
         path: The database file.
         ttl: Default maximum age, in seconds.
+        frozen: Return stored values whatever their age (set by `freeze`, for a rerun from the cache).
     """
 
     def __init__(self, path: str | Path | None = None, ttl_days: float = 30) -> None:
@@ -50,6 +51,7 @@ class Cache:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = path
         self.ttl = ttl_days * 86400
+        self.frozen = False
         self._lock = threading.Lock()
         self._db = sqlite3.connect(str(path), check_same_thread=False, timeout=30)
         self._db.execute("PRAGMA journal_mode=WAL")
@@ -58,12 +60,16 @@ class Cache:
 
     def get(self, key: str, max_age: float | None = None) -> Any:
         """Return the cached value, or None when missing or older than `max_age` seconds (default: the TTL)."""
-        limit = max_age if max_age is not None else self.ttl
+        limit = 0 if self.frozen else max_age if max_age is not None else self.ttl
         with self._lock:
             row = self._db.execute("SELECT v, t FROM kv WHERE k = ?", (key,)).fetchone()
         if row is None or (limit and time.time() - row[1] > limit):
             return None
         return json.loads(row[0])
+
+    def freeze(self) -> None:
+        """Return every stored value whatever its age, for a rerun from the cache without the internet."""
+        self.frozen = True
 
     def stored(self, key: str) -> float | None:
         """Return when `key` was stored (epoch seconds), or None when it is not in the cache."""
@@ -80,7 +86,7 @@ class Cache:
         """
         out: dict[str, Any] = {}
         now = time.time()
-        limit = max_age if max_age is not None else self.ttl
+        limit = 0 if self.frozen else max_age if max_age is not None else self.ttl
         with self._lock:
             for i in range(0, len(keys), 500):
                 chunk = keys[i : i + 500]
@@ -128,6 +134,9 @@ class NullCache:
     def get(self, key: str, max_age: float | None = None) -> Any:
         """Return None: nothing is ever cached."""
         return None
+
+    def freeze(self) -> None:
+        """Do nothing: there is nothing stored."""
 
     def stored(self, key: str) -> float | None:
         """Return None: nothing is ever cached."""

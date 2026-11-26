@@ -417,6 +417,10 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     ),
     (r"NMD likely \(premature stop upstream of last exon\)", "NMD probable (parada prematura antes del último exón)"),
     (
+        r"NMD uncertain \(the change spans an exon-intron boundary\)",
+        "NMD incierto (el cambio abarca una unión exón-intrón)",
+    ),
+    (
         r"truncated at residue (\d+): (\d+) of (\d+) residues lost \((\d+)%\)",
         r"truncada en el residuo \1: se pierden \2 de \3 residuos (\4 %)",
     ),
@@ -515,6 +519,11 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"its rules give ", r"sus reglas dan "),
     (r"no PP3/BP4 for missense variants", r"sin PP3/BP4 en variantes missense"),
     (r"PP3/BP4 not evaluated \(no REVEL score\)", r"PP3/BP4 no evaluado (sin puntuación REVEL)"),
+    (r"PM2 not assessed \(no gnomAD data\)", "PM2 no evaluado (sin datos de gnomAD)"),
+    (
+        r"PM2 not met \(absent from gnomAD, but the panel requires 20x coverage\)",
+        "PM2 no cumplido (ausente de gnomAD, pero el panel exige una cobertura de 20x)",
+    ),
     (r"\bPM2 not met\b", r"PM2 no cumplido"),
     (
         r"\bPM2 met \(absent from gnomAD, but few reads there: check\)",
@@ -546,9 +555,22 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"uses (PP3|BP4) only at ([^:;|]+?) \(its own thresholds\)", r"usa \1 solo con fuerza \2 (sus propios umbrales)"),
     (
         r"grpmax allele frequency ([\d.e+-]+%) is above its BA1 threshold \((>=?) ([\d.e+-]+%)\), which it applies "
-        r"to the filtering allele frequency \(not computed here\): check the filtering allele frequency before BA1",
+        r"to the filtering allele frequency \(not computed here\): check the filtering allele frequency and its other "
+        r"BA1 conditions before BA1",
         r"la frecuencia alélica grpmax \1 supera su umbral de BA1 (\2 \3), que aplica a la frecuencia alélica de "
-        r"filtrado (no calculada aquí): compruebe la frecuencia de filtrado antes de aplicar BA1",
+        r"filtrado (no calculada aquí): compruebe la frecuencia de filtrado y sus otras condiciones de BA1 antes de "
+        r"aplicar BA1",
+    ),
+    (r" \(its other BA1 conditions: “", r" (sus otras condiciones de BA1: “"),
+    (
+        r"on ClinGen's BA1 exception list \(Ghosh et al\. 2018\): BA1 does not apply, whatever the panel's "
+        r"threshold",
+        "en la lista de excepciones de BA1 de ClinGen (Ghosh et al. 2018): BA1 no se aplica, sea cual sea el umbral "
+        "del panel",
+    ),
+    (
+        r"on the panel's BA1 exclusion list \(well-known pathogenic variants\): BA1 does not apply",
+        "en la lista de exclusión de BA1 del panel (variantes patogénicas conocidas): BA1 no se aplica",
     ),
     # inheritance in a specification's name (notes) or description (… autosomal dominant (https://…))
     (r"\b(?<=[(,] )autosomal dominant(?= ?[;)]| or| \(http)", "autosómica dominante"),
@@ -872,11 +894,16 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (
         r"((?:OS3|OM3|OP3|OS2|OM4(?:_Supporting)?)(?:, (?:OS3|OM3|OP3|OS2|OM4(?:_Supporting)?))*) not counted "
         r"\((OS1\S*) uses this amino-acid change\)",
-        r"\1 no contado (\2 usa este cambio de aminoácido)",
+        lambda m: f"{m[1]} no contado{'s' if ',' in m[1] else ''} ({m[2]} usa este cambio de aminoácido)",
     ),
     (
-        r"(OS1\S*) not counted \((.+?); ([A-Za-z0-9_ +]+) for this change is stronger\)",
-        r"\1 no contado (\2; \3 para este cambio es más fuerte)",
+        r"(OS1\S*) not counted \((.+?); ([A-Za-z0-9_ +]+) for this change (is stronger|counts as much and is the "
+        r"standard's)\)",
+        lambda m: (
+            f"{m[1]} no contado ({m[2]}; {m[3]} para este cambio "
+            + ("es más fuerte" if m[4] == "is stronger" else "cuenta lo mismo y es el de la norma")
+            + ")"
+        ),
     ),
     (
         r"OP4 not checked \(absence from gnomAD not confirmed\)",

@@ -64,6 +64,20 @@ def test_ba1_against_the_panel_threshold():
     rare = {"gene": "MYH7", "acmg_points": 0, "gnomad_popmax_af": 0.004, "population_frequency": "rare"}
     note = vcep.notes(rare)[0]  # the cardiomyopathy panel applies BA1 to the filtering allele frequency
     assert "is above its BA1 threshold (>= 0.1%), which it applies to the filtering allele frequency" in note
+    # the panels' further BA1 conditions are quoted whether they use the filtering allele frequency or not
+    ryr1 = next(n for n in vcep.notes({"gene": "RYR1", "acmg_points": 0, "gnomad_popmax_af": 0.0004,
+                                       "population_frequency": "rare"}) if "GN150" in n)  # fmt: skip
+    assert "BA1 exclusion variants: c.14524G>A (p.Val4842Met), c.325C>T (p.Arg109Trp)" in ryr1
+    mlh1 = vcep.notes({"gene": "MLH1", "acmg_points": 0, "gnomad_popmax_af": 0.002, "population_frequency": "rare"})[0]
+    assert "excluded as founder pathogenic variant" in mlh1
+    # a variant on the panel's own exclusion list, or on ClinGen's BA1 exception list, is never sent to BA1
+    v4842m = {"gene": "RYR1", "acmg_points": 0, "gnomad_popmax_af": 0.004, "population_frequency": "rare",
+              "hgvsc": "ENST00000359596.8:c.14524G>A", "hgvsp": "ENSP00000352608.2:p.Val4842Met"}  # fmt: skip
+    assert any("on the panel's BA1 exclusion list" in n for n in vcep.notes(v4842m))
+    gjb2 = {"gene": "GJB2", "acmg_points": 0, "gnomad_popmax_af": 0.071, "population_frequency": "frequent",
+            "rsid": "rs72474224", "alt": "T"}  # fmt: skip
+    assert "on ClinGen's BA1 exception list" in vcep.notes(gjb2)[0]
+    assert "its own BA1 rule" not in vcep.notes(gjb2)[0]
     assert "meets" not in note
     kcnq1 = {"gene": "KCNQ1", "acmg_points": 0, "gnomad_popmax_af": 0.02, "population_frequency": "frequent"}
     assert (
@@ -92,6 +106,14 @@ def test_encoded_rules_say_what_the_panel_would_give():
                                "acmg_pm2": "not applicable (absent from gnomAD v4, but few reads there: >= 20 reads in "
                                            "48% of exomes)"})  # fmt: skip
     assert low == "PP3_Supporting (REVEL 0.734), PM2 met (absent from gnomAD, but few reads there: check)"
+    # the Myeloid Malignancy panel asks for 20x coverage; with no gnomAD answer at all, PM2 is not assessed
+    few_reads = "not applicable (absent from gnomAD v4, but few reads there)"
+    runx1 = vcep_rules.describe({"gene": "RUNX1", "revel": 0.3, "spliceai_max": 0.0, "gnomad_popmax_af": None,
+                                 "acmg_pm2": few_reads})  # fmt: skip
+    assert "PM2 not met (absent from gnomAD, but the panel requires 20x coverage)" in runx1
+    nodata = vcep_rules.describe({"gene": "LDLR", "revel": 0.81, "spliceai_max": 0.0, "gnomad_popmax_af": None,
+                                  "acmg_pm2": None})  # fmt: skip
+    assert "PM2 not assessed (no gnomAD data)" in nodata
     ada = vcep_rules.describe({"gene": "ADA", "gnomad_popmax_af": 0.01})
     assert ada == "no PP3/BP4 for missense variants, PM2 not met, BA1 met"
 

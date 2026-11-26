@@ -41,12 +41,6 @@ CODE_POINTS = {
 }
 SEP = " | "  # between the notes of different specifications in the acmg_notes column
 MAX_QUOTES = 4  # conditions quoted per criterion; the rest are counted
-# BA1 texts with conditions beyond the threshold: allele counts, sex, other datasets, exclusions, founders
-BA1_CONDITIONS = re.compile(
-    r"alleles|allele count|\bmales?\b|hemizyg|homozyg|Exome Sequencing Project|\bESP\b|ExAC|1000 Genomes|"
-    r"exclu|founder|except|at least|NOT MET|fail",
-    re.I,
-)
 
 
 def specifications(gene: str | None) -> list[dict[str, Any]]:
@@ -134,15 +128,33 @@ def _pct(x: float) -> str:
     return f"{100 * x:.3g}%"
 
 
+def _conditions(b: dict[str, Any]) -> str:
+    """' (its other BA1 conditions: “…”; “…”)' when the panel's BA1 text sets further conditions."""
+    found = b.get("conditions") or []
+    return f" (its other BA1 conditions: {'; '.join(f'“{c}”' for c in found)})" if found else ""
+
+
+def _excluded(b: dict[str, Any], row: Row) -> bool:
+    """True when the row's DNA or protein change is on the panel's own BA1 exclusion list."""
+    mine = {str(row.get(k) or "").split(":")[-1] for k in ("hgvsc", "hgvsp")} - {""}
+    return bool(mine & set(b.get("excluded") or []))
+
+
 def _ba1(s: dict[str, Any], row: Row) -> str | None:
     """Where the panel's BA1 threshold and the tool's BA1 (grpmax above 5%) disagree."""
-    from .acmg import ba1_grpmax  # the grpmax the tool's own BA1 uses (groups with >= 2,000 alleles when known)
+    from .acmg import ba1_exception, ba1_grpmax  # BA1's grpmax (groups with >= 2,000 alleles when known)
 
     b = s.get("ba1")
+    if not b:
+        return None
+    if ba1_exception(row):
+        return "on ClinGen's BA1 exception list (Ghosh et al. 2018): BA1 does not apply, whatever the panel's threshold"
+    if _excluded(b, row):
+        return "on the panel's BA1 exclusion list (well-known pathogenic variants): BA1 does not apply"
     g = _num(ba1_grpmax(row))
     if g is None:
         g = _num(row.get("gnomad_popmax_af"))
-    if not b or g is None:
+    if g is None:
         return None
     tool = str(row.get("population_frequency") or "").startswith("common: BA1")
     if b.get("value") is None:
@@ -155,13 +167,13 @@ def _ba1(s: dict[str, Any], row: Row) -> str | None:
         # the grpmax allele frequency is at least the filtering allele frequency: "met" is not established
         return (
             f"grpmax allele frequency {_pct(g)} is above its BA1 threshold ({op} {_pct(t)}), which it applies to the "
-            "filtering allele frequency (not computed here): check the filtering allele frequency before BA1"
+            "filtering allele frequency (not computed here): check the filtering allele frequency and its other "
+            f"BA1 conditions before BA1{_conditions(b)}"
         )
     if met and not tool:
-        text = f"grpmax {_pct(g)} is at or above its BA1 threshold ({op} {_pct(t)}): check its other BA1 conditions"
-        if BA1_CONDITIONS.search(b.get("quote") or ""):
-            text += f" (“{_cut(b['quote'], 200)}”)"
-        return text
+        return f"grpmax {_pct(g)} is at or above its BA1 threshold ({op} {_pct(t)}): check its other BA1 conditions" + (
+            _conditions(b)
+        )
     return None
 
 

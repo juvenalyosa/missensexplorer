@@ -56,7 +56,9 @@ Exclusions: the standard does not use OS3 with OS1 (its count mixes nucleotide c
 OS1 only for studies of the particular nucleotide change, does not use OM4 with OS1 or OS3, and does not
 use OM3 with OM4; OM3 and OP3 combine with OS1. Here OS1 (with OM3 or OP3) and the evidence it excludes
 (OS3, OS2, OM4, with OM3 or OP3) are alternatives and the stronger is kept, so a reference never lowers
-the points; when the standard's rule would give other points, the evidence says so. OM4 and OM3 are not
+the points; when the standard's rule would give other points, the evidence says so. OS1_Moderate, the
+tool's own level for a likely oncogenic reference, is not combined with OM3 or OP3 (that reference may
+itself rest on the same hotspot) and gives way to the standard's criteria on a tie. OM4 and OM3 are not
 combined (the stronger one is kept; OM4 wins a tie), and OM3 comes back when OS1 replaces OM4.
 
 Data: cancerhotspots.org (Chang et al., Cancer Discov 2018; gene symbols updated to HGNC's current
@@ -99,7 +101,8 @@ UNIPROT_KEYWORD_URL = (
 )
 UNIPROT_KEYWORDS = {"LoF": "KW-0043", "Act": "KW-0656"}
 LOF_SHARE, ACT_SHARE = 0.6, 0.4  # IntOGen: share of mutated samples in loss-of-function cohorts
-INTOGEN_MIN_COHORTS, INTOGEN_MIN_SAMPLES = 2, 20  # below both, IntOGen's role is too thin to decide
+INTOGEN_MIN_COHORTS, INTOGEN_MIN_SAMPLES = 2, 20  # IntOGen decides with 2 cohorts, or with 20 samples in one
+INTOGEN_FEWEST_SAMPLES = 10  # and never on fewer samples (POLE was "activating" on 4, CDKN2C on 8)
 INTOGEN_OVERRIDE_COHORTS, INTOGEN_OVERRIDE_SAMPLES = 3, 50  # IntOGen against UniProt's keyword needs both
 MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")  # CIViC's names
 TRUNCATION_SHARE = 0.10  # ClinGen LoF guidance (Abou Tayoun 2018): removing > 10% of the protein
@@ -179,16 +182,17 @@ def tier(points: int) -> str:
 class Role:
     """A gene's role in cancer and where it comes from.
 
-    IntOGen decides when its evidence is enough: at least 2 cohorts or 20 mutated samples among the cohorts
-    that give the gene a role (loss-of-function or activating), and at least as many samples there as in
-    its cohorts of ambiguous role. The role is loss-of-function when at least 60% of those samples are in
-    loss-of-function cohorts, activating when at most 40%. Counting samples rather than cohorts keeps many
-    small cohorts from outvoting large ones (SMARCA4 is "Act" in 27 of 45 cohorts but loss-of-function in
-    49% of the mutated samples of cohorts with a role; KEAP1 7 of 14 but 69%). UniProt's curated keyword
-    (Tumor suppressor or Proto-oncogene, not both) decides when IntOGen is absent, ambiguous or too thin; its
-    Proto-oncogene keyword also marks genes known from fusions, such as RUNX1, NSD1 and CBFB, whose point
-    mutations inactivate them. When IntOGen and UniProt disagree, IntOGen decides only with at least 3 cohorts and
-    50 samples (so RUNX1 is loss-of-function); otherwise the role is ambiguous (SMARCB1, on 13 samples).
+    IntOGen decides when its evidence is enough: at least 10 mutated samples in the cohorts that give the
+    gene a role (loss-of-function or activating), from at least 2 such cohorts unless there are 20, and at
+    least as many samples there as in its cohorts of ambiguous role. The role is loss-of-function when at
+    least 60% of those samples are in loss-of-function cohorts, activating when at most 40%. Counting samples
+    rather than cohorts keeps many small cohorts from outvoting large ones (SMARCA4 is "Act" in 27 of 45
+    cohorts but loss-of-function in 49% of the mutated samples of cohorts with a role; KEAP1 7 of 14 but
+    69%). UniProt's curated keyword (Tumor suppressor or Proto-oncogene, not both) decides when IntOGen is
+    absent, ambiguous or too thin; its Proto-oncogene keyword also marks genes known from fusions, such as
+    RUNX1, NSD1 and CBFB, whose point mutations inactivate them. When IntOGen and UniProt disagree, IntOGen
+    decides only with at least 3 cohorts and 50 samples (so RUNX1 is loss-of-function); otherwise the role
+    is ambiguous (SMARCB1, on 13 samples).
     """
 
     role: str  # Act | LoF | ambiguous
@@ -319,7 +323,7 @@ def combine_roles(intogen: dict[str, list[float]], suppressors: set[str], oncoge
 
         if share is None or decided < amb:  # mostly in cohorts where IntOGen could not tell the role
             out[gene] = make(uni, "UniProt") if uni else make("ambiguous", "IntOGen", "ambiguous cohorts")
-        elif cohorts < INTOGEN_MIN_COHORTS and decided < INTOGEN_MIN_SAMPLES:
+        elif decided < INTOGEN_FEWEST_SAMPLES or (cohorts < INTOGEN_MIN_COHORTS and decided < INTOGEN_MIN_SAMPLES):
             out[gene] = make(uni, "UniProt") if uni else make("ambiguous", "IntOGen", "thin")
         elif ACT_SHARE < share < LOF_SHARE:
             out[gene] = make(uni, "UniProt") if uni else make("ambiguous", "IntOGen")
@@ -373,13 +377,13 @@ def load(http: Http, cache: KeyValueCache, status: SourceStatus | None = None) -
     part of the data empty.
     """
     data = Data()
-    today = time.strftime("%Y-%m-%d")
+    today = time.strftime("%Y-%m-%d", time.gmtime())
     stored: dict[str, str] = dict(cache.get("oncogenicity|versions") or {})  # what each cached download was
     versions: dict[str, str] = {}  # the sources used in this run
 
     def from_cache(source: str, key: str) -> None:
         when = getattr(cache, "stored", lambda k: None)(key)
-        day = time.strftime("%Y-%m-%d", time.localtime(when)) if when else "an earlier run"
+        day = time.strftime("%Y-%m-%d", time.gmtime(when)) if when else "an earlier run"  # UTC, as the run record
         versions[source] = stored.get(source) or f"cached copy retrieved {day}"
 
     hot = cache.get("oncogenicity|cancerhotspots-single", max_age=DATA_MAX_AGE)
@@ -686,7 +690,9 @@ def _ovs1(row: Row, terms: set[str], structure: dict[str, Any] | None) -> tuple[
             f"canonical splice site; skipping exon {exon} would remove {share:.0%} of the coding sequence in frame",
         )
     nmd = str(row.get("nmd") or "")
-    if "escape" not in nmd:
+    # NMD expected, or uncertain at the penultimate exon; a change across an exon-intron boundary is graded
+    # like an escape, by the share of the protein removed (its splice effect is unknown)
+    if "escape" not in nmd and "boundary" not in nmd:
         return "OVS1", "truncating variant expected to undergo nonsense-mediated decay" + (
             f" ({nmd})" if "uncertain" in nmd else ""
         )
@@ -780,27 +786,32 @@ def _same_change(a: Assessment) -> None:
     (Horak et al. 2022, Table 1). Here the two ways of counting the change, OS1 with OM3 or OP3 and the
     evidence it excludes with OM3 or OP3, are alternatives and the stronger is kept, so that adding a
     reference never lowers the points: this departs from the standard when the excluded evidence is
-    stronger. A likely oncogenic reference (OS1_Moderate, two points, the tool's own level) therefore never
-    removes stronger evidence.
+    stronger. A likely oncogenic reference (OS1_Moderate, two points, the tool's own level) is weighed
+    alone against all the evidence for the change, OM3 and OP3 included, because its classification may
+    itself rest on the same hotspot; it is kept only when it is stronger, never on a tie.
     """
     if a.same_change is None:
         return
     code, why = a.same_change
     alt = [(c, w) for c, w in a.codes if c in SAME_CHANGE]
     alt_points = sum(POINTS[c] for c, _ in alt) + sum(POINTS[c] for c, _ in a.codes if c in WITH_OS1)
-    minor = a.hotspot if a.hotspot and a.hotspot[0] in WITH_OS1 else None  # kept or restored with OS1
+    # OM3/OP3 kept (or restored) with OS1, as the standard does; not with the tool's own OS1_Moderate
+    minor = a.hotspot if code == "OS1" and a.hotspot and a.hotspot[0] in WITH_OS1 else None
     os1_points = POINTS[code] + (POINTS[minor[0]] if minor else 0)
-    if os1_points >= alt_points:
+    if os1_points > alt_points or (os1_points == alt_points and code == "OS1"):
+        # OM3/OP3 are left out only with OS1_Moderate; with OS1 they stay (or come back as `minor`)
+        dropped = [c for c, _ in a.codes if c in SAME_CHANGE or (c in WITH_OS1 and minor is None)]
         a.codes = [(c, w) for c, w in a.codes if c not in SAME_CHANGE and c not in WITH_OS1]
         a.codes.append((code, why))
         if minor:
             a.codes.append(minor)
-        if alt:
-            a.notes.append(f"{', '.join(c for c, _ in alt)} not counted ({code} uses this amino-acid change)")
+        if dropped:
+            a.notes.append(f"{', '.join(dropped)} not counted ({code} uses this amino-acid change)")
         chosen = os1_points
     else:
         parts = [c for c, _ in alt] + [c for c, _ in a.codes if c in WITH_OS1]
-        a.notes.append(f"{code} not counted ({why}; {' + '.join(parts)} for this change is stronger)")
+        than = "is stronger" if alt_points > os1_points else "counts as much and is the standard's"
+        a.notes.append(f"{code} not counted ({why}; {' + '.join(parts)} for this change {than})")
         chosen = alt_points
     # the standard's rule: OS1 (with OM3 or OP3) from an oncogenic reference replaces the evidence it
     # excludes; a likely oncogenic reference gives no OS1, so the other evidence stands

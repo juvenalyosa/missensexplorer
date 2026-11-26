@@ -207,6 +207,6 @@ def test_nmd_of_a_change_spanning_exons_is_judged_by_its_last_exon():
     import importlib
 
     predict = importlib.import_module("missensexplorer.predict")
-    assert predict._nmd("9-10/10", {"frameshift_variant"}) == "NMD escape likely (last exon)"
+    assert predict._nmd("9-10/10", {"frameshift_variant"}) == "NMD uncertain (the change spans an exon-intron boundary)"
     assert predict._nmd("3/10", {"stop_gained"}).startswith("NMD likely")
     assert predict._nmd("x/10", {"stop_gained"}) is None

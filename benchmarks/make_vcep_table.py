@@ -116,15 +116,59 @@ def get(client: httpx.Client, url: str) -> dict:
 
 
 def _clean(text: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[*_\\]", "", text or "").replace("\xa0", " ")).strip()
+    """Plain text: no citation links, HTML tags, markdown emphasis or repeated spaces (2x10<sup>-4</sup> is 2x10^-4)."""
+    t = re.sub(r"\[<sup>[^<]*</sup>\]\([^)]*\)", "", text or "")  # citation links such as [<sup>16</sup>](#pmid…)
+    t = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", t)  # other markdown links: their text
+    t = re.sub(r"<sup>([^<]*)</sup>", r"^\1", t)
+    t = re.sub(r"<[^>]+>", "", t)
+    return re.sub(r"\s+", " ", re.sub(r"[*_\\]", "", t).replace("\xa0", " ")).strip()
 
 
 def _applicable(e: dict[str, Any]) -> bool:
     return str(e.get("applicability", "")).lower().startswith("applicable")
 
 
-def ba1_threshold(sid: str, text: str) -> dict[str, Any] | None:
-    """The BA1 allele-frequency threshold in a specification's text, or None when there is no text."""
+# BA1 texts with conditions beyond the threshold: allele counts, sex, other datasets, exclusions, founders
+BA1_CONDITIONS = re.compile(
+    r"alleles|allele count|\bmales?\b|hemizyg|homozyg|Exome Sequencing Project|\bESP\b|ExAC|1000 Genomes|"
+    r"exclu|founder|except|at least|observation|non-cancer|quality control|NOT MET|fail|caution|allele balance",
+    re.I,
+)
+HGVS = re.compile(r"c\.[0-9_+\-*]+[A-Za-z0-9>_+\-*]*|p\.\(?[A-Z][a-z]{2}\d+(?:[A-Z][a-z]{2}|Ter|fs|\*)[A-Za-z0-9*]*\)?")
+
+
+def ba1_conditions(raw: str) -> tuple[list[str], list[str]]:
+    """The clauses of a BA1 text with further conditions, and the variants it lists as BA1 exclusions."""
+    excluded: list[str] = []
+    if m := re.search(r"exclusion variants?(.*)$", raw or "", re.I | re.S):  # HGVS keeps its underscores here
+        excluded = list(dict.fromkeys(x.strip("()") for x in HGVS.findall(m.group(1).replace("\\", ""))))
+    out = []
+    for c in clauses(raw):
+        if re.search(r"exclusion variants", c, re.I) and excluded:
+            continue  # replaced by the list itself, below
+        if HGVS.fullmatch(c.split(" ")[-1].strip("()")) and excluded:
+            continue  # a line of the exclusion list
+        if BA1_CONDITIONS.search(c):
+            out.append(c if len(c) <= 220 else c[:219].rsplit(" ", 1)[0] + "…")
+    if excluded:  # 'c.14524G>A (p.Val4842Met)' when the protein change follows the DNA change
+        shown: list[str] = []
+        for x in excluded:
+            if x.startswith("p.") and shown and shown[-1].startswith("c.") and "(" not in shown[-1]:
+                shown[-1] += f" ({x})"
+            else:
+                shown.append(x)
+        out.append("BA1 exclusion variants: " + ", ".join(shown))
+    return out[:4], excluded
+
+
+def ba1_threshold(sid: str, text: str, raw: str = "") -> dict[str, Any] | None:
+    """The BA1 allele-frequency threshold in a specification's text, or None when there is no text.
+
+    Args:
+        sid: The specification's id (for the hand-checked corrections in BA1_FIX).
+        text: The applicable BA1 texts, cleaned and joined.
+        raw: The same texts as written (lines kept), for the conditions and the exclusion list.
+    """
     t = _clean(text)
     if not t:
         return None
@@ -148,7 +192,8 @@ def ba1_threshold(sid: str, text: str) -> dict[str, Any] | None:
                 break
         op = ">=" if re.search(r"≥|>=|greater than or equal|or greater", t, re.I) else ">"
         faf = bool(re.search(r"filter|FAF|lower bound|95%|99\.99% CI", t, re.I))
-    return {"value": value, "op": op, "faf": faf, "quote": t[:200]}
+    conditions, excluded = ba1_conditions(raw or text)
+    return {"value": value, "op": op, "faf": faf, "quote": t, "conditions": conditions, "excluded": excluded}
 
 
 def clauses(raw: str) -> list[str]:
@@ -199,7 +244,8 @@ def rule_set_entry(svi: dict[str, Any], rs: dict[str, Any], label: str) -> dict[
             if found := condition_quotes(raw):
                 conditions[crit] = found
         if crit == "BA1":
-            ba1 = ba1_threshold(sid, " / ".join(texts))
+            raw_ba1 = "\n".join(e.get("description") or "" for e in strengths if _applicable(e))
+            ba1 = ba1_threshold(sid, " / ".join(texts), raw_ba1)
     return {
         "panel": label,
         "id": sid,

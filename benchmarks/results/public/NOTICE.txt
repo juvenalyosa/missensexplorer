@@ -20,7 +20,8 @@ Kept, with their sources and terms:
 - gene roles from IntOGen (CC0; Martinez-Jimenez et al., Nat Rev Cancer 2020) and UniProt keywords
   (CC BY 4.0; The UniProt Consortium);
 - CIViC evidence identifiers (CC0);
-- the EGFR transformation results (ffa, baf3) of Ikeuchi et al. (CC BY 4.0; PLoS Comput Biol 2022).
+- the EGFR transformation results (ffa, baf3) of Ikeuchi et al. (CC BY 4.0; Oncogene 2022;41:2470-9).
 
 Outside this folder, tests/data holds a few recorded Ensembl VEP answers and model test vectors with REVEL,
-CADD and SpliceAI values, used only as test fixtures.
+CADD and SpliceAI values, and the tests quote a few cancerhotspots.org counts; they are used only as test
+fixtures.

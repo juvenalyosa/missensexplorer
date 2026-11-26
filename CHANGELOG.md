@@ -5,7 +5,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [2.5.0] — unreleased
 
-Corrections prompted by four rounds of review of the evaluation. The model and its PP3/BP4
+Corrections prompted by five rounds of review of the evaluation. The model and its PP3/BP4
 thresholds are retrained and recalibrated, so the results of 2.4 change.
 
 ### Fixed
@@ -29,19 +29,22 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   BA1 at 5% applies to genes without a gene-specific rule (Ghosh et al. 2018); nor does the prediction
   column call such a variant "common". When gnomAD could not be asked for allele numbers, the BA1 text
   says so.
-- A truncation whose VEP exon spans two exons ("9-10/10") is judged by its last exon for
-  nonsense-mediated decay (before, its decay was not assessed and it got full OVS1).
+- A truncation that spans two exons ("9-10/10" in VEP) crosses an exon-intron boundary: its
+  nonsense-mediated decay is "uncertain" and OVS1 is graded by the share of the protein removed (before,
+  its decay was not assessed and it got full OVS1).
 - When Ensembl cannot be reached but the cache holds earlier answers (a rerun of a published analysis),
-  the run goes on with the cached answers and says so, instead of stopping.
+  the run uses every cached answer, whatever its age, and says so (`cache_only` in the run record),
+  instead of stopping.
 - PS1/PM5: a ClinVar reference variant with a single review star counts one step lower (a pathogenic
   one like a likely pathogenic one; a likely pathogenic one not at all). Expert panels agreed with PM5
   from single-star references in only about a third of their classifications.
 - Somatic oncogenicity:
   - gene roles: IntOGen's role weighted by mutated samples in cohorts with a role (the majority of
     cohorts made SMARCA4, KEAP1, GATA3 and CHEK2 "activating"), when it rests on at least 2 cohorts with
-    a role or 20 samples in them, not outnumbered by samples in cohorts of ambiguous role (which made
-    PMS2 and SDHA "activating"; cohorts of ambiguous role no longer count towards the two cohorts, which
-    made MAML2 loss-of-function on one cohort); UniProt's curated keyword (tumour suppressor or proto-oncogene) when
+    a role or 20 samples in them, and never on fewer than 10 samples (POLE was "activating" on 4, CDKN2C
+    on 8), not outnumbered by samples in cohorts of ambiguous role (which made PMS2 and SDHA "activating";
+    cohorts of ambiguous role no longer count towards the two cohorts, which made MAML2 loss-of-function
+    on one cohort); UniProt's curated keyword (tumour suppressor or proto-oncogene) when
     IntOGen is absent, ambiguous or too thin; when they disagree, IntOGen decides only with at least 3
     cohorts and 50 samples, otherwise the role is ambiguous (UniProt's Proto-oncogene keyword also marks
     fusion genes such as RUNX1, NSD1 and CBFB, whose point mutations inactivate them; a few IntOGen
@@ -51,8 +54,10 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
     OP3, which the standard combines with OS1) and the evidence the standard does not use with OS1 (OS3,
     OS2, OM4, with OM3 or OP3) are alternatives, and the stronger is kept (before, a likely oncogenic
     reference, OS1_Moderate, removed OS3, OS2 and OM4: TP53 p.K132N fell to VUS; and OS1 removed OM3 and
-    OP3). OM3 comes back when OS1 replaces OM4. Keeping the excluded evidence when it is stronger departs
-    from the standard; the evidence then gives the points under the standard's rule;
+    OP3). OM3 comes back when OS1 replaces OM4. OS1_Moderate, the tool's own level for a likely oncogenic
+    reference, is not combined with OM3 or OP3 (that reference may itself rest on the same hotspot) and
+    gives way to the standard's criteria on a tie. Keeping the excluded evidence when it is stronger
+    departs from the standard; the evidence then gives the points under the standard's rule;
   - OP4 ("absent from gnomAD") needs gnomAD itself to confirm the absence, with enough coverage, as
     PM2 does (before, it was also given when gnomAD had not been asked);
   - CIViC is read from its monthly release (citable), not the nightly file, with English month names
@@ -86,12 +91,14 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   - the panel's own BA1 threshold, read from its text (VWF's is above 10%, most are far below 5%), with a
     warning when the panel applies it to the filtering allele frequency, which the tool does not compute,
     and the text quoted when it sets further conditions (allele counts, males only, other datasets,
-    excluded or founder variants);
+    excluded or founder variants), whichever frequency the panel uses; a variant on the panel's own BA1
+    exclusion list (RYR1, NEB, ACTA1) or on ClinGen's BA1 exception list is said not to meet BA1;
   - its conditions the tool cannot check, quoted from the clause that states them (for example,
     references classified under its specification, PM5 not with PM1);
   - the disease and mode of inheritance of each specification, from CSpec's structured fields;
   - for the ten panels whose PP3/BP4, PM2 and BA1 rules were encoded by hand (`vcep_rules.py`), what
-    those rules give for the variant.
+    those rules give for the variant (PM2 "not assessed" without gnomAD data; the Myeloid Malignancy
+    panel's 20x coverage for an absent variant).
   The notes are shown in the ACMG section of the desktop app, the web app and the reports.
 - A note when PP3 at moderate or stronger meets PS1/PM5, which may share residue-level information
   (Pejaver et al. 2022); it is in `acmg_notes` too.
@@ -113,6 +120,7 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   quoted in text columns are removed, `NOTICE.txt` lists each kept source and its terms, and the files are
   byte-for-byte reproducible. `benchmarks/requirements-lock.txt` lists the exact package versions of the
   analysis environment, and the `benchmark` extra now includes SciPy, which the scripts need.
+- CI also runs the desktop app's tests and the CIViC test under a Spanish locale.
 
 ### Changed
 - The `acmg_notes` column is new and sits after `vcep_specification`; the overlap and expert-panel

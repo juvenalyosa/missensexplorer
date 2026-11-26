@@ -115,7 +115,12 @@ def tool_row(r: dict) -> dict:
 
 
 def notes_on_erepo(df: pd.DataFrame, d: pd.DataFrame) -> dict:
-    """What the tool's expert-panel notes (vcep.notes, as predict.py calls it) say on the eRepo classifications."""
+    """What the tool's expert-panel notes (vcep.notes, as predict.py calls it) say on the eRepo classifications.
+
+    The rows are rebuilt from the per-variant table, which does not keep gnomAD's frequency in groups with at
+    least 2,000 alleles (``_grpmax_2000``): for the three variants above 5% the BA1 part of a note can differ
+    from the pipeline's (CYP1B1 p.Ala443Gly); none of them changes the counts reported here.
+    """
     notes = {i: " | ".join(vcep.notes(tool_row(r))) for i, r in df.to_dict("index").items()}
     text = pd.Series(notes)
     # the ten panels: the note gives the panel rules' PP3/BP4, which differs from the tool's here

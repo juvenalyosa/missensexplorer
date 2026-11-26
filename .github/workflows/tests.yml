@@ -25,3 +25,19 @@ jobs:
       # the benchmark extra lets the tests of the benchmark helpers (tests/test_benchmark_helpers.py) run
       - run: pip install -e ".[dev,benchmark]"
       - run: pytest -q --cov --cov-report=term:skip-covered
+  gui:
+    # the desktop app's tests and its translations (57 tests), and the CIViC release names under a Spanish locale
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y locales libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+          sudo locale-gen es_ES.UTF-8
+      - run: pip install -e ".[dev,gui,benchmark]"
+      - run: pytest -q -rs tests/test_gui.py tests/test_oncogenicity.py

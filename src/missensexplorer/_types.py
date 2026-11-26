@@ -33,3 +33,7 @@ class KeyValueCache(Protocol):
     def set_many(self, items: dict[str, Any]) -> None:
         """Store several values at once."""
         ...
+
+    def freeze(self) -> None:
+        """Return stored values whatever their age (a rerun from the cache without the internet)."""
+        ...

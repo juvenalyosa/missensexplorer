@@ -398,6 +398,13 @@ Produced by `benchmarks/erepo_clinvar_history.py`. `tool`: the tool's calls (cur
    "gross": 0.5797,
    "net": 0.5797
   },
+  "within_panel_net": {
+   "net": 0.2067,
+   "discordant_in_panels_used": [
+    485,
+    523
+   ]
+  },
   "release_lag_days": {
    "median": 46.0,
    "min": 28,

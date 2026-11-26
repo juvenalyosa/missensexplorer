@@ -375,6 +375,13 @@ def main() -> int:
          ("2016-2021 without Phenylketonuria", (yr <= 2021) & ~pku))
     }  # fmt: skip
     attribution["phenylketonuria_2016_2021"] = rates(shares(ev[(yr <= 2021) & pku]))
+    # sensitivity: the concordant loss rate taken within each panel (panels with >= 5 concordant applications)
+    within = [shares(g) for _, g in ev.groupby("panel")]
+    kept = [t for t in within if t[3] >= 5 and t[1]]
+    attribution["within_panel_net"] = {
+        "net": round(sum(t[0] - t[1] * t[2] / t[3] for t in kept) / sum(t[1] for t in kept), 4),
+        "discordant_in_panels_used": [sum(t[1] for t in kept), sum(t[1] for t in within)],
+    }
     lags = pd.Series([v["lag_days"] for v in variants if v["lag_days"] is not None])
     attribution["release_lag_days"] = {"median": float(lags.median()), "min": int(lags.min()), "max": int(lags.max())}
     attribution["clinvar_only_excess_share"] = round(

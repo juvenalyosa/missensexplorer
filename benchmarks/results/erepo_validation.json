@@ -1,13 +1,14 @@
 {
- "generated": "2026-11-26T14:27:49Z",
+ "generated": "2026-11-26T17:47:51Z",
  "missensexplorer": "2.5.0",
  "run": {
   "tool": "MissensExplorer 2.5.0",
-  "started_utc": "2026-11-26T14:27:44+00:00",
-  "seconds": "3.6",
+  "started_utc": "2026-11-26T17:47:40+00:00",
+  "seconds": "8.6",
   "assembly": "GRCh38",
   "annotation": "Ensembl VEP REST, release 116",
   "ensembl_release": "116",
+  "cache_only": "False",
   "options": "{'assembly': 'auto', 'default_gene': None, 'genes': None, 'sample': None, 'pass_only': False, 'include_noncoding': False, 'predictors': True, 'protein_context': False, 'clinvar': True, 'sequences': False, 'vep': 'rest', 'vep_command': None, 'vep_args': None, 'offline': False, 'common_af': 0.05, 'acmg_source': 'model', 'gnomad_check': True, 'oncogenicity': False, 'workers': 6, 'cache': True}",
   "inputs": "{'text_lines': 6389, 'files': []}",
   "sources": "{'ClinVar': 'ok', 'Ensembl VEP': 'ok', 'VEP predictor plugins': 'ok'}",
@@ -763,5 +764,5 @@
    "Uncertain (conflicting predictors)": 321
   }
  },
- "seconds": 51
+ "seconds": 111
 }

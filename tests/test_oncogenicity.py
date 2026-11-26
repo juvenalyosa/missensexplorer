@@ -158,6 +158,14 @@ def test_ovs1_is_graded_like_pvs1_by_decay_and_the_share_of_protein_removed():
     assert "OVS1 not applied (not a loss-of-function gene" in b.evidence()
 
 
+def test_a_truncation_across_an_exon_intron_boundary_is_graded_by_the_share_removed():
+    r = row("TP53", "R306*", 306, "R", "*", nmd="NMD uncertain (the change spans an exon-intron boundary)",
+            protein_length=393)  # fmt: skip
+    code, why = onco._ovs1(r, {"frameshift_variant"}, None)
+    assert code == "OVS1_Strong"  # removes 22% of the protein; not full OVS1, as for an expected decay
+    assert why.startswith("NMD uncertain (the change spans an exon-intron boundary)")
+
+
 def test_splice_site_ovs1_depends_on_whether_skipping_the_exon_keeps_the_frame():
     # exons in transcript order (plus strand); the CDS runs from 105 to 400
     structure = {"exons": [[1, 110], [201, 260], [301, 400]], "cds": [105, 400], "length": 100}
@@ -420,6 +428,10 @@ def test_gene_roles_come_from_intogen_weighted_by_samples_then_uniprot_keywords(
     # cohorts of ambiguous role do not count towards the two cohorts IntOGen needs (MAML2: one cohort of 14)
     assert roles["MAML"].role == "ambiguous"
     assert not roles["MAML"].decisive
+    # nor do fewer than 10 samples, however many cohorts (POLE was "activating" on 4 samples in 2 cohorts)
+    few = onco.combine_roles(onco.parse_intogen(intogen_zip([("POLX", "Act", 2), ("POLX", "Act", 2)])), set(), set())
+    assert few["POLX"].role == "ambiguous"
+    assert "too few to decide" in few["POLX"].text()
     assert onco.parse_uniprot("Entry\tGene Names (primary)\nP1\tTP53\nP2\t\n") == {"TP53"}
 
 
@@ -620,6 +632,19 @@ def test_os1_combines_with_om3_and_op3_as_the_standard_does():
     d = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, None, data(), [same, ref("p.Gly719Ser", "S")])
     assert codes(d) == ["OS1", "OM3", "OP4"]
     assert "OM4 not counted (OS1 uses this amino-acid change)" in d.evidence()
+
+
+def test_a_likely_oncogenic_reference_is_not_added_to_the_hotspot_criteria():
+    """OS1_Moderate (the tool's own level) is weighed alone against OM3/OP3: the reference's classification may
+    rest on the same hotspot (TP53 F134L: two DNA changes, each the other's likely oncogenic reference)."""
+    lo = ref("p.Gly719Ala", "A", level="LO", same=True)
+    a = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, "damaging", data(), [lo])
+    assert codes(a) == ["OM3", "OP1", "OP4"]  # a tie (2 against 2): the standard's criterion is kept
+    assert "OM3 for this change counts as much and is the standard's" in a.evidence()
+    b = onco.assess(egfr("G719C"), {"missense_variant"}, None, data(), [ref("p.Gly719Cys", "C", level="LO", same=True)])
+    assert codes(b) == ["OS1_Moderate", "OP4"]  # 2 points against OP3's 1: OS1_Moderate replaces OP3
+    assert "OP3 not counted (OS1_Moderate uses this amino-acid change)" in b.evidence()
+    assert b.points == 3
 
 
 def test_the_standards_rule_for_os1_is_reported_when_it_differs():

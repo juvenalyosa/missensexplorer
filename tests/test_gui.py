@@ -236,6 +236,8 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "OP4 not applied (absent from gnomAD, but few reads there)",
         "ambiguous (IntOGen: 12 mutated samples in 1 cohort with a role: too few to decide)",
         "OM4 not counted (OS1 uses this amino-acid change)",
+        "OS1_Moderate not counted (same change by c.1A>G: Likely oncogenic, VCV1; OM3 for this change counts as much "
+        "and is the standard's)",
         "OS2, OM4_Supporting not counted (OS1_Moderate uses this amino-acid change)",
         "OS1_Moderate not counted (same change by c.1A>G: Likely oncogenic, VCV1; OM4_Supporting + OP3 for this "
         "change is stronger)",
@@ -245,7 +247,15 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "UniProt keywords unavailable: gene roles from IntOGen only",
         "Ensembl cannot be reached: only answers already in the cache are used",
         "PM2 met (absent from gnomAD, but few reads there: check)",
+        "PM2 not assessed (no gnomAD data)",
+        "NMD uncertain (the change spans an exon-intron boundary)",
+        "PM2 not met (absent from gnomAD, but the panel requires 20x coverage)",
         "grpmax 2% is at or above its BA1 threshold (>= 0.4%): check its other BA1 conditions",
+        "on ClinGen's BA1 exception list (Ghosh et al. 2018): BA1 does not apply, whatever the panel's threshold",
+        "on the panel's BA1 exclusion list (well-known pathogenic variants): BA1 does not apply",
+        "grpmax allele frequency 0.04% is above its BA1 threshold (>= 0.00486%), which it applies to the filtering "
+        "allele frequency (not computed here): check the filtering allele frequency and its other BA1 conditions "
+        "before BA1 (its other BA1 conditions: “x”)",
         "has no PM5 below Moderate: the tool lowered PM5 because the ClinVar reference is likely pathogenic or has one "
         "review star, and the panel judges the reference under its own specification",
         "the standard's rule for OS1 would give 6 points",

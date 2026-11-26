@@ -326,3 +326,43 @@ def test_an_unreachable_ensembl_with_a_filled_cache_uses_the_cache(monkeypatch, 
     P._check_connection(ctx)  # a rerun from a filled cache goes on, and says so
     assert ctx.warnings == ["Ensembl cannot be reached: only answers already in the cache are used"]
     cache.close()
+
+
+def test_a_rerun_from_the_cache_without_the_internet_gives_the_same_rows(monkeypatch, tmp_path):
+    """A run fills the cache; two days later, with Ensembl unreachable, the same input gives the same rows."""
+    import time as _time
+
+    import missensexplorer.cache as cache_mod
+    from missensexplorer.api import Http
+
+    braf = json.loads((DATA / "vep_braf_v600e_region.json").read_text())
+    online = {"on": True}
+
+    def handler(request):
+        if not online["on"]:
+            raise httpx.ConnectError("no network", request=request)
+        if request.url.path.endswith("/info/software"):
+            return httpx.Response(200, json={"release": 116})
+        if "/vep/" in request.url.path:
+            return httpx.Response(200, json=braf)
+        return httpx.Response(404, json={})
+
+    class MockHttp(Http):
+        def __init__(self, *a, **k):
+            super().__init__(*a, max_retries=1, transport_retries=1, max_wait=0, **k)
+            self.client = httpx.Client(transport=httpx.MockTransport(handler))
+
+    monkeypatch.setattr(P, "Http", MockHttp)
+    opts = {"cache_path": str(tmp_path / "c.sqlite"), "clinvar": False, "protein_context": False,
+            "sequences": False, "gnomad_check": False}  # fmt: skip
+    first = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
+    assert len(first.table) == 1
+    online["on"] = False
+    later = _time.time() + 2 * 86400  # the cached Ensembl release (kept a day) has expired
+    monkeypatch.setattr(cache_mod.time, "time", lambda: later)
+    again = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
+    assert "Ensembl cannot be reached: only answers already in the cache are used" in again.warnings
+    assert again.run["cache_only"]
+    assert again.run["ensembl_release"] == 116
+    cols = ["gene", "protein_change", "prediction", "acmg_pp3_bp4"]
+    assert again.table[cols].equals(first.table[cols])

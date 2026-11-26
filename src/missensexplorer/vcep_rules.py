@@ -27,10 +27,12 @@ REVEL_PEJAVER_BP4 = [(0.016, 4), (0.183, 2), (0.290, 1)]
 
 RULES: dict[str, dict] = {
     # Myeloid Malignancy VCEP v3.1 (GN008): PP3 "REVEL score >= 0.88 or SpliceAI >= 0.38"; BP4 "REVEL score
-    # < 0.50 AND SpliceAI <= 0.20"; PM2 "Minor allele frequency <= 0.00005"; BA1 ">= 0.0015 (0.15%)".
+    # < 0.50 AND SpliceAI <= 0.20"; PM2 "Minor allele frequency <= 0.00005 with at least 2000 alleles tested
+    # around and 20x coverage at the position" (an absent variant counts only with that coverage);
+    # BA1 ">= 0.0015 (0.15%)".
     "RUNX1": {"panel": "Myeloid Malignancy", "spec": "GN008", "score": "revel", "pp3": [(0.88, 1)],
               "pp3_spliceai": 0.38, "bp4": [(0.50, 1)], "bp4_strict": True, "bp4_spliceai_max": 0.20,
-              "pm2": ("le", 0.00005), "ba1": ("ge", 0.0015)},
+              "pm2": ("le", 0.00005), "pm2_coverage": True, "ba1": ("ge", 0.0015)},
     # Monogenic Diabetes VCEP (GN086 GCK v3.1, GN017 HNF1A v3.1, GN085 HNF4A v4.0): PP3 "REVEL score of
     # >= 0.70"; BP4 "REVEL score of <= 0.15"; PM2 "Grpmax FAF <= 1:333,000 (<= 0.000003)"; BA1 "Grpmax FAF
     # >= 1:10,000 (>= 0.0001)".
@@ -124,8 +126,12 @@ def panel_rule_codes(
         out["PP3"] = 1
     af = row.get(af_key)
     af = None if af is None or (isinstance(af, float) and np.isnan(af)) else float(af)
-    # absent from gnomAD, whatever the coverage: the panels' rules ask for absence (or a low frequency) only
-    absent = af is None and "absent from gnomAD" in str(row.get(pm2_key) or "")
+    # absent from gnomAD counts as absent whatever the coverage, as the panels' rules ask, except where the rule
+    # itself requires coverage (Myeloid Malignancy: 20x), where the tool's confirmed absence (PM2_Supporting) is used
+    pm2_text = str(row.get(pm2_key) or "")
+    absent = af is None and (
+        pm2_text.startswith("PM2_Supporting") if rule.get("pm2_coverage") else "absent from gnomAD" in pm2_text
+    )
     pm2 = rule.get("pm2")
     if pm2:
         out["PM2"] = int(absent if pm2[0] == "absent" else (absent or (af is not None and _cmp(af, *pm2))))
@@ -157,9 +163,18 @@ def describe(row: dict[str, Any]) -> str | None:
     else:
         parts.append(f"neither PP3 nor BP4 (REVEL {float(s):.3f})")
     if rule.get("pm2"):
-        low = c["PM2"] and "few reads there" in str(row.get("acmg_pm2") or "")
-        met = "PM2 met (absent from gnomAD, but few reads there: check)" if low else "PM2 met"
-        parts.append(met if c["PM2"] else "PM2 not met")
+        pm2_text = str(row.get("acmg_pm2") or "")
+        af = row.get("gnomad_popmax_af")
+        no_data = (af is None or (isinstance(af, float) and np.isnan(af))) and "absent from gnomAD" not in pm2_text
+        low = "few reads there" in pm2_text
+        if c["PM2"]:
+            parts.append("PM2 met (absent from gnomAD, but few reads there: check)" if low else "PM2 met")
+        elif no_data:
+            parts.append("PM2 not assessed (no gnomAD data)")
+        elif low and rule.get("pm2_coverage"):
+            parts.append("PM2 not met (absent from gnomAD, but the panel requires 20x coverage)")
+        else:
+            parts.append("PM2 not met")
     if c["BA1"]:
         parts.append("BA1 met")
     return ", ".join(parts)

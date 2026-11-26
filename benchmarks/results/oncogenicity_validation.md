@@ -16,7 +16,7 @@ Produced by `benchmarks/validate_oncogenicity.py`. The points follow the ClinGen
 | EGFR | Ba/F3 (missense) | 258 | 200 | 0.214 | **0.396** (0.341–0.45) | 0.395 |
 | EGFR | Ba/F3 (all) | 279 | 212 | 0.214 | **0.393** (0.335–0.454) | 0.39 |
 | TP53 | Kato (missense) | 1724 | 493 | 0.927 | **0.931** (0.916–0.947) | 0.928 |
-| TP53 | Giacomelli (missense) | 2158 | 570 | 0.84 | **0.848** (0.826–0.868) | 0.845 |
+| TP53 | Giacomelli (missense) | 2158 | 570 | 0.84 | **0.847** (0.826–0.868) | 0.845 |
 
 ## CIViC
 
@@ -42,7 +42,7 @@ Items that cite the validation assays or yeast assays like Kato's are left out h
 
 | Kato class | Oncogenic | Likely oncogenic | VUS | Likely benign | Benign | mixed | not assessed |
 |---|---|---|---|---|---|---|---|
-| non-functional | 2 | 91 | 398 | 1 | 0 | 1 | 0 |
+| non-functional | 2 | 90 | 399 | 1 | 0 | 1 | 0 |
 | partially functional | 0 | 5 | 571 | 5 | 0 | 1 | 0 |
 | functional | 0 | 0 | 1123 | 21 | 0 | 3 | 0 |
 | supertrans | 0 | 0 | 80 | 4 | 0 | 0 | 0 |

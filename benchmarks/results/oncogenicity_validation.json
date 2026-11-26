@@ -274,26 +274,26 @@
     ],
     "points_without_clinvar": 0.928,
     "points_without_op1_sbp1": 0.868,
-    "hotspot_points_only": 0.836,
+    "hotspot_points_only": 0.835,
     "hotspot_only_minus_points": {
-     "auc_a": 0.836146,
-     "auc_b": 0.931214,
-     "difference": -0.095069,
+     "auc_a": 0.83505,
+     "auc_b": 0.931179,
+     "difference": -0.09613,
      "ci": [
-      -0.112402,
-      -0.077735
+      -0.113552,
+      -0.078708
      ],
-     "p": 5.9303365244881806e-27
+     "p": 2.940462853191285e-27
     },
     "without_op1_sbp1_minus_points": {
-     "auc_a": 0.867711,
-     "auc_b": 0.931214,
-     "difference": -0.063503,
+     "auc_a": 0.867662,
+     "auc_b": 0.931179,
+     "difference": -0.063517,
      "ci": [
-      -0.078196,
-      -0.04881
+      -0.078211,
+      -0.048824
      ],
-     "p": 2.4343656371457135e-17
+     "p": 2.3987036336558188e-17
     },
     "model": 0.927,
     "model_n": 1724,
@@ -302,46 +302,46 @@
      0.943
     ],
     "points_minus_model_paired": {
-     "auc_a": 0.931214,
+     "auc_a": 0.931179,
      "auc_b": 0.92737,
-     "difference": 0.003844,
+     "difference": 0.00381,
      "ci": [
-      -0.003248,
-      0.010936
+      -0.003285,
+      0.010904
      ],
-     "p": 0.28803658511861596
+     "p": 0.2926029590764474
     }
    },
    "Giacomelli (missense)": {
     "n": 2158,
     "positives": 570,
-    "points": 0.848,
+    "points": 0.847,
     "points_ci": [
      0.826,
      0.868
     ],
     "points_without_clinvar": 0.845,
     "points_without_op1_sbp1": 0.782,
-    "hotspot_points_only": 0.752,
+    "hotspot_points_only": 0.751,
     "hotspot_only_minus_points": {
-     "auc_a": 0.751776,
-     "auc_b": 0.847529,
-     "difference": -0.095752,
+     "auc_a": 0.750798,
+     "auc_b": 0.84749,
+     "difference": -0.096692,
      "ci": [
-      -0.112628,
-      -0.078876
+      -0.113642,
+      -0.079742
      ],
-     "p": 9.964122684098351e-29
+     "p": 5.060888638271511e-29
     },
     "without_op1_sbp1_minus_points": {
-     "auc_a": 0.781752,
-     "auc_b": 0.847529,
-     "difference": -0.065776,
+     "auc_a": 0.781698,
+     "auc_b": 0.84749,
+     "difference": -0.065792,
      "ci": [
-      -0.080804,
-      -0.050749
+      -0.08082,
+      -0.050765
      ],
-     "p": 9.58220690055776e-18
+     "p": 9.407044522308536e-18
     },
     "model": 0.84,
     "model_n": 2158,
@@ -350,22 +350,22 @@
      0.861
     ],
     "points_minus_model_paired": {
-     "auc_a": 0.847529,
+     "auc_a": 0.84749,
      "auc_b": 0.83987,
-     "difference": 0.007658,
+     "difference": 0.00762,
      "ci": [
-      -0.001813,
-      0.017129
+      -0.001851,
+      0.017092
      ],
-     "p": 0.11300307921345773
+     "p": 0.1148285273993785
     }
    }
   },
   "tiers": {
    "non-functional": {
     "Oncogenic": 2,
-    "Likely oncogenic": 91,
-    "VUS": 398,
+    "Likely oncogenic": 90,
+    "VUS": 399,
     "Likely benign": 1,
     "mixed": 1
    },
@@ -403,10 +403,9 @@
    }
   },
   "standard_os1_rule": {
-   "variants_with_other_points": 4,
+   "variants_with_other_points": 3,
    "class_changes": {
     "VUS -> VUS": 2,
-    "Likely oncogenic -> VUS": 1,
     "Oncogenic -> Likely oncogenic": 1
    }
   },
@@ -441,12 +440,12 @@
   "baf3_transforming": 9
  },
  "civic_dropped": 78,
- "generated": "2026-11-26T15:59:11Z",
+ "generated": "2026-11-26T17:50:06Z",
  "missensexplorer": "2.5.0",
  "data_versions": {
   "cancerhotspots.org": "cached copy retrieved 2026-11-25",
   "IntOGen": "IntOGen-Drivers-20240920",
-  "UniProt": "cached copy retrieved 2026-11-26",
+  "UniProt": "cached copy retrieved 2026-11-25",
   "CIViC": "monthly release 01-Nov-2026",
   "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
  },
@@ -456,11 +455,12 @@
    "inputs": 345,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T15:58:49+00:00",
-    "seconds": 0.4,
+    "started_utc": "2026-11-26T17:49:38+00:00",
+    "seconds": 0.5,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
+    "cache_only": false,
     "options": {
      "assembly": "auto",
      "default_gene": null,
@@ -500,7 +500,7 @@
     "data_versions": {
      "cancerhotspots.org": "cached copy retrieved 2026-11-25",
      "IntOGen": "IntOGen-Drivers-20240920",
-     "UniProt": "cached copy retrieved 2026-11-26",
+     "UniProt": "cached copy retrieved 2026-11-25",
      "CIViC": "monthly release 01-Nov-2026",
      "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
     },
@@ -521,11 +521,12 @@
    "inputs": 345,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T15:58:49+00:00",
+    "started_utc": "2026-11-26T17:49:39+00:00",
     "seconds": 0.3,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
+    "cache_only": false,
     "options": {
      "assembly": "auto",
      "default_gene": null,
@@ -564,7 +565,7 @@
     "data_versions": {
      "cancerhotspots.org": "cached copy retrieved 2026-11-25",
      "IntOGen": "IntOGen-Drivers-20240920",
-     "UniProt": "cached copy retrieved 2026-11-26",
+     "UniProt": "cached copy retrieved 2026-11-25",
      "CIViC": "monthly release 01-Nov-2026",
      "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
     },
@@ -585,11 +586,12 @@
    "inputs": 2571,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T15:58:50+00:00",
-    "seconds": 2.4,
+    "started_utc": "2026-11-26T17:49:39+00:00",
+    "seconds": 3.0,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
+    "cache_only": false,
     "options": {
      "assembly": "auto",
      "default_gene": null,
@@ -628,7 +630,7 @@
     "data_versions": {
      "cancerhotspots.org": "cached copy retrieved 2026-11-25",
      "IntOGen": "IntOGen-Drivers-20240920",
-     "UniProt": "cached copy retrieved 2026-11-26",
+     "UniProt": "cached copy retrieved 2026-11-25",
      "CIViC": "monthly release 01-Nov-2026",
      "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
     },
@@ -649,11 +651,12 @@
    "inputs": 2571,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T15:58:55+00:00",
-    "seconds": 1.8,
+    "started_utc": "2026-11-26T17:49:47+00:00",
+    "seconds": 2.2,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
+    "cache_only": false,
     "options": {
      "assembly": "auto",
      "default_gene": null,
@@ -691,7 +694,7 @@
     "data_versions": {
      "cancerhotspots.org": "cached copy retrieved 2026-11-25",
      "IntOGen": "IntOGen-Drivers-20240920",
-     "UniProt": "cached copy retrieved 2026-11-26",
+     "UniProt": "cached copy retrieved 2026-11-25",
      "CIViC": "monthly release 01-Nov-2026",
      "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
     },
