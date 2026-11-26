@@ -39,6 +39,7 @@ BA1 exception list are never called benign for being common.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from typing import Any, TypeAlias, TypedDict, cast
 
@@ -209,6 +210,33 @@ def overlap_note(row: Row) -> str | None:
             "exceed 4 points"
         )
     return None
+
+
+def common_pathogenic_note(row: Row, ba1_noted: bool = False) -> str | None:
+    """A caution when a frequent variant, or one at an expert panel's BA1 threshold, is pathogenic in ClinVar.
+
+    Well-known pathogenic variants can be common (HbS in HBB, GJB2 p.Met34Thr) without being on ClinGen's BA1
+    exception list; the panels keep them pathogenic on other evidence. The variant's own classification is
+    shown as a caution, never counted as evidence.
+
+    Args:
+        row: One results row with ``clinvar``, ``clinvar_stars`` and ``population_frequency`` filled.
+        ba1_noted: An expert-panel note says the panel's BA1 threshold is reached.
+
+    Returns:
+        The caution, or None.
+    """
+    cls = str(row.get("clinvar") or "")
+    stars = _num(row.get("clinvar_stars"))
+    freq = str(row.get("population_frequency") or "")
+    if not re.match(r"(Likely pathogenic|Pathogenic)(/Likely pathogenic)?$", cls) or stars is None or stars < 2:
+        return None
+    if not (ba1_noted or freq.startswith(("frequent", "common"))):
+        return None
+    return (
+        f"ClinVar: {cls} ({int(stars)}\u2605): a common pathogenic variant; review BA1 and BS1 before using them "
+        "(expert panels keep such variants pathogenic on other evidence)"
+    )
 
 
 def thresholds_used(evidence: object) -> str | None:

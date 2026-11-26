@@ -67,13 +67,41 @@ def test_ba1_against_the_panel_threshold():
     # the panels' further BA1 conditions are quoted whether they use the filtering allele frequency or not
     ryr1 = next(n for n in vcep.notes({"gene": "RYR1", "acmg_points": 0, "gnomad_popmax_af": 0.0004,
                                        "population_frequency": "rare"}) if "GN150" in n)  # fmt: skip
-    assert "BA1 exclusion variants: c.14524G>A (p.Val4842Met), c.325C>T (p.Arg109Trp)" in ryr1
+    assert "BA1 exclusion variants (NM_000540.3: c.14524G>A (p.Val4842Met), c.325C>T (p.Arg109Trp))" in ryr1
     mlh1 = vcep.notes({"gene": "MLH1", "acmg_points": 0, "gnomad_popmax_af": 0.002, "population_frequency": "rare"})[0]
     assert "excluded as founder pathogenic variant" in mlh1
     # a variant on the panel's own exclusion list, or on ClinGen's BA1 exception list, is never sent to BA1
     v4842m = {"gene": "RYR1", "acmg_points": 0, "gnomad_popmax_af": 0.004, "population_frequency": "rare",
-              "hgvsc": "ENST00000359596.8:c.14524G>A", "hgvsp": "ENSP00000352608.2:p.Val4842Met"}  # fmt: skip
-    assert any("on the panel's BA1 exclusion list" in n for n in vcep.notes(v4842m))
+              "mane_select": "NM_000540.3", "hgvsc": "ENST00000359596.8:c.14524G>A",
+              "hgvsp": "ENSP00000352608.2:p.Val4842Met"}  # fmt: skip
+    assert any("on the panel's BA1 exclusion list (well-known pathogenic variants): BA1 and BS1 do not apply" in n
+               for n in vcep.notes(v4842m))  # fmt: skip
+    # the lists are numbered on MANE Select: the same text on another transcript is another variant
+    assert not any("exclusion list" in n for n in vcep.notes({**v4842m, "mane_select": None}))
+    # NEB's list is numbered on NM_001271208.2: its p.Thr7417Pro is p.Thr7382Pro (c.22144A>C) on MANE Select
+    neb = {
+        "gene": "NEB",
+        "acmg_points": 0,
+        "gnomad_popmax_af": 0.01,
+        "population_frequency": "frequent",
+        "mane_select": "NM_001164508.2",
+        "hgvsc": "ENST00000397345.8:c.22144A>C",
+        "hgvsp": "ENSP1:p.Thr7382Pro",
+    }
+    assert any("on the panel's BA1 exclusion list" in n for n in vcep.notes(neb))
+    assert not any(
+        "exclusion list" in n for n in vcep.notes({**neb, "hgvsc": "x:c.22249A>C", "hgvsp": "x:p.Thr7417Pro"})
+    )
+    # 'p.Arg41*' and VEP's 'p.Arg41Ter'; 'p.Asp181fs' and any frameshift there (ACTA1)
+    acta1 = {
+        "gene": "ACTA1",
+        "acmg_points": 0,
+        "gnomad_popmax_af": 0.03,
+        "population_frequency": "frequent",
+        "mane_select": "NM_001100.4",
+    }
+    assert any("exclusion list" in n for n in vcep.notes({**acta1, "hgvsp": "x:p.Arg41Ter"}))
+    assert any("exclusion list" in n for n in vcep.notes({**acta1, "hgvsp": "x:p.Asp181ThrfsTer3"}))
     gjb2 = {"gene": "GJB2", "acmg_points": 0, "gnomad_popmax_af": 0.071, "population_frequency": "frequent",
             "rsid": "rs72474224", "alt": "T"}  # fmt: skip
     assert "on ClinGen's BA1 exception list" in vcep.notes(gjb2)[0]

@@ -555,13 +555,31 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"uses (PP3|BP4) only at ([^:;|]+?) \(its own thresholds\)", r"usa \1 solo con fuerza \2 (sus propios umbrales)"),
     (
         r"grpmax allele frequency ([\d.e+-]+%) is above its BA1 threshold \((>=?) ([\d.e+-]+%)\), which it applies "
-        r"to the filtering allele frequency \(not computed here\): check the filtering allele frequency and its other "
-        r"BA1 conditions before BA1",
-        r"la frecuencia alélica grpmax \1 supera su umbral de BA1 (\2 \3), que aplica a la frecuencia alélica de "
-        r"filtrado (no calculada aquí): compruebe la frecuencia de filtrado y sus otras condiciones de BA1 antes de "
-        r"aplicar BA1",
+        r"to the filtering allele frequency \(not computed here\): check the filtering allele frequency( and its "
+        r"other BA1 conditions)? before BA1",
+        lambda m: (
+            f"la frecuencia alélica grpmax {m[1]} supera su umbral de BA1 ({m[2]} {m[3]}), que aplica a la frecuencia "
+            "alélica de filtrado (no calculada aquí): compruebe la frecuencia de filtrado"
+            + (" y sus otras condiciones de BA1" if m[4] else "")
+            + " antes de aplicar BA1"
+        ),
     ),
-    (r" \(its other BA1 conditions: “", r" (sus otras condiciones de BA1: “"),
+    (r"BA1 exclusion variants \(", r"variantes excluidas de BA1 ("),
+    (
+        r"ClinVar: (Pathogenic|Likely pathogenic|Pathogenic/Likely pathogenic) \((\d)★\): a common pathogenic "
+        r"variant; review BA1 and BS1 before using them \(expert panels keep such variants pathogenic on other "
+        r"evidence\)",
+        lambda m: (
+            "ClinVar: "
+            + {
+                "Pathogenic": "patogénica",
+                "Likely pathogenic": "probablemente patogénica",
+                "Pathogenic/Likely pathogenic": "patogénica/probablemente patogénica",
+            }[m[1]]
+            + f" ({m[2]}★): una variante patogénica común; revise BA1 y BS1 antes de usarlos (los paneles de expertos "
+            "mantienen estas variantes como patogénicas por otras evidencias)"
+        ),
+    ),
     (
         r"on ClinGen's BA1 exception list \(Ghosh et al\. 2018\): BA1 does not apply, whatever the panel's "
         r"threshold",
@@ -569,8 +587,12 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         "del panel",
     ),
     (
-        r"on the panel's BA1 exclusion list \(well-known pathogenic variants\): BA1 does not apply",
-        "en la lista de exclusión de BA1 del panel (variantes patogénicas conocidas): BA1 no se aplica",
+        r"on the panel's BA1 exclusion list \(well-known pathogenic variants\): (BA1 does not apply|BA1 and BS1 do "
+        r"not apply)",
+        lambda m: (
+            "en la lista de exclusión de BA1 del panel (variantes patogénicas conocidas): "
+            + ("BA1 no se aplica" if m[1] == "BA1 does not apply" else "no se aplican BA1 ni BS1")
+        ),
     ),
     # inheritance in a specification's name (notes) or description (… autosomal dominant (https://…))
     (r"\b(?<=[(,] )autosomal dominant(?= ?[;)]| or| \(http)", "autosómica dominante"),

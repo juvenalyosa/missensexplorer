@@ -336,9 +336,11 @@ def test_a_rerun_from_the_cache_without_the_internet_gives_the_same_rows(monkeyp
     from missensexplorer.api import Http
 
     braf = json.loads((DATA / "vep_braf_v600e_region.json").read_text())
-    online = {"on": True}
+    online = {"on": True, "status": 0}
 
     def handler(request):
+        if online["status"]:
+            return httpx.Response(online["status"], json={})
         if not online["on"]:
             raise httpx.ConnectError("no network", request=request)
         if request.url.path.endswith("/info/software"):
@@ -358,11 +360,13 @@ def test_a_rerun_from_the_cache_without_the_internet_gives_the_same_rows(monkeyp
     first = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
     assert len(first.table) == 1
     online["on"] = False
-    later = _time.time() + 2 * 86400  # the cached Ensembl release (kept a day) has expired
+    later = _time.time() + 31 * 86400  # past the cache's 30-day limit: only a frozen cache still answers
     monkeypatch.setattr(cache_mod.time, "time", lambda: later)
-    again = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
-    assert "Ensembl cannot be reached: only answers already in the cache are used" in again.warnings
-    assert again.run["cache_only"]
-    assert again.run["ensembl_release"] == 116
     cols = ["gene", "protein_change", "prediction", "acmg_pp3_bp4"]
-    assert again.table[cols].equals(first.table[cols])
+    for status in (0, 503):  # no connection, then an Ensembl outage (HTTP 503 after the retries)
+        online["status"] = status
+        again = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
+        assert "Ensembl cannot be reached: only answers already in the cache are used" in again.warnings
+        assert again.run["cache_only"]
+        assert again.run["ensembl_release"] == 116
+        assert again.table[cols].equals(first.table[cols]), status

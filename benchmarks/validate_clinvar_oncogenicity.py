@@ -147,9 +147,15 @@ def sha256(path: Path) -> str | None:
 
 
 def role_of(evidence: str) -> str:
-    """The gene role shown in the evidence: 'loss-of-function (UniProt)', 'activating (IntOGen)', ..."""
-    m = re.search(r"(activating|loss-of-function|ambiguous) \((UniProt|IntOGen)", evidence)
+    """The gene role shown in the evidence: 'loss-of-function (UniProt)', 'activating (IntOGen)', ...
+
+    An IntOGen role left open because it rests on too few samples is 'undecided (IntOGen)', apart from the
+    roles that IntOGen's cohorts leave ambiguous.
+    """
+    m = re.search(r"(activating|loss-of-function|ambiguous) \((UniProt|IntOGen)([^)]*)\)", evidence)
     if m:
+        if m.group(1) == "ambiguous" and "too few to decide" in m.group(3):
+            return f"undecided ({m.group(2)})"
         return f"{m.group(1)} ({m.group(2)})"
     return "not a known cancer gene" if "not a known cancer gene" in evidence else "unknown"
 
@@ -216,6 +222,17 @@ def tier(points: float) -> str:
     return "O/LO" if points >= 6 else "VUS" if points >= 0 else "B/LB"
 
 
+def gene_ci(olo: pd.DataFrame, col: str, reps: int = 10000) -> list[float | None]:
+    """95% interval of the share recovered from a bootstrap of whole genes (variants of a gene are not independent)."""
+    if olo.empty:
+        return [None, None]
+    g = olo.assign(hit=(olo[col] == "O/LO").astype(float)).groupby("gene")["hit"].agg(["sum", "count"]).to_numpy()
+    picks = np.random.default_rng(7).integers(0, len(g), (reps, len(g)))
+    tot = g[picks].sum(1)
+    share = tot[:, 0] / tot[:, 1]
+    return [round(float(x), 6) for x in np.percentile(share, [2.5, 97.5])]
+
+
 def summary(d: pd.DataFrame, col: str = "tool_group") -> dict:
     tab = pd.crosstab(d["clinvar_group"], d[col])
     olo = d[d["clinvar_group"] == "O/LO"]
@@ -227,6 +244,7 @@ def summary(d: pd.DataFrame, col: str = "tool_group") -> dict:
         "confusion (rows ClinVar, columns tool)": {r: {c: int(n) for c, n in v.items()} for r, v in tab.iterrows()},
         "agreement_3class": round(float((d["clinvar_group"] == d[col]).mean()), 6) if len(d) else None,
         "olo_called_olo": [k, len(olo), round(k / len(olo), 6) if len(olo) else None, wilson(k, len(olo))],
+        "olo_called_olo_gene_ci": gene_ci(olo, col),
         "olo_called_blb": int((olo[col] == "B/LB").sum()),
         "blb_called_olo": int((b[col] == "O/LO").sum()),
         "vus_called_olo": int(((d["clinvar_group"] == "VUS") & (d[col] == "O/LO")).sum()),

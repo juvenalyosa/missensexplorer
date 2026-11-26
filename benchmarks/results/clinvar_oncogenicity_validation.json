@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-26T17:49:27Z",
+ "generated": "2026-11-26T20:55:00Z",
  "missensexplorer": "2.5.0",
  "clinvar_file": "variant_summary.txt.gz",
  "selected": 2296,
@@ -39,6 +39,10 @@
     0.608496
    ]
   ],
+  "olo_called_olo_gene_ci": [
+   0.496159,
+   0.654799
+  ],
   "olo_called_blb": 1,
   "blb_called_olo": 0,
   "vus_called_olo": 32
@@ -69,6 +73,10 @@
      0.014951,
      0.177047
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.142857
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -108,6 +116,10 @@
      0.29136
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.122282,
+    0.344404
+   ],
    "olo_called_blb": 1,
    "blb_called_olo": 0,
    "vus_called_olo": 0
@@ -137,6 +149,10 @@
      0.749591,
      0.798817
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.642689,
+    0.867287
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -172,6 +188,10 @@
      0.0,
      0.203883
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.0
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -213,6 +233,10 @@
      0.258676
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.126371,
+    0.278596
+   ],
    "olo_called_blb": 1,
    "blb_called_olo": 0,
    "vus_called_olo": 0
@@ -241,40 +265,41 @@
      0.203883
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.0
+   ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
    "vus_called_olo": 0
   },
   "ambiguous (IntOGen)": {
-   "n": 142,
+   "n": 72,
    "by_clinvar": {
-    "O/LO": 78,
-    "VUS": 63,
-    "B/LB": 1
+    "O/LO": 43,
+    "VUS": 29
    },
    "confusion (rows ClinVar, columns tool)": {
-    "B/LB": {
-     "B/LB": 1,
-     "VUS": 0
-    },
     "O/LO": {
-     "B/LB": 0,
-     "VUS": 78
+     "VUS": 43
     },
     "VUS": {
-     "B/LB": 2,
-     "VUS": 61
+     "VUS": 29
     }
    },
-   "agreement_3class": 0.43662,
+   "agreement_3class": 0.402778,
    "olo_called_olo": [
     0,
-    78,
+    43,
     0.0,
     [
-     -0.0,
-     0.046938
+     0.0,
+     0.08201
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.0
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -314,6 +339,10 @@
      0.751865
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.63212,
+    0.846156
+   ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
    "vus_called_olo": 32
@@ -343,6 +372,10 @@
      0.531299,
      0.888138
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.5,
+    1.0
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -374,6 +407,49 @@
      0.09181
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.0
+   ],
+   "olo_called_blb": 0,
+   "blb_called_olo": 0,
+   "vus_called_olo": 0
+  },
+  "undecided (IntOGen)": {
+   "n": 70,
+   "by_clinvar": {
+    "O/LO": 35,
+    "VUS": 34,
+    "B/LB": 1
+   },
+   "confusion (rows ClinVar, columns tool)": {
+    "B/LB": {
+     "B/LB": 1,
+     "VUS": 0
+    },
+    "O/LO": {
+     "B/LB": 0,
+     "VUS": 35
+    },
+    "VUS": {
+     "B/LB": 2,
+     "VUS": 32
+    }
+   },
+   "agreement_3class": 0.471429,
+   "olo_called_olo": [
+    0,
+    35,
+    0.0,
+    [
+     0.0,
+     0.098901
+    ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.0
+   ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
    "vus_called_olo": 0
@@ -401,6 +477,10 @@
      null
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    null,
+    null
+   ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
    "vus_called_olo": 0
@@ -425,6 +505,10 @@
      null,
      null
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    null,
+    null
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -452,6 +536,10 @@
      0.608143
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.488546,
+    0.663618
+   ],
    "olo_called_blb": 1,
    "blb_called_olo": 0,
    "vus_called_olo": 0
@@ -477,6 +565,10 @@
      0.639215
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.444444,
+    0.681391
+   ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
    "vus_called_olo": 0
@@ -500,6 +592,10 @@
      0.34238,
      1.0
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    1.0,
+    1.0
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -526,6 +622,10 @@
      null,
      null
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    null,
+    null
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -567,6 +667,10 @@
      0.611517
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.495725,
+    0.657848
+   ],
    "olo_called_blb": 1,
    "blb_called_olo": 0,
    "vus_called_olo": 32
@@ -596,6 +700,10 @@
      0.151665,
      0.646199
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.090909,
+    0.700682
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -628,6 +736,10 @@
      0.508323,
      0.850854
     ]
+   ],
+   "olo_called_olo_gene_ci": [
+    0.0,
+    0.907407
    ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
@@ -674,6 +786,10 @@
      0.579933
     ]
    ],
+   "olo_called_olo_gene_ci": [
+    0.455571,
+    0.633268
+   ],
    "olo_called_blb": 0,
    "blb_called_olo": 0,
    "vus_called_olo": 32
@@ -704,6 +820,10 @@
       0.014951,
       0.177047
      ]
+    ],
+    "olo_called_olo_gene_ci": [
+     0.0,
+     0.142857
     ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
@@ -743,6 +863,10 @@
       0.196674
      ]
     ],
+    "olo_called_olo_gene_ci": [
+     0.024047,
+     0.289236
+    ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
     "vus_called_olo": 0
@@ -772,6 +896,10 @@
       0.749591,
       0.798817
      ]
+    ],
+    "olo_called_olo_gene_ci": [
+     0.642689,
+     0.867287
     ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
@@ -807,6 +935,10 @@
       0.0,
       0.203883
      ]
+    ],
+    "olo_called_olo_gene_ci": [
+     0.0,
+     0.0
     ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
@@ -848,6 +980,10 @@
       0.063592
      ]
     ],
+    "olo_called_olo_gene_ci": [
+     0.008473,
+     0.066203
+    ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
     "vus_called_olo": 0
@@ -876,40 +1012,41 @@
       0.203883
      ]
     ],
+    "olo_called_olo_gene_ci": [
+     0.0,
+     0.0
+    ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
     "vus_called_olo": 0
    },
    "ambiguous (IntOGen)": {
-    "n": 142,
+    "n": 72,
     "by_clinvar": {
-     "O/LO": 78,
-     "VUS": 63,
-     "B/LB": 1
+     "O/LO": 43,
+     "VUS": 29
     },
     "confusion (rows ClinVar, columns tool)": {
-     "B/LB": {
-      "B/LB": 1,
-      "VUS": 0
-     },
      "O/LO": {
-      "B/LB": 0,
-      "VUS": 78
+      "VUS": 43
      },
      "VUS": {
-      "B/LB": 2,
-      "VUS": 61
+      "VUS": 29
      }
     },
-    "agreement_3class": 0.43662,
+    "agreement_3class": 0.402778,
     "olo_called_olo": [
      0,
-     78,
+     43,
      0.0,
      [
-      -0.0,
-      0.046938
+      0.0,
+      0.08201
      ]
+    ],
+    "olo_called_olo_gene_ci": [
+     0.0,
+     0.0
     ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
@@ -949,6 +1086,10 @@
       0.751865
      ]
     ],
+    "olo_called_olo_gene_ci": [
+     0.63212,
+     0.846156
+    ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
     "vus_called_olo": 32
@@ -979,6 +1120,10 @@
       0.888138
      ]
     ],
+    "olo_called_olo_gene_ci": [
+     0.5,
+     1.0
+    ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
     "vus_called_olo": 0
@@ -1008,6 +1153,49 @@
       0.0,
       0.09181
      ]
+    ],
+    "olo_called_olo_gene_ci": [
+     0.0,
+     0.0
+    ],
+    "olo_called_blb": 0,
+    "blb_called_olo": 0,
+    "vus_called_olo": 0
+   },
+   "undecided (IntOGen)": {
+    "n": 70,
+    "by_clinvar": {
+     "O/LO": 35,
+     "VUS": 34,
+     "B/LB": 1
+    },
+    "confusion (rows ClinVar, columns tool)": {
+     "B/LB": {
+      "B/LB": 1,
+      "VUS": 0
+     },
+     "O/LO": {
+      "B/LB": 0,
+      "VUS": 35
+     },
+     "VUS": {
+      "B/LB": 2,
+      "VUS": 32
+     }
+    },
+    "agreement_3class": 0.471429,
+    "olo_called_olo": [
+     0,
+     35,
+     0.0,
+     [
+      0.0,
+      0.098901
+     ]
+    ],
+    "olo_called_olo_gene_ci": [
+     0.0,
+     0.0
     ],
     "olo_called_blb": 0,
     "blb_called_olo": 0,
@@ -1110,8 +1298,8 @@
  "runs": {
   "with ClinVar": {
    "tool": "MissensExplorer 2.5.0",
-   "started_utc": "2026-11-26T17:49:22+00:00",
-   "seconds": 2.5,
+   "started_utc": "2026-11-26T20:54:52+00:00",
+   "seconds": 3.8,
    "assembly": "GRCh38",
    "annotation": "Ensembl VEP REST, release 116",
    "ensembl_release": 116,
@@ -1171,8 +1359,8 @@
   },
   "without ClinVar": {
    "tool": "MissensExplorer 2.5.0",
-   "started_utc": "2026-11-26T17:49:25+00:00",
-   "seconds": 1.4,
+   "started_utc": "2026-11-26T20:54:57+00:00",
+   "seconds": 2.6,
    "assembly": "GRCh38",
    "annotation": "Ensembl VEP REST, release 116",
    "ensembl_release": 116,
@@ -1377,5 +1565,5 @@
    "codes": "OM3 +2, OP1 +1, OP4 +1"
   }
  ],
- "seconds": 118
+ "seconds": 246
 }

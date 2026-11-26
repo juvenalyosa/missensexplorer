@@ -274,16 +274,16 @@
     ],
     "points_without_clinvar": 0.928,
     "points_without_op1_sbp1": 0.868,
-    "hotspot_points_only": 0.835,
+    "hotspot_points_only": 0.847,
     "hotspot_only_minus_points": {
-     "auc_a": 0.83505,
+     "auc_a": 0.847103,
      "auc_b": 0.931179,
-     "difference": -0.09613,
+     "difference": -0.084076,
      "ci": [
-      -0.113552,
-      -0.078708
+      -0.100516,
+      -0.067637
      ],
-     "p": 2.940462853191285e-27
+     "p": 1.1976786643722365e-23
     },
     "without_op1_sbp1_minus_points": {
      "auc_a": 0.867662,
@@ -322,16 +322,16 @@
     ],
     "points_without_clinvar": 0.845,
     "points_without_op1_sbp1": 0.782,
-    "hotspot_points_only": 0.751,
+    "hotspot_points_only": 0.759,
     "hotspot_only_minus_points": {
-     "auc_a": 0.750798,
+     "auc_a": 0.758641,
      "auc_b": 0.84749,
-     "difference": -0.096692,
+     "difference": -0.088849,
      "ci": [
-      -0.113642,
-      -0.079742
+      -0.10523,
+      -0.072469
      ],
-     "p": 5.060888638271511e-29
+     "p": 2.131485727647481e-26
     },
     "without_op1_sbp1_minus_points": {
      "auc_a": 0.781698,
@@ -440,7 +440,7 @@
   "baf3_transforming": 9
  },
  "civic_dropped": 78,
- "generated": "2026-11-26T17:50:06Z",
+ "generated": "2026-11-26T20:57:05Z",
  "missensexplorer": "2.5.0",
  "data_versions": {
   "cancerhotspots.org": "cached copy retrieved 2026-11-25",
@@ -455,8 +455,8 @@
    "inputs": 345,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T17:49:38+00:00",
-    "seconds": 0.5,
+    "started_utc": "2026-11-26T20:55:24+00:00",
+    "seconds": 1.1,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
@@ -521,8 +521,8 @@
    "inputs": 345,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T17:49:39+00:00",
-    "seconds": 0.3,
+    "started_utc": "2026-11-26T20:55:26+00:00",
+    "seconds": 1.0,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
@@ -586,8 +586,8 @@
    "inputs": 2571,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T17:49:39+00:00",
-    "seconds": 3.0,
+    "started_utc": "2026-11-26T20:55:27+00:00",
+    "seconds": 8.3,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
@@ -651,8 +651,8 @@
    "inputs": 2571,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T17:49:47+00:00",
-    "seconds": 2.2,
+    "started_utc": "2026-11-26T20:55:48+00:00",
+    "seconds": 5.6,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,

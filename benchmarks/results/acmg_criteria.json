@@ -9,9 +9,9 @@
    "pathogenic": 978,
    "benign": 994,
    "PS1": {
-    "pathogenic": 37,
+    "pathogenic": 27,
     "benign": 0,
-    "pathogenic_share": 0.0378,
+    "pathogenic_share": 0.0276,
     "benign_share": 0.0,
     "lr": "\u221e",
     "ci": [
@@ -31,35 +31,35 @@
     ]
    },
    "PM5": {
-    "pathogenic": 299,
+    "pathogenic": 253,
     "benign": 1,
-    "pathogenic_share": 0.3057,
+    "pathogenic_share": 0.2587,
     "benign_share": 0.001,
-    "lr": 303.9,
+    "lr": 257.1,
     "ci": [
-     95.9,
+     80.1,
      "\u221e"
     ]
    },
    "PM5_Supporting": {
-    "pathogenic": 149,
-    "benign": 2,
-    "pathogenic_share": 0.1524,
-    "benign_share": 0.002,
-    "lr": 75.7,
+    "pathogenic": 106,
+    "benign": 1,
+    "pathogenic_share": 0.1084,
+    "benign_share": 0.001,
+    "lr": 107.7,
     "ci": [
-     29.2,
+     33.0,
      "\u221e"
     ]
    },
    "any PS1/PM5": {
-    "pathogenic": 498,
-    "benign": 3,
-    "pathogenic_share": 0.5092,
-    "benign_share": 0.003,
-    "lr": 168.7,
+    "pathogenic": 399,
+    "benign": 2,
+    "pathogenic_share": 0.408,
+    "benign_share": 0.002,
+    "lr": 202.8,
     "ci": [
-     76.8,
+     79.4,
      "\u221e"
     ]
    },
@@ -80,9 +80,9 @@
    "pathogenic": 964,
    "benign": 199,
    "PS1": {
-    "pathogenic": 37,
+    "pathogenic": 27,
     "benign": 0,
-    "pathogenic_share": 0.0384,
+    "pathogenic_share": 0.028,
     "benign_share": 0.0,
     "lr": "\u221e",
     "ci": [
@@ -102,35 +102,35 @@
     ]
    },
    "PM5": {
-    "pathogenic": 296,
+    "pathogenic": 250,
     "benign": 1,
-    "pathogenic_share": 0.3071,
+    "pathogenic_share": 0.2593,
     "benign_share": 0.005,
-    "lr": 61.1,
+    "lr": 51.6,
     "ci": [
-     18.9,
+     15.8,
      "\u221e"
     ]
    },
    "PM5_Supporting": {
-    "pathogenic": 143,
+    "pathogenic": 105,
     "benign": 1,
-    "pathogenic_share": 0.1483,
+    "pathogenic_share": 0.1089,
     "benign_share": 0.005,
-    "lr": 29.5,
+    "lr": 21.7,
     "ci": [
-     8.8,
+     6.2,
      "\u221e"
     ]
    },
    "any PS1/PM5": {
-    "pathogenic": 489,
+    "pathogenic": 395,
     "benign": 2,
-    "pathogenic_share": 0.5073,
+    "pathogenic_share": 0.4098,
     "benign_share": 0.0101,
-    "lr": 50.5,
+    "lr": 40.8,
     "ci": [
-     20.1,
+     16.5,
      "\u221e"
     ]
    },
@@ -151,9 +151,9 @@
    "pathogenic": 282,
    "benign": 172,
    "PS1": {
-    "pathogenic": 4,
+    "pathogenic": 3,
     "benign": 0,
-    "pathogenic_share": 0.0142,
+    "pathogenic_share": 0.0106,
     "benign_share": 0.0,
     "lr": "\u221e",
     "ci": [
@@ -162,9 +162,9 @@
     ]
    },
    "PS1_Moderate": {
-    "pathogenic": 2,
+    "pathogenic": 1,
     "benign": 0,
-    "pathogenic_share": 0.0071,
+    "pathogenic_share": 0.0035,
     "benign_share": 0.0,
     "lr": "\u221e",
     "ci": [
@@ -173,9 +173,9 @@
     ]
    },
    "PM5": {
-    "pathogenic": 37,
+    "pathogenic": 28,
     "benign": 0,
-    "pathogenic_share": 0.1312,
+    "pathogenic_share": 0.0993,
     "benign_share": 0.0,
     "lr": "\u221e",
     "ci": [
@@ -184,24 +184,24 @@
     ]
    },
    "PM5_Supporting": {
-    "pathogenic": 32,
-    "benign": 2,
-    "pathogenic_share": 0.1135,
-    "benign_share": 0.0116,
-    "lr": 9.8,
+    "pathogenic": 17,
+    "benign": 0,
+    "pathogenic_share": 0.0603,
+    "benign_share": 0.0,
+    "lr": "\u221e",
     "ci": [
-     3.5,
+     "\u221e",
      "\u221e"
     ]
    },
    "any PS1/PM5": {
-    "pathogenic": 75,
-    "benign": 2,
-    "pathogenic_share": 0.266,
-    "benign_share": 0.0116,
-    "lr": 22.9,
+    "pathogenic": 49,
+    "benign": 0,
+    "pathogenic_share": 0.1738,
+    "benign_share": 0.0,
+    "lr": "\u221e",
     "ci": [
-     8.4,
+     "\u221e",
      "\u221e"
     ]
    },

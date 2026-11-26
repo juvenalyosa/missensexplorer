@@ -1132,14 +1132,18 @@ def _check_connection(ctx: _Context) -> None:
     if not ctx.net:
         return
     # one quick request tells us whether Ensembl is reachable at all
+    cached = any(ctx.cache.get(f"ensembl_release|{a}", max_age=0) for a in ("GRCh38", "GRCh37"))
     try:
         ensembl_release(ctx.http, ctx.cache, "GRCh38")
-    except OfflineError as e:
-        if not ctx.local and any(ctx.cache.get(f"ensembl_release|{a}", max_age=0) for a in ("GRCh38", "GRCh37")):
+    except ApiError as e:  # no connection (OfflineError), or HTTP 5xx and timeouts after the retries
+        if not ctx.local and cached:
             # a cache filled by earlier runs (a rerun of a published analysis): use what it holds, whatever its age
             ctx.cache.freeze()
             ctx.cache_only = True
             ctx.warnings.append("Ensembl cannot be reached: only answers already in the cache are used")
+            return
+        if not isinstance(e, OfflineError):
+            log.warning("Ensembl release lookup failed: %s", e)
             return
         if not ctx.local:
             raise ConnectionError(
@@ -1148,8 +1152,6 @@ def _check_connection(ctx: _Context) -> None:
             ) from e
         ctx.net = False
         ctx.warnings.append("No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold are skipped.")
-    except ApiError as e:
-        log.warning("Ensembl release lookup failed: %s", e)
 
 
 def _load_inputs(ctx: _Context) -> ParsedInput:
@@ -1244,7 +1246,8 @@ def _release(ctx: _Context) -> int | None:
         return ensembl_release(ctx.http, ctx.cache, ctx.assembly)
     except ApiError as e:
         log.warning("Ensembl release lookup failed: %s", e)
-        return None
+        rel = ctx.cache.get(f"ensembl_release|{ctx.assembly}", max_age=0)  # the cached answers name their release
+        return int(rel) if rel else None
 
 
 def _vep_queries(parsed: ParsedInput) -> dict[str, list[str]]:
@@ -1873,6 +1876,9 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     if r.get("acmg_codes") or r.get("acmg_pp3_bp4"):
         r["vcep_specification"] = vcep.describe(r.get("gene"))
         acmg_notes.extend(vcep.notes(r))
+    ba1_noted = any("BA1 threshold" in n or "BA1 rule" in n for n in acmg_notes)
+    if caution := acmg.common_pathogenic_note(r, ba1_noted):
+        acmg_notes.insert(0, caution)
     r["acmg_notes"] = vcep.SEP.join(acmg_notes) or None
     if found.onco_data is not None:
         _add_oncogenicity(r, i, terms, label, found)
@@ -2017,7 +2023,9 @@ def _run_record(ctx: _Context, seconds: float) -> dict[str, Any]:
             else f"Ensembl VEP REST, release {ctx.release or 'unknown'}"
         ),
         "ensembl_release": ctx.release,
-        "cache_only": ctx.cache_only,  # Ensembl could not be reached: every answer came from the cache
+        # Ensembl could not be reached: cached answers were used whatever their age, and other services were
+        # asked only for what the cache lacked
+        "cache_only": ctx.cache_only,
         "options": {k: v for k, v in asdict(ctx.opt).items() if k not in ("cache_path",)},
         "inputs": {
             "text_lines": len([x for x in (ctx.text or "").splitlines() if x.strip()]),

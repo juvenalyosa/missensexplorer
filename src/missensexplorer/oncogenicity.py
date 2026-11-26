@@ -740,7 +740,7 @@ def _missense(
     if refs is None:
         a.notes.append("OS1/OM4 not checked (ClinVar oncogenicity search unavailable)")
     if same:  # resolved in _same_change, once the hotspot and CIViC evidence are known
-        x = same[0]
+        x = sorted(same, key=lambda x: x.level != "O")[0]  # an oncogenic reference first, whatever the input order
         a.same_change = (
             "OS1" if x.level == "O" else "OS1_Moderate",
             f"same change by {x.cdna}: {_level(x)}, {x.accession}",

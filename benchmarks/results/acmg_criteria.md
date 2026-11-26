@@ -10,11 +10,11 @@ Likelihood ratio = share of pathogenic variants with the criterion / share of be
 
 | Criterion | Pathogenic with it | Benign with it | Likelihood ratio (95% CI) | Needed |
 |---|---|---|---|---|
-| PS1 | 37 (3.8%) | 0 (0.0%) | ∞ (∞–∞) | 33.53 |
+| PS1 | 27 (2.8%) | 0 (0.0%) | ∞ (∞–∞) | 33.53 |
 | PS1_Moderate | 13 (1.3%) | 0 (0.0%) | ∞ (∞–∞) | 5.79 |
-| PM5 | 299 (30.6%) | 1 (0.1%) | 303.9 (95.9–∞) | 5.79 |
-| PM5_Supporting | 149 (15.2%) | 2 (0.2%) | 75.7 (29.2–∞) | 2.41 |
-| any PS1/PM5 | 498 (50.9%) | 3 (0.3%) | 168.7 (76.8–∞) | — |
+| PM5 | 253 (25.9%) | 1 (0.1%) | 257.1 (80.1–∞) | 5.79 |
+| PM5_Supporting | 106 (10.8%) | 1 (0.1%) | 107.7 (33.0–∞) | 2.41 |
+| any PS1/PM5 | 399 (40.8%) | 2 (0.2%) | 202.8 (79.4–∞) | — |
 | PM2_Supporting | 450 (46.0%) | 2 (0.2%) | 228.7 (90.5–∞) | 2.41 |
 
 ## rare variants, current ClinVar
@@ -23,11 +23,11 @@ Likelihood ratio = share of pathogenic variants with the criterion / share of be
 
 | Criterion | Pathogenic with it | Benign with it | Likelihood ratio (95% CI) | Needed |
 |---|---|---|---|---|
-| PS1 | 37 (3.8%) | 0 (0.0%) | ∞ (∞–∞) | 33.53 |
+| PS1 | 27 (2.8%) | 0 (0.0%) | ∞ (∞–∞) | 33.53 |
 | PS1_Moderate | 13 (1.4%) | 0 (0.0%) | ∞ (∞–∞) | 5.79 |
-| PM5 | 296 (30.7%) | 1 (0.5%) | 61.1 (18.9–∞) | 5.79 |
-| PM5_Supporting | 143 (14.8%) | 1 (0.5%) | 29.5 (8.8–∞) | 2.41 |
-| any PS1/PM5 | 489 (50.7%) | 2 (1.0%) | 50.5 (20.1–∞) | — |
+| PM5 | 250 (25.9%) | 1 (0.5%) | 51.6 (15.8–∞) | 5.79 |
+| PM5_Supporting | 105 (10.9%) | 1 (0.5%) | 21.7 (6.2–∞) | 2.41 |
+| any PS1/PM5 | 395 (41.0%) | 2 (1.0%) | 40.8 (16.5–∞) | — |
 | PM2_Supporting | 450 (46.7%) | 2 (1.0%) | 46.4 (17.3–∞) | 2.41 |
 
 ## labelled since 2023, ClinVar of January 2023
@@ -36,9 +36,9 @@ Likelihood ratio = share of pathogenic variants with the criterion / share of be
 
 | Criterion | Pathogenic with it | Benign with it | Likelihood ratio (95% CI) | Needed |
 |---|---|---|---|---|
-| PS1 | 4 (1.4%) | 0 (0.0%) | ∞ (∞–∞) | 33.53 |
-| PS1_Moderate | 2 (0.7%) | 0 (0.0%) | ∞ (∞–∞) | 5.79 |
-| PM5 | 37 (13.1%) | 0 (0.0%) | ∞ (∞–∞) | 5.79 |
-| PM5_Supporting | 32 (11.3%) | 2 (1.2%) | 9.8 (3.5–∞) | 2.41 |
-| any PS1/PM5 | 75 (26.6%) | 2 (1.2%) | 22.9 (8.4–∞) | — |
+| PS1 | 3 (1.1%) | 0 (0.0%) | ∞ (∞–∞) | 33.53 |
+| PS1_Moderate | 1 (0.4%) | 0 (0.0%) | ∞ (∞–∞) | 5.79 |
+| PM5 | 28 (9.9%) | 0 (0.0%) | ∞ (∞–∞) | 5.79 |
+| PM5_Supporting | 17 (6.0%) | 0 (0.0%) | ∞ (∞–∞) | 2.41 |
+| any PS1/PM5 | 49 (17.4%) | 0 (0.0%) | ∞ (∞–∞) | — |
 | PM2_Supporting | 141 (50.0%) | 1 (0.6%) | 86.0 (26.9–∞) | 2.41 |

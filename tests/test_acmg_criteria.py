@@ -283,3 +283,21 @@ def test_overlap_note_gives_whole_points_and_is_translated():
         assert i18n.tr_text(note).startswith("PP3 (4 puntos) y PM5")
     finally:
         i18n.set_language("en")
+
+
+def test_a_common_variant_that_clinvar_calls_pathogenic_carries_a_caution():
+    from missensexplorer.gui import i18n
+
+    hbs = {"clinvar": "Pathogenic", "clinvar_stars": 2, "population_frequency": "frequent: BS1 candidate (grpmax 5.7%)"}
+    note = acmg.common_pathogenic_note(hbs)
+    assert note.startswith("ClinVar: Pathogenic (2★): a common pathogenic variant; review BA1 and BS1")
+    assert acmg.common_pathogenic_note({**hbs, "clinvar_stars": 1}) is None  # not reviewed by anyone else
+    assert acmg.common_pathogenic_note({**hbs, "clinvar": "Conflicting classifications of pathogenicity"}) is None
+    rare = {**hbs, "population_frequency": "rare (grpmax 0.6%)"}
+    assert acmg.common_pathogenic_note(rare) is None
+    assert acmg.common_pathogenic_note(rare, ba1_noted=True) is not None  # at a panel's BA1 threshold (GJB2 M34T)
+    i18n.set_language("es")
+    try:
+        assert i18n.tr_text(note).startswith("ClinVar: patogénica (2★): una variante patogénica común")
+    finally:
+        i18n.set_language("en")

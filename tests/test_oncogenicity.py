@@ -645,6 +645,13 @@ def test_a_likely_oncogenic_reference_is_not_added_to_the_hotspot_criteria():
     assert codes(b) == ["OS1_Moderate", "OP4"]  # 2 points against OP3's 1: OS1_Moderate replaces OP3
     assert "OP3 not counted (OS1_Moderate uses this amino-acid change)" in b.evidence()
     assert b.points == 3
+    # the standard has no OS1 for a likely oncogenic reference: OP3 + OP4
+    assert "the standard's rule for OS1 would give 2 points" in b.evidence()
+    # an oncogenic reference is used first, whatever the order of the references given
+    both = [ref("p.Gly719Ala", "A", level="LO", same=True), ref("p.Gly719Ala", "A", same=True, cdna="c.2C>T")]
+    c = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, "damaging", data(), both)
+    d = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, "damaging", data(), both[::-1])
+    assert codes(c) == codes(d) == ["OS1", "OM3", "OP1", "OP4"]
 
 
 def test_the_standards_rule_for_os1_is_reported_when_it_differs():

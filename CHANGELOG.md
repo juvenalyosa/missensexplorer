@@ -5,7 +5,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [2.5.0] — 2026-11-26
 
-Corrections prompted by five rounds of review of the evaluation. The model and its PP3/BP4
+Corrections prompted by six rounds of review of the evaluation. The model and its PP3/BP4
 thresholds are retrained and recalibrated, so the results of 2.4 change.
 
 ### Fixed
@@ -34,7 +34,10 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   its decay was not assessed and it got full OVS1).
 - When Ensembl cannot be reached but the cache holds earlier answers (a rerun of a published analysis),
   the run uses every cached answer, whatever its age, and says so (`cache_only` in the run record),
-  instead of stopping.
+  instead of stopping; this also holds when Ensembl answers with server errors or times out.
+- A frequent variant that ClinVar classifies as pathogenic with review (two stars or more), such as HbS
+  in HBB, carries a caution in `acmg_notes`: panels keep such variants pathogenic on other evidence, so
+  BA1 and BS1 need review. The classification is shown, never counted as evidence.
 - PS1/PM5: a ClinVar reference variant with a single review star counts one step lower (a pathogenic
   one like a likely pathogenic one; a likely pathogenic one not at all). Expert panels agreed with PM5
   from single-star references in only about a third of their classifications.
@@ -92,7 +95,9 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
     warning when the panel applies it to the filtering allele frequency, which the tool does not compute,
     and the text quoted when it sets further conditions (allele counts, males only, other datasets,
     excluded or founder variants), whichever frequency the panel uses; a variant on the panel's own BA1
-    exclusion list (RYR1, NEB, ACTA1) or on ClinGen's BA1 exception list is said not to meet BA1;
+    exclusion list (RYR1, NEB, ACTA1; matched on MANE Select, NEB's list mapped from NM_001271208.2, and
+    shown with its transcript) or on ClinGen's BA1 exception list is said not to meet BA1 (nor BS1 where
+    the panel says so);
   - its conditions the tool cannot check, quoted from the clause that states them (for example,
     references classified under its specification, PM5 not with PM1);
   - the disease and mode of inheritance of each specification, from CSpec's structured fields;
@@ -121,6 +126,9 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   byte-for-byte reproducible. `benchmarks/requirements-lock.txt` lists the exact package versions of the
   analysis environment, and the `benchmark` extra now includes SciPy, which the scripts need.
 - CI also runs the desktop app's tests and the CIViC test under a Spanish locale.
+- The hotspot-only comparison of the EGFR/TP53 evaluation takes the hotspot criteria met from the run without
+  ClinVar (a reference could remove them from the final points); the ClinVar oncogenicity evaluation gives
+  intervals from a bootstrap of genes and keeps genes whose IntOGen role rests on too few samples apart.
 
 ### Changed
 - The `acmg_notes` column is new and sits after `vcep_specification`; the overlap and expert-panel

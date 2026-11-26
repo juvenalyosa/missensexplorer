@@ -253,9 +253,10 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "grpmax 2% is at or above its BA1 threshold (>= 0.4%): check its other BA1 conditions",
         "on ClinGen's BA1 exception list (Ghosh et al. 2018): BA1 does not apply, whatever the panel's threshold",
         "on the panel's BA1 exclusion list (well-known pathogenic variants): BA1 does not apply",
+        "on the panel's BA1 exclusion list (well-known pathogenic variants): BA1 and BS1 do not apply",
         "grpmax allele frequency 0.04% is above its BA1 threshold (>= 0.00486%), which it applies to the filtering "
         "allele frequency (not computed here): check the filtering allele frequency and its other BA1 conditions "
-        "before BA1 (its other BA1 conditions: “x”)",
+        "before BA1: “x”; BA1 exclusion variants (NM_1: c.1A>G)",
         "has no PM5 below Moderate: the tool lowered PM5 because the ClinVar reference is likely pathogenic or has one "
         "review star, and the panel judges the reference under its own specification",
         "the standard's rule for OS1 would give 6 points",

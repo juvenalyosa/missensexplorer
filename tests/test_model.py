@@ -203,10 +203,14 @@ def test_ba1_exceptions_are_not_called_benign():
     assert acmg.ba1_exception({"rsid": "rs1, rs387906242", "alt": "TAAG"}).startswith("ACAD9")
 
 
-def test_nmd_of_a_change_spanning_exons_is_judged_by_its_last_exon():
+def test_nmd_is_judged_by_the_exon_of_the_change():
     import importlib
 
     predict = importlib.import_module("missensexplorer.predict")
     assert predict._nmd("9-10/10", {"frameshift_variant"}) == "NMD uncertain (the change spans an exon-intron boundary)"
     assert predict._nmd("3/10", {"stop_gained"}).startswith("NMD likely")
+    assert predict._nmd("10/10", {"stop_gained"}) == "NMD escape likely (last exon)"
+    assert predict._nmd("9/10", {"frameshift_variant"}).startswith("NMD uncertain (penultimate exon")
+    assert predict._nmd("1/1", {"stop_gained"}) == "NMD escape likely (single-exon gene)"
+    assert predict._nmd("3/10", {"missense_variant"}) is None
     assert predict._nmd("x/10", {"stop_gained"}) is None

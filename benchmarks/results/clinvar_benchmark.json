@@ -6,11 +6,12 @@
  "genes": 1181,
  "run": {
   "tool": "MissensExplorer 2.5.0",
-  "started_utc": "2026-11-26T00:15:55+00:00",
-  "seconds": 0.8,
+  "started_utc": "2026-11-26T20:46:55+00:00",
+  "seconds": 5.2,
   "assembly": "GRCh38",
   "annotation": "Ensembl VEP REST, release 116",
   "ensembl_release": 116,
+  "cache_only": false,
   "options": {
    "assembly": "auto",
    "default_gene": null,
@@ -40,6 +41,9 @@
   "sources": {
    "Ensembl VEP": "ok",
    "VEP predictor plugins": "ok"
+  },
+  "data_versions": {
+   "ClinGen CSpec (expert panel specifications)": "accessed 2026-11-26"
   },
   "missense_model": {
    "version": "2.5",
@@ -203,11 +207,11 @@
     "n_pathogenic": 978,
     "n_benign": 994,
     "sensitivity": 0.876278118609407,
-    "specificity": 0.8309859154929577,
+    "specificity": 0.8048289738430584,
     "pathogenic_called_benign": 0.015337423312883436,
     "benign_called_damaging": 0.025150905432595575,
-    "coverage": 0.8737322515212982,
-    "accuracy_when_decisive": 0.9767846778874056
+    "coverage": 0.8605476673427992,
+    "accuracy_when_decisive": 0.9764289923394225
    }
   },
   "rare (gnomAD grpmax < 0.1% or absent)": {
@@ -275,11 +279,11 @@
     "n_pathogenic": 964,
     "n_benign": 199,
     "sensitivity": 0.8775933609958506,
-    "specificity": 0.7738693467336684,
+    "specificity": 0.7537688442211056,
     "pathogenic_called_benign": 0.014522821576763486,
     "benign_called_damaging": 0.05025125628140704,
-    "coverage": 0.880481513327601,
-    "accuracy_when_decisive": 0.9765625
+    "coverage": 0.8770421324161651,
+    "accuracy_when_decisive": 0.9764705882352941
    }
   },
   "evaluated since 2024": {
@@ -347,11 +351,11 @@
     "n_pathogenic": 773,
     "n_benign": 769,
     "sensitivity": 0.8641655886157826,
-    "specificity": 0.8335500650195059,
+    "specificity": 0.8036410923276983,
     "pathogenic_called_benign": 0.018111254851228976,
     "benign_called_damaging": 0.02860858257477243,
-    "coverage": 0.8722438391699092,
-    "accuracy_when_decisive": 0.9732342007434944
+    "coverage": 0.8573281452658884,
+    "accuracy_when_decisive": 0.972768532526475
    }
   }
  },
@@ -761,5 +765,5 @@
    }
   }
  },
- "seconds": 29.8
+ "seconds": 277.8
 }

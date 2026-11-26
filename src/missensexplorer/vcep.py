@@ -129,15 +129,33 @@ def _pct(x: float) -> str:
 
 
 def _conditions(b: dict[str, Any]) -> str:
-    """' (its other BA1 conditions: “…”; “…”)' when the panel's BA1 text sets further conditions."""
-    found = b.get("conditions") or []
-    return f" (its other BA1 conditions: {'; '.join(f'“{c}”' for c in found)})" if found else ""
+    """'“…”; “…”; BA1 exclusion variants (NM_…: …)' for a BA1 text with further conditions, else ''."""
+    parts = [f"“{c}”" for c in b.get("conditions") or []]
+    if ex := b.get("excluded"):
+        parts.append(f"BA1 exclusion variants ({ex['text']})")
+    return "; ".join(parts)
+
+
+def _protein_forms(p: str) -> set[str]:
+    """'p.Arg41*' and 'p.Arg41Ter' alike; 'p.Asp181fs' as the prefix of any frameshift at that residue."""
+    return {p, p.replace("*", "Ter"), p.replace("Ter", "*")}
 
 
 def _excluded(b: dict[str, Any], row: Row) -> bool:
-    """True when the row's DNA or protein change is on the panel's own BA1 exclusion list."""
-    mine = {str(row.get(k) or "").split(":")[-1] for k in ("hgvsc", "hgvsp")} - {""}
-    return bool(mine & set(b.get("excluded") or []))
+    """True when the row, on MANE Select, is a variant of the panel's own BA1 exclusion list."""
+    ex = b.get("excluded")
+    if not ex or not str(row.get("mane_select") or "").startswith(("NM_", "NC_")):
+        return False  # the lists are numbered on MANE Select (or mapped to it): other transcripts would not match
+    c = str(row.get("hgvsc") or "").split(":")[-1]
+    p = str(row.get("hgvsp") or "").split(":")[-1].replace("%3D", "=")
+    for x in ex.get("match") or []:
+        if x == c or (
+            x.startswith("p.")
+            and p
+            and (p in _protein_forms(x) or (x.endswith("fs") and p.startswith(x[:-2]) and "fs" in p))
+        ):
+            return True
+    return False
 
 
 def _ba1(s: dict[str, Any], row: Row) -> str | None:
@@ -150,7 +168,8 @@ def _ba1(s: dict[str, Any], row: Row) -> str | None:
     if ba1_exception(row):
         return "on ClinGen's BA1 exception list (Ghosh et al. 2018): BA1 does not apply, whatever the panel's threshold"
     if _excluded(b, row):
-        return "on the panel's BA1 exclusion list (well-known pathogenic variants): BA1 does not apply"
+        which = "BA1 and BS1 do not apply" if (b.get("excluded") or {}).get("bs1") else "BA1 does not apply"
+        return f"on the panel's BA1 exclusion list (well-known pathogenic variants): {which}"
     g = _num(ba1_grpmax(row))
     if g is None:
         g = _num(row.get("gnomad_popmax_af"))
@@ -165,14 +184,16 @@ def _ba1(s: dict[str, Any], row: Row) -> str | None:
         return f"BA1 only {op} {_pct(t)}: grpmax {_pct(g)} does not meet it"
     if met and not tool and b.get("faf"):
         # the grpmax allele frequency is at least the filtering allele frequency: "met" is not established
+        conds = _conditions(b)
         return (
             f"grpmax allele frequency {_pct(g)} is above its BA1 threshold ({op} {_pct(t)}), which it applies to the "
-            "filtering allele frequency (not computed here): check the filtering allele frequency and its other "
-            f"BA1 conditions before BA1{_conditions(b)}"
+            "filtering allele frequency (not computed here): check the filtering allele frequency"
+            + (f" and its other BA1 conditions before BA1: {conds}" if conds else " before BA1")
         )
     if met and not tool:
+        conds = _conditions(b)
         return f"grpmax {_pct(g)} is at or above its BA1 threshold ({op} {_pct(t)}): check its other BA1 conditions" + (
-            _conditions(b)
+            f": {conds}" if conds else ""
         )
     return None
 

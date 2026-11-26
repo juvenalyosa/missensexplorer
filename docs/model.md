@@ -252,23 +252,26 @@ worked examples in Horak et al.
 | OP1 / SBP1: the calibrated computational evidence reaches PP3 / BP4 | MissensExplorer |
 
 **Gene roles.** IntOGen, weighting each cohort by its mutated samples, when its evidence is enough (at
-least 2 cohorts or 20 samples among the cohorts with a role, not outnumbered by samples in cohorts of
-ambiguous role):
+least 10 samples among the cohorts with a role, from at least 2 such cohorts unless there are 20, not
+outnumbered by samples in cohorts of ambiguous role):
 loss-of-function when at least 60% of the samples in cohorts with a role are in loss-of-function ones,
 activating when at most 40%. Otherwise, or when IntOGen is ambiguous, UniProt's curated keyword (Tumor
 suppressor or Proto-oncogene) when it names one role. When the two disagree, IntOGen decides only with at
 least 3 cohorts and 50 samples (RUNX1, NSD1 and CBFB are loss-of-function genes although UniProt calls
 them proto-oncogenes, from their fusions); otherwise the role is ambiguous (SMARCB1, BCL6). Up to
 version 2.4 the role was the majority of IntOGen cohorts, which made tumour suppressors such as SMARCA4,
-KEAP1, GATA3 and CHEK2 "activating". Some remain unclassified: SMARCA4 is ambiguous, BARD1 rests on a
-single small IntOGen cohort, BRIP1 is in neither source, and ETV6 and IKZF1 are activating in IntOGen.
+KEAP1, GATA3 and CHEK2 "activating". Some remain unclassified or doubtful: SMARCA4 and SMARCB1 are
+ambiguous; BARD1, POLE and CDKN2C rest on too few IntOGen samples; BRIP1 and MSH6 are in neither source;
+ETV6, IKZF1, RAD21 and PTPRD are activating in IntOGen; CSF3R and NOTCH2, whose recurrent truncations
+activate them, are loss-of-function genes, so their truncations get OVS1.
 
 **OVS1 is graded** as ClinGen's loss-of-function guidance (Abou Tayoun et al. 2018) grades PVS1,
 which the standard recommends, using the standard's option to downgrade a criterion:
 - full (8) when nonsense-mediated decay is expected, or when skipping the affected exon would shift
   the reading frame;
-- OVS1_Strong (4) when decay is escaped (last exon, single-exon gene) and the truncation removes more
-  than 10% of the protein, or an in-frame exon skip removes more than 10% of the coding sequence;
+- OVS1_Strong (4) when decay is escaped (last exon, single-exon gene) or uncertain because the change
+  spans an exon-intron boundary, and the truncation removes more than 10% of the protein, or an in-frame
+  exon skip removes more than 10% of the coding sequence;
 - OVS1_Moderate (2) otherwise, and for a lost start codon.
 Cryptic splice sites and alternative isoforms are not assessed, and the penultimate exon counts as
 subject to decay. Up to version 2.4, OVS1 was not given anywhere in a last exon.
@@ -306,6 +309,8 @@ so it never adds oncogenicity points.
    when the standard's rule would give other points, the evidence says so. OM3 and OM4 are never combined
    (the stronger is kept), and OM3 comes back when OS1 replaces OM4. OS1_Moderate (a likely oncogenic
    reference, the tool's own level) is not combined with OM3 or OP3 and gives way to them on a tie.
+   OM4_Supporting (a likely oncogenic reference for another change at the residue) can be combined with OP3,
+   as OM4 can with OP3 in the standard; it is never decisive in the ClinVar evaluation.
 
 **Validation on laboratory assays** (AUC; ties count half; CIViC items citing the assays left out):
 

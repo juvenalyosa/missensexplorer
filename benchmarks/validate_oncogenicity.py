@@ -274,7 +274,10 @@ def evaluate(df: pd.DataFrame, labels: dict[str, str], classes: list[str], rng, 
             line["points_without_clinvar"] = round(auc(y[keep], off_pts[keep]), 3)
             no_op1 = pts - d.op1.to_numpy(float)
             line["points_without_op1_sbp1"] = round(auc(y, no_op1), 3)
-            hot = d.hotspot.to_numpy(float)
+            # the hotspot criteria met, from the run without ClinVar: with a reference, OS1 or OM4 can replace
+            # a hotspot code in the final points, which would score a hotspot variant as if it had none
+            hot = off.loc[d.variant, "hotspot"].to_numpy(float)
+            hot = np.where(np.isnan(hot), d.hotspot.to_numpy(float), hot)
             line["hotspot_points_only"] = round(auc(y, hot), 3)
             # paired against the full points: are the differences more than noise?
             line["hotspot_only_minus_points"] = delong(y.astype(int), hot, pts)
