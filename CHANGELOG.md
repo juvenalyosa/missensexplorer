@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [2.5.0] — unreleased
+## [2.5.0] — 2026-11-26
 
 Corrections prompted by five rounds of review of the evaluation. The model and its PP3/BP4
 thresholds are retrained and recalibrated, so the results of 2.4 change.
