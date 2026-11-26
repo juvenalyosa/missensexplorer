@@ -80,7 +80,7 @@ RULES: dict[str, dict] = {
     # "< 0.290", PM2 "< 0.025% (0.00025)", BA1 "Grpmax > 0.005".
     "GAA": {"panel": "Lysosomal Diseases", "spec": "GN010", "score": "revel", "pp3": [(0.7, 1)], "pp3_strict": True,
             "bp4": [(0.5, 1)], "bp4_strict": True, "pm2": ("lt", 0.001), "ba1": ("gt", 0.01)},
-    "IDUA": {"panel": "Lysosomal Diseases", "spec": "GN091", "score": "revel", "pp3": [(0.773, 2), (0.644, 1)],
+    "IDUA": {"panel": "Lysosomal Diseases", "spec": "GN091", "score": "revel", "pp3": [(0.773, 2, True), (0.644, 1, False)],
              "bp4": [(0.290, 1)], "bp4_strict": True, "pm2": ("lt", 0.00025), "ba1": ("gt", 0.005)},
     # Limb Girdle Muscular Dystrophy VCEP v2.0 (GN180 DYSF, GN187 CAPN3, GN188 ANO5, GN184-186/189 SGCB/G/D/A):
     # PP3 "REVEL with a score >= 0.7"; BP4 "REVEL with a score <= 0.1 AND SpliceAI with a score <= 0.05"; PM2
@@ -103,15 +103,15 @@ def panel_rule_codes(
     """PP3/BP4 points, PM2 and BA1 (1/0) for one variant under its panel's rule.
 
     Reads ``revel``, ``spliceai_max``, the gnomAD grpmax allele frequency (``af_key``) and the tool's PM2
-    text (``pm2_key``: PM2_Supporting means absence from gnomAD confirmed with enough coverage).
+    text (``pm2_key``: "absent from gnomAD" in it means absent, whatever the coverage; the rules count it).
     """
     out = {"PP3": 0, "BP4": 0, "PM2": 0, "BA1": 0}
     s = row.get(rule["score"]) if rule.get("score") else None
     sp = row.get("spliceai_max")
     sp = None if sp is None or (isinstance(sp, float) and np.isnan(sp)) else float(sp)
     if s is not None and not (isinstance(s, float) and np.isnan(s)):
-        for t, p in rule.get("pp3", []):
-            if (s > t) if rule.get("pp3_strict") else (s >= t):
+        for t, p, *strict in rule.get("pp3", []):  # (threshold, points[, strict]): strict means "above"
+            if (s > t) if (strict[0] if strict else rule.get("pp3_strict")) else (s >= t):
                 out["PP3"] = p
                 break
         if not out["PP3"]:
@@ -124,7 +124,8 @@ def panel_rule_codes(
         out["PP3"] = 1
     af = row.get(af_key)
     af = None if af is None or (isinstance(af, float) and np.isnan(af)) else float(af)
-    absent = af is None and str(row.get(pm2_key) or "").startswith("PM2_Supporting")  # confirmed absence
+    # absent from gnomAD, whatever the coverage: the panels' rules ask for absence (or a low frequency) only
+    absent = af is None and "absent from gnomAD" in str(row.get(pm2_key) or "")
     pm2 = rule.get("pm2")
     if pm2:
         out["PM2"] = int(absent if pm2[0] == "absent" else (absent or (af is not None and _cmp(af, *pm2))))
@@ -156,7 +157,9 @@ def describe(row: dict[str, Any]) -> str | None:
     else:
         parts.append(f"neither PP3 nor BP4 (REVEL {float(s):.3f})")
     if rule.get("pm2"):
-        parts.append("PM2 met" if c["PM2"] else "PM2 not met")
+        low = c["PM2"] and "few reads there" in str(row.get("acmg_pm2") or "")
+        met = "PM2 met (absent from gnomAD, but few reads there: check)" if low else "PM2 met"
+        parts.append(met if c["PM2"] else "PM2 not met")
     if c["BA1"]:
         parts.append("BA1 met")
     return ", ".join(parts)

@@ -36,6 +36,7 @@ import argparse
 import json
 import re
 import sys
+import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -47,7 +48,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import validate_egfr as E
 from erepo_analyses import delong
 
-from missensexplorer import PredictOptions, model, predict
+from missensexplorer import PredictOptions, __version__, model, predict
 from missensexplorer import oncogenicity as onco
 from missensexplorer.cache import default_cache_dir
 from missensexplorer.oncogenicity import INTOGEN_RELEASE
@@ -63,7 +64,7 @@ EXCLUDED_PMIDS = {
     "11896595": "Monti et al. 2002 (TP53 yeast assay)",
 }
 EXCLUDED: list[dict] = []  # EGFR table variants that cannot be analysed (filled by egfr())
-RUNS: list[dict] = []  # data versions and sources of each predict() run, for the report
+RUNS: list[dict] = []  # the run record of each predict() call (software, Ensembl, options, data versions)
 WATCH = {
     "EGFR": ["L858R", "G719A", "G719C", "G719S", "L861Q", "S768I", "E709K", "T790M", "L747P", "E746_A750del"],
     "TP53": ["R175H", "R248Q", "R248W", "R273H", "G245S", "Y220C", "R337H", "V217M", "P47S"],
@@ -127,7 +128,7 @@ def run(inputs: list[str], clinvar: bool) -> pd.DataFrame:
     failed = {k: v for k, v in res.sources.items() if str(v).startswith("failed")}
     if failed:
         raise SystemExit(f"incomplete: {failed}. Run again (cached answers are kept).")
-    RUNS.append({"data_versions": res.run.get("data_versions", {}), "sources": res.sources})
+    RUNS.append({"clinvar": clinvar, "inputs": len(inputs), "run": res.run})
     return res.table
 
 
@@ -142,6 +143,8 @@ def summarise(rows: list[dict]) -> dict:
         "points": float(np.mean(pts)) if pts else None,
         "tier": tiers.pop() if len(tiers) == 1 else "mixed",
         "codes": " / ".join(sorted({str(r.get("oncogenicity_codes") or "") for r in rows})),
+        # the evidence as the tool wrote it (frozen: hotspot counts, CIViC items, ClinVar references, gnomAD)
+        "evidence": " / ".join(sorted({str(r.get("oncogenicity_evidence") or "") for r in rows})),
         "op1": float(np.mean([_op1(r) for r in rows])) if rows else 0.0,
         "hotspot": float(np.mean([_hotspot(r) for r in rows])) if rows else 0.0,
         "points_standard_os1": float(np.mean(std))
@@ -408,7 +411,11 @@ def main(argv: list[str] | None = None) -> int:
             "baf3_transforming": int(sum(bool(x["baf3"]) for x in EXCLUDED)),
         },
         "civic_dropped": len(dropped),
-        "data_versions": RUNS[-1] if RUNS else {},
+        "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "missensexplorer": __version__,
+        # every run's data versions (the same in all runs, read from one cache) and its full record
+        "data_versions": {k: v for x in RUNS for k, v in x["run"].get("data_versions", {}).items()},
+        "runs": RUNS,
     }
     if args.dump:
         args.dump.mkdir(parents=True, exist_ok=True)

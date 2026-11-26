@@ -67,11 +67,11 @@
    },
    "panel_rules": {
     "evaluated": 2878,
-    "tp": 2051,
-    "fn": 253,
+    "tp": 2052,
+    "fn": 252,
     "fp": 195,
     "tn": 379,
-    "positive_agreement": 0.890191,
+    "positive_agreement": 0.890625,
     "negative_agreement": 0.660279
    }
   },
@@ -98,92 +98,92 @@
  },
  "intervals": {
   "PP3_tool_positive_agreement": [
-   0.8826,
-   0.9555
+   0.883,
+   0.9565
   ],
   "PP3_tool_negative_agreement": [
-   0.6581,
-   0.8498
+   0.6452,
+   0.8487
   ],
   "PP3_rule_positive_agreement": [
-   0.9756,
-   0.9893
+   0.9757,
+   0.9892
   ],
   "PP3_rule_negative_agreement": [
-   0.8136,
-   0.9964
+   0.8099,
+   0.9966
   ],
   "BP4_tool_positive_agreement": [
-   0.702,
-   0.9202
+   0.7,
+   0.9171
   ],
   "BP4_tool_negative_agreement": [
-   0.687,
-   0.9398
+   0.6872,
+   0.94
   ],
   "BP4_rule_positive_agreement": [
-   0.8695,
+   0.8681,
    1.0
   ],
   "BP4_rule_negative_agreement": [
-   0.9401,
-   0.9953
+   0.9403,
+   0.9952
   ],
   "PM2_tool_positive_agreement": [
-   0.3388,
-   0.5933
+   0.3389,
+   0.5877
   ],
   "PM2_tool_negative_agreement": [
    0.9771,
    1.0
   ],
   "PM2_rule_positive_agreement": [
-   0.7968,
-   0.9551
+   0.7985,
+   0.9562
   ],
   "PM2_rule_negative_agreement": [
-   0.4281,
+   0.4306,
    0.9656
   ],
   "BA1_tool_positive_agreement": [
-   0.0353,
-   0.3208
+   0.035,
+   0.3185
   ],
   "BA1_tool_negative_agreement": [
    1.0,
    1.0
   ],
   "BA1_rule_positive_agreement": [
-   0.8294,
+   0.8324,
    1.0
   ],
   "BA1_rule_negative_agreement": [
-   0.9099,
+   0.9113,
    0.9949
   ],
   "strength_panel_pp3_met_tool": [
    0.1049,
-   0.2158
+   0.2177
   ],
   "strength_panel_pp3_met_tool_capped": [
-   0.5909,
-   0.941
+   0.589,
+   0.9402
   ],
   "strength_panel_pp3_met_rule": [
    0.6141,
-   0.9847
+   0.985
   ],
   "strength_pp3_or_bp4_evaluated_tool": [
-   0.194,
-   0.2963
+   0.1933,
+   0.2968
   ],
   "strength_pp3_or_bp4_evaluated_tool_capped": [
-   0.5901,
+   0.5899,
    0.8027
   ],
   "strength_pp3_or_bp4_evaluated_rule": [
-   0.7062,
-   0.9802
+   0.6998,
+   0.9805
   ]
  },
  "strength_exact_agreement": {
@@ -218,11 +218,11 @@
   },
   "panel_rules": {
    "evaluated": 2142,
-   "tp": 1564,
-   "fn": 248,
+   "tp": 1565,
+   "fn": 247,
    "fp": 21,
    "tn": 309,
-   "positive_agreement": 0.863135,
+   "positive_agreement": 0.863687,
    "negative_agreement": 0.936364
   },
   "rule_conflicts_total": 195,
@@ -315,6 +315,12 @@
     "tool": 0.238806,
     "tool_capped": 0.547974,
     "rule": 0.490405
+   },
+   "strength_panel_pp3_met": {
+    "n": 337,
+    "tool": 0.148368,
+    "tool_capped": 0.522255,
+    "rule": 0.448071
    }
   },
   "2022-2023": {
@@ -364,6 +370,12 @@
     "tool": 0.275862,
     "tool_capped": 0.758621,
     "rule": 0.931034
+   },
+   "strength_panel_pp3_met": {
+    "n": 439,
+    "tool": 0.202733,
+    "tool_capped": 0.865604,
+    "rule": 0.940774
    }
   },
   "2024-2026": {
@@ -413,6 +425,12 @@
     "tool": 0.245671,
     "tool_capped": 0.722944,
     "rule": 0.975108
+   },
+   "strength_panel_pp3_met": {
+    "n": 876,
+    "tool": 0.144977,
+    "tool_capped": 0.872146,
+    "rule": 0.974886
    }
   }
  },
@@ -438,6 +456,12 @@
      "positive_agreement": 0.97351,
      "negative_agreement": 0.964286
     }
+   },
+   "strength": {
+    "n": 223,
+    "tool": 0.188341,
+    "tool_capped": 0.838565,
+    "rule": 0.932735
    },
    "strength_panel_pp3_met": {
     "n": 151,
@@ -468,6 +492,12 @@
      "negative_agreement": 0.980198
     }
    },
+   "strength": {
+    "n": 668,
+    "tool": 0.276946,
+    "tool_capped": 0.77994,
+    "rule": 0.965569
+   },
    "strength_panel_pp3_met": {
     "n": 414,
     "tool": 0.205314,
@@ -496,6 +526,12 @@
      "positive_agreement": 0.978391,
      "negative_agreement": 0.9953
     }
+   },
+   "strength": {
+    "n": 1801,
+    "tool": 0.239867,
+    "tool_capped": 0.729595,
+    "rule": 0.976124
    },
    "strength_panel_pp3_met": {
     "n": 833,
@@ -1183,11 +1219,11 @@
     },
     "panel_rules": {
      "evaluated": 173,
-     "tp": 90,
-     "fn": 42,
+     "tp": 91,
+     "fn": 41,
      "fp": 0,
      "tn": 41,
-     "positive_agreement": 0.681818,
+     "positive_agreement": 0.689394,
      "negative_agreement": 1.0
     }
    },
@@ -1396,5 +1432,25 @@
     "rule": 1.0
    }
   }
+ },
+ "notes_on_erepo": {
+  "ten_panels_rules_pp3_bp4_differ_from_tool": [
+   2576,
+   3460
+  ],
+  "ba1_panel_met_tool_not_note_cites_panel_ba1": {
+   "all_panels": [
+    304,
+    361
+   ],
+   "ten_panels": [
+    139,
+    154
+   ]
+  },
+  "classifications_with_a_note": [
+   5857,
+   6310
+  ]
  }
 }

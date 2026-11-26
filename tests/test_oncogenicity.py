@@ -382,15 +382,17 @@ def intogen_zip(rows):
     return buf.getvalue()
 
 
-def test_gene_roles_come_from_uniprot_keywords_then_intogen_weighted_by_samples():
+def test_gene_roles_come_from_intogen_weighted_by_samples_then_uniprot_keywords():
     counts = onco.parse_intogen(
         intogen_zip([("SMARCA4", "Act", 10), ("SMARCA4", "Act", 10), ("SMARCA4", "LoF", 80), ("EGFR", "Act", 50),
                      ("MIXED", "LoF", 50), ("MIXED", "Act", 50), ("ETV6", "LoF", 80), ("ETV6", "LoF", 10),
                      ("ETV6", "Act", 10), ("THIN", "Act", 5), ("FUSION", "Act", 3), ("PMS2", "ambiguous", 26),
                      ("SMB1", "LoF", 5), ("SMB1", "Act", 4), ("SMB1", "Act", 4), ("AMBX", "LoF", 4),
-                     ("AMBX", "ambiguous", 10)])
+                     ("AMBX", "ambiguous", 10), ("MAML", "LoF", 14), ("MAML", "ambiguous", 5),
+                     ("MAML", "ambiguous", 6)])
     )  # fmt: skip
-    assert counts["SMARCA4"] == [80.0, 20.0, 0.0, 3]
+    assert counts["SMARCA4"] == [80.0, 20.0, 0.0, 3, 0]
+    assert counts["MAML"] == [14.0, 0.0, 11.0, 1, 2]  # cohorts with a role, then cohorts of ambiguous role
     roles = onco.combine_roles(counts, suppressors={"MLH1", "PMS2", "SMB1"}, oncogenes={"ETV6", "FUSION", "MIXED"})
     assert roles["SMARCA4"].role == "LoF"  # most cohorts say Act, but 80% of the mutated samples say LoF
     assert (
@@ -414,8 +416,10 @@ def test_gene_roles_come_from_uniprot_keywords_then_intogen_weighted_by_samples(
     # a single small cohort and no UniProt keyword: the role is left undecided
     assert roles["THIN"].role == "ambiguous"
     assert not roles["THIN"].decisive
-    assert "too few to decide" in roles["THIN"].text()
-    assert "1 cohort," in roles["THIN"].text()
+    assert roles["THIN"].text() == "ambiguous (IntOGen: 5 mutated samples in 1 cohort with a role: too few to decide)"
+    # cohorts of ambiguous role do not count towards the two cohorts IntOGen needs (MAML2: one cohort of 14)
+    assert roles["MAML"].role == "ambiguous"
+    assert not roles["MAML"].decisive
     assert onco.parse_uniprot("Entry\tGene Names (primary)\nP1\tTP53\nP2\t\n") == {"TP53"}
 
 
@@ -555,28 +559,67 @@ def test_os2_needs_preclinical_civic_evidence():
     assert "from clinical observations (not functional studies) not used" in a.evidence()
 
 
+def egfr(change, pos=719, ref_aa="G", alt="C"):
+    return row("EGFR", change, pos, ref_aa, alt, "ENST00000275493")
+
+
 def test_adding_a_clinvar_reference_never_lowers_the_points():
     """For every combination of references (same change or other change, oncogenic or likely oncogenic),
-    with or without a hotspot and CIViC evidence, adding references never lowers the points."""
-    refs = {
-        "same O": ref("p.Arg175His", "H", level="O", same=True, cdna="c.524_525delinsAT"),
-        "same LO": ref("p.Arg175His", "H", level="LO", same=True, cdna="c.524_525delinsAC"),
-        "other O": ref("p.Arg175Leu", "L", level="O"),
-        "other LO": ref("p.Arg175Cys", "C", level="LO"),
-    }
-    civic = with_civic("TP53", "R175H", item(sig="Loss of Function"))
-    for d in (data(), civic, onco.Data(roles=ROLES, roles_ok=True, hotspots_ok=True)):
-        for pos in (175, 176):  # with and without a hotspot at the residue
-            r = row(pos=pos, change=f"R{pos}H")
-            names = list(refs)
-            for k in range(1 << len(names)):
-                chosen = [refs[n] for i, n in enumerate(names) if k >> i & 1]
-                base = onco.assess(r, {"missense_variant"}, "damaging", d, chosen).points
-                for extra in names:
-                    if refs[extra] in chosen:
-                        continue
-                    more = onco.assess(r, {"missense_variant"}, "damaging", d, [*chosen, refs[extra]]).points
-                    assert more >= base, (pos, [x.level for x in chosen], extra)
+    with hotspots of each strength (OS3, OM3, OP3, none), OM4, CIViC evidence and model calls, adding a
+    reference never lowers the points."""
+    cases = [  # (row, CIViC significance, milder other changes at the residue)
+        (row(), "Loss of Function", [("p.Arg175Lys", "K"), ("p.Arg175Lys", "K")]),  # OS3 (OM4 excluded)
+        (row(change="R175G", alt="G"), "Loss of Function", [("p.Arg175His", "H"), ("p.Arg175Lys", "K")]),  # OP3
+        (row(pos=176, change="R176H"), "Loss of Function", [("p.Arg176Lys", "K"), ("p.Arg176Lys", "K")]),  # none
+        (egfr("G719A", alt="A"), "Gain of Function", [("p.Gly719Ser", "S"), ("p.Gly719Ser", "S")]),  # OM3, OM4
+        (egfr("G719C"), "Gain of Function", [("p.Gly719Ala", "A"), ("p.Gly719Ser", "S")]),  # OP3 with OM4
+    ]
+    seen: set[str] = set()
+    for r, sig, milder in cases:
+        aa3 = {"H": "His", "G": "Gly", "A": "Ala", "C": "Cys"}[r["alt_aa"]]
+        same = f"p.{'Arg' if r['ref_aa'] == 'R' else 'Gly'}{r['protein_position']}{aa3}"
+        refs = {
+            "same O": ref(same, r["alt_aa"], level="O", same=True, cdna="c.1_2delinsAT"),
+            "same LO": ref(same, r["alt_aa"], level="LO", same=True, cdna="c.1_2delinsAC"),
+            "other O": ref(milder[0][0], milder[0][1], level="O"),
+            "other LO": ref(milder[1][0], milder[1][1], level="LO"),
+        }
+        civic = with_civic(r["gene"], r["protein_change"], item(sig=sig))
+        for d in (data(), civic, onco.Data(roles=ROLES, roles_ok=True, hotspots_ok=True)):
+            for call in ("damaging", None):
+                names = list(refs)
+                for k in range(1 << len(names)):
+                    chosen = [refs[n] for i, n in enumerate(names) if k >> i & 1]
+                    a = onco.assess(r, {"missense_variant"}, call, d, chosen)
+                    seen |= set(codes(a))
+                    for extra in names:
+                        if refs[extra] in chosen:
+                            continue
+                        more = onco.assess(r, {"missense_variant"}, call, d, [*chosen, refs[extra]]).points
+                        assert more >= a.points, (r["protein_change"], [x.level for x in chosen], extra)
+    # the cases exercise every criterion that a same-change reference is weighed against
+    assert {"OS1", "OS1_Moderate", "OS3", "OM3", "OP3", "OS2", "OM4", "OM4_Supporting"} <= seen
+
+
+def test_os1_combines_with_om3_and_op3_as_the_standard_does():
+    same = ref("p.Gly719Ala", "A", same=True)
+    # an oncogenic same-change reference and an OM3 hotspot: OS1 + OM3 (the standard does not exclude OM3)
+    a = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, "damaging", data(), [same])
+    assert codes(a) == ["OS1", "OM3", "OP1", "OP4"]
+    assert a.points == 8
+    assert "standard's rule" not in a.evidence()
+    # with CIViC evidence too: OS1 + OM3 (6) ties OS2 + OM3 (6); either way 8 points, as the standard gives
+    b = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, "damaging",
+                    with_civic("EGFR", "G719A", item(sig="Gain of Function")), [same])  # fmt: skip
+    assert b.points == 8
+    assert "standard's rule" not in b.evidence()
+    # an OP3 hotspot stays with OS1
+    c = onco.assess(egfr("G719C"), {"missense_variant"}, None, data(), [ref("p.Gly719Cys", "C", same=True)])
+    assert codes(c) == ["OS1", "OP3", "OP4"]
+    # OM4 had replaced OM3; when OS1 replaces OM4, OM3 comes back
+    d = onco.assess(egfr("G719A", alt="A"), {"missense_variant"}, None, data(), [same, ref("p.Gly719Ser", "S")])
+    assert codes(d) == ["OS1", "OM3", "OP4"]
+    assert "OM4 not counted (OS1 uses this amino-acid change)" in d.evidence()
 
 
 def test_the_standards_rule_for_os1_is_reported_when_it_differs():
@@ -585,6 +628,14 @@ def test_the_standards_rule_for_os1_is_reported_when_it_differs():
                     refs)  # fmt: skip
     assert a.points == 10  # OS3 + OS2 (stronger than OS1) + OP1 + OP4
     assert "the standard's rule for OS1 would give 6 points" in a.evidence()
+    # a likely oncogenic reference gives no OS1 under the standard: the hotspot evidence stands
+    lo = onco.assess(row(), {"missense_variant"}, None, data(), [ref("p.Arg175His", "H", level="LO", same=True)])
+    assert "standard's rule" not in lo.evidence()
+
+
+def test_unavailable_uniprot_keywords_are_said():
+    a = onco.assess(row(), {"missense_variant"}, None, data(roles_partial=True), [])
+    assert "UniProt keywords unavailable: gene roles from IntOGen only" in a.evidence()
 
 
 def test_civic_release_names_are_english_whatever_the_locale():
@@ -593,12 +644,15 @@ def test_civic_release_names_are_english_whatever_the_locale():
 
     old = locale.setlocale(locale.LC_TIME)
     try:
-        for name in ("es_ES.UTF-8", "de_DE.UTF-8", "fr_FR.UTF-8"):
+        for name in ("es_ES.UTF-8", "de_DE.UTF-8", "fr_FR.UTF-8", "es_ES", "de_DE", "fr_FR"):
             try:
                 locale.setlocale(locale.LC_TIME, name)
-                break
             except locale.Error:
                 continue
+            if dt.date(2026, 3, 1).strftime("%b") != "Mar":  # the locale really names months otherwise
+                break
+        else:
+            pytest.skip("no non-English locale is installed")
         assert onco.civic_releases(dt.date(2026, 1, 15)) == ["01-Jan-2026", "01-Dec-2025"]
         assert onco.civic_releases(dt.date(2026, 8, 3)) == ["01-Aug-2026", "01-Jul-2026"]
     finally:

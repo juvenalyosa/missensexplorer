@@ -49,7 +49,7 @@ PERIODS = (
     ("2022-2023", "2022-01-01", "2023-12-31"),
     ("2024-2026", "2024-01-01", None),
 )
-B = 2000
+B = 10000
 
 
 def agree(d: pd.DataFrame, exp: str, got: str) -> dict:
@@ -100,6 +100,38 @@ def strength(d: pd.DataFrame) -> dict:
 
 
 PICKS = np.random.default_rng(1).integers(0, 10, (B, 10))  # the same panel resamples for every statistic
+
+
+def _num(x: object) -> float | None:
+    return None if x is None or (isinstance(x, float) and np.isnan(x)) else float(x)  # type: ignore[arg-type]
+
+
+def tool_row(r: dict) -> dict:
+    """The fields of a results row that vcep.notes() reads, rebuilt from the eRepo per-variant table."""
+    pts = int(r["tool_PP3"]) if r["tool_PP3"] > 0 else -int(r["tool_BP4"]) if r["tool_BP4"] > 0 else 0
+    return {"gene": r["gene"], "acmg_points": pts, "acmg_ps1_pm5": r["tool_ps1_pm5"], "acmg_pm2": r["tool_pm2"],
+            "gnomad_popmax_af": _num(r["grpmax"]), "population_frequency": r["population_frequency"],
+            "revel": _num(r["revel"]), "spliceai_max": _num(r["spliceai_max"])}  # fmt: skip
+
+
+def notes_on_erepo(df: pd.DataFrame, d: pd.DataFrame) -> dict:
+    """What the tool's expert-panel notes (vcep.notes, as predict.py calls it) say on the eRepo classifications."""
+    notes = {i: " | ".join(vcep.notes(tool_row(r))) for i, r in df.to_dict("index").items()}
+    text = pd.Series(notes)
+    # the ten panels: the note gives the panel rules' PP3/BP4, which differs from the tool's here
+    differ = signed(d, "rule_") != signed(d, "tool_")
+    given = text[d.index].str.contains("its rules give")
+    ba1 = (df["exp_BA1"] > 0) & (df["tool_BA1"] == 0)  # the panel applied BA1 and the tool did not
+    cites = text.str.contains(r"BA1 threshold|BA1 rule|BA1 only", regex=True)
+    ten = df.index.isin(d.index)
+    return {
+        "ten_panels_rules_pp3_bp4_differ_from_tool": [int((differ & given).sum()), len(d)],
+        "ba1_panel_met_tool_not_note_cites_panel_ba1": {
+            "all_panels": [int((ba1 & cites).sum()), int(ba1.sum())],
+            "ten_panels": [int((ba1 & cites & ten).sum()), int((ba1 & ten).sum())],
+        },
+        "classifications_with_a_note": [int(text.ne("").sum()), len(df)],
+    }
 
 
 def bootstrap(d: pd.DataFrame, num, den) -> list[float] | None:
@@ -204,11 +236,13 @@ def main() -> int:
             "PP3": {"tool": agree(g, "exp_PP3", "tool_PP3"), "panel_rules": agree(g, "exp_PP3", "rule_PP3")},
             "BP4": {"tool": agree(g, "exp_BP4", "tool_BP4"), "panel_rules": agree(g, "exp_BP4", "rule_BP4")},
             "strength": strength(g)["pp3_or_bp4_evaluated"],
+            "strength_panel_pp3_met": strength(g)["panel_pp3_met"],
         }
         h = d[m & ~pku]
         rep["by_period_without_phenylketonuria"][name] = {
             "classifications": len(h),
             "PP3": {"tool": agree(h, "exp_PP3", "tool_PP3"), "panel_rules": agree(h, "exp_PP3", "rule_PP3")},
+            "strength": strength(h)["pp3_or_bp4_evaluated"],
             "strength_panel_pp3_met": strength(h)["panel_pp3_met"],
         }
     rep["by_panel"] = {
@@ -217,6 +251,7 @@ def main() -> int:
             "strength": strength(g)["pp3_or_bp4_evaluated"]}
         for p, g in d.groupby("panel")
     }  # fmt: skip
+    rep["notes_on_erepo"] = notes_on_erepo(df, d)
     OUT.mkdir(exist_ok=True)
     keep = ["clinvar_id", "gene", "panel", "approved", "n_not_met",
             *[f"{w}_{c}" for c in CRITERIA for w in ("exp", "tool", "rule")], "tool_capped_PP3", "tool_capped_BP4"]  # fmt: skip

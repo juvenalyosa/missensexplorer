@@ -20,7 +20,7 @@ def test_several_specifications_of_a_gene_are_all_kept():
     notes = vcep.notes({"gene": "RYR1", "acmg_points": 4})
     assert len(notes) == 3
     assert any("autosomal recessive; GN179)" in n for n in notes)
-    assert "x-linked" in vcep.describe("ABCD1")  # mode of inheritance from CSpec's structured field
+    assert "X-linked" in vcep.describe("ABCD1")  # mode of inheritance from CSpec's structured field
 
 
 def test_evidence_stronger_than_the_panel_allows_is_noted():
@@ -66,7 +66,19 @@ def test_ba1_against_the_panel_threshold():
     assert "is above its BA1 threshold (>= 0.1%), which it applies to the filtering allele frequency" in note
     assert "meets" not in note
     kcnq1 = {"gene": "KCNQ1", "acmg_points": 0, "gnomad_popmax_af": 0.02, "population_frequency": "frequent"}
-    assert "meets its BA1 threshold (>= 0.4%)" in vcep.notes(kcnq1)[0]
+    assert (
+        "grpmax 2% is at or above its BA1 threshold (>= 0.4%): check its other BA1 conditions" in vcep.notes(kcnq1)[0]
+    )
+    # never a flat "meets": the panels' BA1 texts carry exceptions (antithrombin Cambridge II is pathogenic)
+    serpinc1 = {"gene": "SERPINC1", "acmg_points": 0, "gnomad_popmax_af": 0.0024, "population_frequency": "frequent"}
+    note = vcep.notes(serpinc1)[0]
+    assert "is at or above its BA1 threshold (>= 0.2%): check its other BA1 conditions" in note
+    assert "meets" not in note
+    # conditions beyond the threshold (allele counts, males only, other datasets) are quoted
+    rs1 = {"gene": "RS1", "acmg_points": 0, "gnomad_popmax_af": 0.001, "population_frequency": "rare"}
+    assert "in males in population databases" in vcep.notes(rs1)[0]
+    hbb = {"gene": "HBB", "acmg_points": 0, "gnomad_popmax_af": 0.045, "population_frequency": "frequent"}
+    assert "variant present in ≥5 alleles" in vcep.notes(hbb)[0]
     assert vcep.ba1_above_5pct("VWF") == pytest.approx(0.1)
     assert vcep.ba1_above_5pct("MYH7") is None
 
@@ -75,13 +87,19 @@ def test_encoded_rules_say_what_the_panel_would_give():
     note = vcep.notes({"gene": "LDLR", "acmg_points": 4, "revel": 0.81, "spliceai_max": 0.0,
                        "gnomad_popmax_af": None, "acmg_pm2": "PM2_Supporting (absent from gnomAD v4)"})[0]  # fmt: skip
     assert "its rules give PP3_Supporting (REVEL 0.810), PM2 met" in note
+    # the panels' PM2 asks for absence, whatever the coverage: the rules count it, with a word of caution
+    low = vcep_rules.describe({"gene": "SOS1", "revel": 0.734, "spliceai_max": 0.0, "gnomad_popmax_af": None,
+                               "acmg_pm2": "not applicable (absent from gnomAD v4, but few reads there: >= 20 reads in "
+                                           "48% of exomes)"})  # fmt: skip
+    assert low == "PP3_Supporting (REVEL 0.734), PM2 met (absent from gnomAD, but few reads there: check)"
     ada = vcep_rules.describe({"gene": "ADA", "gnomad_popmax_af": 0.01})
     assert ada == "no PP3/BP4 for missense variants, PM2 not met, BA1 met"
 
 
 def test_weaker_residue_evidence_is_not_an_invitation_to_upgrade():
     note = vcep.notes({"gene": "LDLR", "acmg_points": 0, "acmg_ps1_pm5": "PM5_Supporting (p.X: Likely pathogenic)"})[0]
-    assert "does not use PM5 below Moderate: with a likely pathogenic or single-star reference" in note
+    assert "has no PM5 below Moderate: the tool lowered PM5 because the ClinVar reference is likely pathogenic" in note
+    assert "would not apply" not in note  # the panel judges the reference itself (it applied PM5 in 25 of 134)
     assert "is weaker" not in note.split("PM2")[0]
     assert "classified pathogenic (by these guidelines)" in note  # the panel's condition on the reference
 
@@ -89,6 +107,23 @@ def test_weaker_residue_evidence_is_not_an_invitation_to_upgrade():
 def test_conditions_the_tool_cannot_check_are_quoted():
     note = vcep.notes({"gene": "DICER1", "acmg_points": 0, "acmg_ps1_pm5": "PS1_Moderate (same change: LP)"})[0]
     assert "on PS1: “Likely pathogenic changes do not apply" in note
+    # a reference classified under the panel's own specification (TP53, mismatch repair, hearing loss, F8)
+    for gene, crit, words in (("TP53", "PM5", "according to the TP53 VCEP"),
+                              ("MLH1", "PS1", "established by this VCEP"),
+                              ("GJB2", "PS1", "pathogenicity by the HL specification"),
+                              ("F8", "PS1", "based on F8 gene rule specifications")):  # fmt: skip
+        code = "PM5 (p.X: Pathogenic, 3★)" if crit == "PM5" else "PS1 (same change: Pathogenic, 3★)"
+        assert words in vcep.notes({"gene": gene, "acmg_points": 0, "acmg_ps1_pm5": code})[0], gene
+
+
+def test_a_panel_that_uses_neither_pp3_nor_bp4_is_not_said_to_set_its_own_thresholds():
+    note = vcep.notes({"gene": "GFAP", "acmg_points": 2})[0]
+    assert "does not use PP3" in note
+    assert "own predictor" not in note
+
+
+def test_the_disease_types_of_a_specification_are_listed_together():
+    assert "von Willebrand disease types 2A, 2B, 2M" in vcep.describe("VWF")
 
 
 @pytest.mark.parametrize("gene", ["MYH7", "RYR1"])

@@ -53,9 +53,11 @@ NOT_MISSENSE = re.compile(
 # PP3/BP4 that a specification restricts to splicing or to non-coding variants in words the regex above does
 # not catch (checked by hand against the texts, November 2026)
 NOT_MISSENSE_FIX: dict[str, dict[str, str]] = {
-    "GN007": {  # CDH1 (Gastric Cancer VCEP)
-        "PP3": "At least three in silico splicing predictors in agreement (splicing only)",
-        "BP4": "Splicing predictions only.",
+    "GN007": {  # CDH1 (Gastric Cancer VCEP): both are splicing predictions only (quoted verbatim)
+        "PP3": "At least three in silico splicing predictors in agreement (SpliceAI, MaxEntScan, SSF, GeneSplicer, "
+        "HSF, TraP, varSEAK).",
+        "BP4": "Splicing predictions only. At least three in silico splicing predictors in agreement (SpliceAI, "
+        "MaxEntScan, SSF, GeneSplicer, HSF, TraP, varSEAK).",
     },
     "GN018": {  # AKT3, MTOR, PIK3CA, PIK3R2 (Brain Malformations VCEP)
         "BP4": "Not applicable for any variant type except for synonymous, intronic positions (except canonical "
@@ -68,7 +70,11 @@ CONDITION = re.compile(
     r"must reach a classification|classifi\w*[^.;]{0,40}(by|using|under|according to|with)[^.;]{0,60}"
     r"(specification|guideline|criteria|rules|VCEP)|likely pathogenic[^.;]{0,40}(do|does)? ?not apply|"
     r"do not apply (if|for|when)|without PM5|Grantham|splicing impact for either variant|"
-    r"not (be )?(use|appl)\w* (if|when|for)",
+    r"not (be )?(use|appl)\w* (if|when|for)|meet criteria for pathogenicity|"
+    r"according to[^.;]{0,60}(specification|VCEP|guideline|criteria)|"
+    r"established (by this VCEP|using|by interpretation)|per criteria established|"
+    r"based on[^.;]{0,60}\b(specifications?|VCEP)\b|\bby (the )?[^.;]{0,60}\b(VCEP|Expert Panel)\b|"
+    r"reach (a|an) (likely )?pathogenic classification",
     re.I,
 )
 NUM = r"(\d+(?:\.\d+)?)"
@@ -152,17 +158,17 @@ def clauses(raw: str) -> list[str]:
 
 
 def condition_quotes(raw_texts: list[str]) -> list[str]:
-    """The clauses that state a condition the tool cannot check, each cut to 180 characters from the condition."""
+    """The clauses that state a condition the tool cannot check, each cut to 200 characters around the condition."""
     out = []
     for raw in raw_texts:
         for c in clauses(raw):
             if re.search(r"splic\w* variant|nonsense|frameshift|synonymous|intronic", c, re.I):
                 continue  # conditions for other variant types
             if m := CONDITION.search(c):
-                start = max(0, m.start() - 60)
+                start = max(0, m.start() - 100)  # enough to keep what the reference must be ("classified as ...")
                 start = c.rfind(" ", 0, start) + 1 if start else 0
                 q = ("…" if start else "") + c[start:]
-                out.append(q if len(q) <= 180 else q[:179].rsplit(" ", 1)[0] + "…")
+                out.append(q if len(q) <= 200 else q[:199].rsplit(" ", 1)[0] + "…")
     return list(dict.fromkeys(out))
 
 
@@ -210,7 +216,7 @@ def rule_set_entry(svi: dict[str, Any], rs: dict[str, Any], label: str) -> dict[
 def structured_inheritance(rs: dict[str, Any]) -> str | None:
     """The mode of inheritance of the rule set's diseases (CSpec's modeOfInheritance), when there is one."""
     found = {
-        re.sub(r"\s*inheritance$", "", str(m.get("@label") or "").strip(), flags=re.I).lower()
+        re.sub(r"\s*inheritance$", "", str(m.get("@label") or "").strip(), flags=re.I).lower().replace("x-", "X-")
         for g in rs.get("genes") or []
         for d in g.get("diseases") or []
         for m in d.get("modeOfInheritance") or []

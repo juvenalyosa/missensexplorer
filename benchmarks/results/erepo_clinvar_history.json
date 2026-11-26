@@ -243,12 +243,12 @@
   "gained_then": 20,
   "mcnemar_p_unclustered": 0.000303163413558493,
   "positive_agreement_change_ci": [
-   -0.0801,
-   0.0042
+   -0.0803,
+   0.0028
   ],
   "ppv_change_ci": [
-   0.0132,
-   0.0872
+   0.0134,
+   0.0887
   ]
  },
  "pm5_attribution": {
@@ -275,12 +275,13 @@
    "net": 0.1723,
    "gross_ci": [
     0.1578,
-    0.3707
+    0.3674
    ],
    "net_ci": [
     0.0684,
-    0.304
+    0.3002
    ],
+   "panels": 47,
    "strictly_earlier_panel_references": {
     "discordant_lost": [
      195,
@@ -305,7 +306,16 @@
      79
     ],
     "gross": 0.4724,
-    "net": 0.4471
+    "net": 0.4471,
+    "gross_ci": [
+     0.2333,
+     0.6023
+    ],
+    "net_ci": [
+     0.1799,
+     0.5741
+    ],
+    "panels": 14
    },
    "2022-2023": {
     "discordant_lost": [
@@ -317,7 +327,16 @@
      127
     ],
     "gross": 0.2222,
-    "net": 0.112
+    "net": 0.112,
+    "gross_ci": [
+     0.1346,
+     0.5
+    ],
+    "net_ci": [
+     0.0279,
+     0.3975
+    ],
+    "panels": 23
    },
    "2024-2026": {
     "discordant_lost": [
@@ -329,8 +348,50 @@
      431
     ],
     "gross": 0.1609,
-    "net": 0.0797
+    "net": 0.0797,
+    "gross_ci": [
+     0.1103,
+     0.2262
+    ],
+    "net_ci": [
+     0.0189,
+     0.1544
+    ],
+    "panels": 45
+   },
+   "2016-2021 without Phenylketonuria": {
+    "discordant_lost": [
+     20,
+     58
+    ],
+    "concordant_lost": [
+     2,
+     42
+    ],
+    "gross": 0.3448,
+    "net": 0.2972,
+    "gross_ci": [
+     0.2021,
+     0.65
+    ],
+    "net_ci": [
+     0.1429,
+     0.5806
+    ],
+    "panels": 13
    }
+  },
+  "phenylketonuria_2016_2021": {
+   "discordant_lost": [
+    40,
+    69
+   ],
+   "concordant_lost": [
+    0,
+    37
+   ],
+   "gross": 0.5797,
+   "net": 0.5797
   },
   "release_lag_days": {
    "median": 46.0,

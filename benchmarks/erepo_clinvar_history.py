@@ -73,7 +73,7 @@ STARS = {
 SPLICE_CAUTION = 0.2
 FIRST = (2016, 1)
 VERSION = "2"  # of the extract format; part of the cache file names
-B_REPS = 2000
+B_REPS = 10000
 
 
 def level(sig: str) -> str | None:
@@ -348,23 +348,33 @@ def main() -> int:
         return {"discordant_lost": [t[0], t[1]], "concordant_lost": [t[2], t[3]],
                 "gross": None if dr is None else round(dr, 4), "net": None if net is None else round(net, 4)}  # fmt: skip
 
-    groups = [g for _, g in ev.groupby("panel")]
-    cells = np.array([shares(g) for g in groups], float)
-    picks = np.random.default_rng(1).integers(0, len(groups), (B_REPS, len(groups)))
-    tot = cells[picks].sum(1)
-    with np.errstate(invalid="ignore", divide="ignore"):
-        gross_b, net_b = tot[:, 0] / tot[:, 1], tot[:, 0] / tot[:, 1] - tot[:, 2] / tot[:, 3]
+    def with_ci(g: pd.DataFrame) -> dict:
+        """The shares of `g` with 95% intervals from a bootstrap of its panels."""
+        groups = [x for _, x in g.groupby("panel")]
+        cells = np.array([shares(x) for x in groups], float)
+        picks = np.random.default_rng(1).integers(0, len(groups), (B_REPS, len(groups)))
+        tot = cells[picks].sum(1)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            gross_b, net_b = tot[:, 0] / tot[:, 1], tot[:, 0] / tot[:, 1] - tot[:, 2] / tot[:, 3]
+        return {
+            **rates(shares(g)),
+            "gross_ci": [round(float(x), 4) for x in np.nanpercentile(gross_b, [2.5, 97.5])],
+            "net_ci": [round(float(x), 4) for x in np.nanpercentile(net_b, [2.5, 97.5])],
+            "panels": len(groups),
+        }
+
     attribution["reimplementation_basis"] = {
-        **rates(shares(ev)),
-        "gross_ci": [round(float(x), 4) for x in np.nanpercentile(gross_b, [2.5, 97.5])],
-        "net_ci": [round(float(x), 4) for x in np.nanpercentile(net_b, [2.5, 97.5])],
+        **with_ci(ev),
         "strictly_earlier_panel_references": rates(shares(ev, "then_strict_base")),
     }
     yr = ev["approved"].str[:4].astype(int)
+    pku = ev["panel"].str.startswith("Phenylketonuria")
     attribution["by_period"] = {
-        name: rates(shares(ev[m])) for name, m in
-        (("2016-2021", yr <= 2021), ("2022-2023", (yr >= 2022) & (yr <= 2023)), ("2024-2026", yr >= 2024))
+        name: with_ci(ev[m]) for name, m in
+        (("2016-2021", yr <= 2021), ("2022-2023", (yr >= 2022) & (yr <= 2023)), ("2024-2026", yr >= 2024),
+         ("2016-2021 without Phenylketonuria", (yr <= 2021) & ~pku))
     }  # fmt: skip
+    attribution["phenylketonuria_2016_2021"] = rates(shares(ev[(yr <= 2021) & pku]))
     lags = pd.Series([v["lag_days"] for v in variants if v["lag_days"] is not None])
     attribution["release_lag_days"] = {"median": float(lags.median()), "min": int(lags.min()), "max": int(lags.max())}
     attribution["clinvar_only_excess_share"] = round(

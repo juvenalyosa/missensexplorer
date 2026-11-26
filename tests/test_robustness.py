@@ -306,3 +306,23 @@ def test_one_unreadable_variant_does_not_sink_its_batch():
     assert "results" in out[("region", good)]
     assert out[("region", bad)]["service_error"]
     assert st.failed("Ensembl VEP", bad)
+
+
+def test_an_unreachable_ensembl_with_a_filled_cache_uses_the_cache(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from missensexplorer.api import OfflineError
+    from missensexplorer.cache import Cache
+
+    def offline(*a, **k):
+        raise OfflineError("no network")
+
+    monkeypatch.setattr(P, "ensembl_release", offline)
+    cache = Cache(tmp_path / "c.sqlite")
+    ctx = SimpleNamespace(net=True, local=False, cache=cache, http=None, warnings=[])
+    with pytest.raises(ConnectionError):  # nothing cached: no answers to use
+        P._check_connection(ctx)
+    cache.set("ensembl_release|GRCh38", 116)
+    P._check_connection(ctx)  # a rerun from a filled cache goes on, and says so
+    assert ctx.warnings == ["Ensembl cannot be reached: only answers already in the cache are used"]
+    cache.close()

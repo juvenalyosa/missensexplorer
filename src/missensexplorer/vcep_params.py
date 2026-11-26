@@ -50,9 +50,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {'PM5': ['…have been curated using the Perox VCEP rule specifications '
-                                             'and must reach a pathogenic/likely pathogenic classification '
-                                             'without PM5']},
+                      'conditions': {'PM5': ['…variant(s) used for evidence should also have been curated '
+                                             'using the Perox VCEP rule specifications and must reach a '
+                                             'pathogenic/likely pathogenic classification without PM5']},
                       'ba1': {'value': 0.00017,
                               'op': '>=',
                               'faf': True,
@@ -60,7 +60,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                        '≥0.017% (0.00017) from the most resent version of gnomAD. This '
                                        'frequency was calculated using the Whiffen-Ware calculator with a '
                                        'prevalenc'},
-                      'inheritance': 'x-linked',
+                      'inheritance': 'X-linked',
                       'diseases': ['adrenoleukodystrophy']}],
            'ACADVL': [{'panel': 'ACADVL Variant Curation Expert Panel',
                        'id': 'GN021',
@@ -76,12 +76,14 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'not_missense': {},
                        'conditions': {'PM5': ['Note: Cannot be applied with PM1, apply criteria with the '
                                               'highest strength.'],
-                                      'PS1': ['…amino acid change as a previously established pathogenic '
+                                      'PS1': ['Same amino acid change as a previously established pathogenic '
                                               'variant classified using the ACADVL specifications without '
-                                              'application of PS1, regardless of nucleotide change OR Same…',
-                                              '…change as a previously established likely pathogenic variant '
-                                              'classified using the ACADVL specifications without '
-                                              'application of PS1, regardless of nucleotide change.']},
+                                              'application of PS1, regardless of nucleotide change OR Same '
+                                              'amino acid change…',
+                                              'PS1Moderate: Same amino acid change as a previously '
+                                              'established likely pathogenic variant classified using the '
+                                              'ACADVL specifications without application of PS1, regardless '
+                                              'of nucleotide change.']},
                        'ba1': {'value': 0.007,
                                'op': '>=',
                                'faf': False,
@@ -145,12 +147,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon '
-                                             'has been classified as pathogenic using these modified '
-                                             'guidelines without application of PM5.',
-                                             '…SUPPORTING if a different missense variant at the same codon '
-                                             'has been classified as likely pathogenic using these modified '
-                                             'guidelines without application of PM5.',
+                      'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                             'variant at the same codon has been classified as pathogenic '
+                                             'using these modified guidelines without application of PM5.',
+                                             '…criterion can be considered at SUPPORTING if a different '
+                                             'missense variant at the same codon has been classified as '
+                                             'likely pathogenic using these modified guidelines without '
+                                             'application of PM5.',
                                              'Consider reducing the strength of this rule to NOT APPLICABLE '
                                              'if the predicted impact is not expected to be equivalent or '
                                              'more severe.']},
@@ -175,7 +178,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                    'BA1': ['Stand Alone'],
                                    'PS1': ['Strong']},
                        'not_missense': {},
-                       'conditions': {},
+                       'conditions': {'PM5': ['…different missense changes at same codon have been '
+                                              'determined to be likely pathogenic or pathogenic based on HHT '
+                                              'VCEP rules.',
+                                              'A different missense change at same codon has been determined '
+                                              'to be likely pathogenic or pathogenic based on HHT VCEP '
+                                              'rules.']},
                        'ba1': {'value': 0.01,
                                'op': '>=',
                                'faf': True,
@@ -201,7 +209,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'as likely pathogenic by SCID VCEP specifications for ADA.'],
                                    'PM5': ['Notes: The informative variant must be classified by the SCID '
                                            'VCEP specifications and may not be the same variant used to meet '
-                                           '“+1 pathogenic variant downstream” on the PVS1…',
+                                           '“+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                            'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                            'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                            'Informative variants must also be classified by these rule '
@@ -228,12 +236,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'not_missense': {},
                       'conditions': {'PM5': ['Must have one comparison variant that reaches a Pathogenic '
                                              'classification using this rule specification.',
-                                             '…have one comparison variant that reaches a Likely Pathogenic '
-                                             'classification using this rule specification.'],
+                                             'Must have one comparison variant that reaches a Likely '
+                                             'Pathogenic classification using this rule specification.'],
                                      'PS1': ['Must have one comparison variant that reaches a Pathogenic '
                                              'classification using this rule specification.',
-                                             '…have one comparison variant that reaches a Likely Pathogenic '
-                                             'classification using this rule specification.']},
+                                             'Must have one comparison variant that reaches a Likely '
+                                             'Pathogenic classification using this rule specification.']},
                       'ba1': {'value': 0.0057,
                               'op': '>=',
                               'faf': True,
@@ -282,13 +290,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'variation should be present at the residue.',
                                             'Do not apply for missense variants encoded by the first or last '
                                             '3 nucleotides of an exon unless a splice effect has been ruled '
-                                            'out for the variant under curation and the…'],
+                                            'out for the variant under curation and the variant(s) resulting '
+                                            'in the…'],
                                     'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                             'classified using LGMD VCEP specifications, and potential splice '
-                                            'effects must be excluded for the missense variant…',
+                                            'effects must be excluded for the missense variant under '
+                                            'curation and the…',
                                             'The likely pathogenic variant must have been classified using '
                                             'LGMD VCEP specifications, and potential splice effects must be '
-                                            'excluded for the missense variant under curation and…']},
+                                            'excluded for the missense variant under curation and the '
+                                            'variant…']},
                      'ba1': {'value': 0.003,
                              'op': '>',
                              'faf': True,
@@ -442,13 +453,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                              'variation should be present at the residue.',
                                              'Do not apply for missense variants encoded by the first or '
                                              'last 3 nucleotides of an exon unless a splice effect has been '
-                                             'ruled out for the variant under curation and the…'],
+                                             'ruled out for the variant under curation and the variant(s) '
+                                             'resulting in the…'],
                                      'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                              'classified using LGMD VCEP specifications, and potential '
-                                             'splice effects must be excluded for the missense variant…',
+                                             'splice effects must be excluded for the missense variant under '
+                                             'curation and the…',
                                              'The likely pathogenic variant must have been classified using '
                                              'LGMD VCEP specifications, and potential splice effects must be '
-                                             'excluded for the missense variant under curation and…']},
+                                             'excluded for the missense variant under curation and the '
+                                             'variant…']},
                       'ba1': {'value': 0.003,
                               'op': '>',
                               'faf': True,
@@ -469,9 +483,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BP4': ['Supporting'],
                                  'PP3': ['Supporting', 'Moderate'],
                                  'PM5': ['Supporting']},
-                     'not_missense': {'BP4': 'Splicing predictions only.',
+                     'not_missense': {'BP4': 'Splicing predictions only. At least three in silico splicing '
+                                             'predictors in agreement (SpliceAI, MaxEntScan, SSF, '
+                                             'GeneSplicer, HSF, TraP, varSEAK).',
                                       'PP3': 'At least three in silico splicing predictors in agreement '
-                                             '(splicing only)'},
+                                             '(SpliceAI, MaxEntScan, SSF, GeneSplicer, HSF, TraP, varSEAK).'},
                      'conditions': {},
                      'ba1': {'value': 0.002, 'op': '>', 'faf': False, 'quote': 'MAF cutoff of 0.2%.'},
                      'inheritance': None,
@@ -488,7 +504,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {},
+                      'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                             'the HL specifications']},
                       'ba1': {'value': None,
                               'op': '',
                               'faf': False,
@@ -518,7 +535,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                        'gnomAD). Use if variant is present at ≥0.000083 (0.0083%) in any '
                                        'sub-population. Use if allele frequency is met in any general '
                                        'contin'},
-                      'inheritance': 'x-linked',
+                      'inheritance': 'X-linked',
                       'diseases': ['CDKL5 disorder']}],
            'CEP290': [{'panel': 'Leber Congenital Amaurosis/early onset Retinal Dystrophy Variant Curation '
                                 'Expert Panel',
@@ -535,12 +552,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'not_missense': {},
                        'conditions': {'PS1': ['Must have one comparison variant that reaches a Pathogenic '
                                               'classification using this rule specification.',
-                                              '…have one comparison variant that reaches a Likely Pathogenic '
-                                              'classification using this rule specification.'],
+                                              'Must have one comparison variant that reaches a Likely '
+                                              'Pathogenic classification using this rule specification.'],
                                       'PM5': ['Must have one comparison variant that reaches a Pathogenic '
                                               'classification using this rule specification.',
-                                              '…have one comparison variant that reaches a Likely Pathogenic '
-                                              'classification using this rule specification.']},
+                                              'Must have one comparison variant that reaches a Likely '
+                                              'Pathogenic classification using this rule specification.']},
                        'ba1': {'value': 0.016,
                                'op': '>',
                                'faf': True,
@@ -560,7 +577,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PP3': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by the '
+                                            'HL specifications']},
                      'ba1': {'value': None,
                              'op': '',
                              'faf': False,
@@ -582,9 +600,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'not_missense': {},
                       'conditions': {'PS1': ['Use PS1 for missense variants when other variant was '
                                              'classified pathogenic by VCEP standards without using PS1.',
-                                             '…PS1Moderate for missense variants when the other variant was '
-                                             'classified likely pathogenic by VCEP standards without using '
-                                             'PS1.'],
+                                             'Use PS1Moderate for missense variants when the other variant '
+                                             'was classified likely pathogenic by VCEP standards without '
+                                             'using PS1.'],
                                      'PM5': ['Do not apply for any variant that meets BS1 or BA1.',
                                              'Comparison variant must have a Pathogenic or Likely Pathogenic '
                                              'classification reached using these VCEP-specified rules '
@@ -641,7 +659,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                                'for DCLRE1C.'],
                                        'PM5': ['Notes: The informative variant must be classified by the '
                                                'SCID VCEP specifications and may not be the same variant '
-                                               'used to meet “+1 pathogenic variant downstream” on the PVS1…',
+                                               'used to meet “+1 pathogenic variant downstream” on the PVS1 '
+                                               'flowchart.',
                                                'PM5Moderate may not be combined with PVS1VeryStrong (should '
                                                'be downgraded to PM5Supporting if PVS1VeryStrong is '
                                                'applied).',
@@ -667,11 +686,19 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                 'PP3': ['Supporting']},
                     'not_missense': {'BP4': 'Due to some pathogenic variants having low REVEL scores, BP4 is '
                                             'not applied for missense variants'},
-                    'conditions': {'PS1': ['…change as a previously established (likely) pathogenic variant '
-                                           'must reach a classification of LP without PS1 using these DDC '
-                                           'specifications.'],
-                                   'BP4': ['…to some pathogenic variants having low REVEL scores, BP4 is not '
-                                           'applied for missense variants.']},
+                    'conditions': {'PM5': ['…case, where a different missense change is determined to be '
+                                           'pathogenic in at least 1 case as determined by the DDC VCEP or '
+                                           'curated using these DDC specifications in the absence of '
+                                           'applying PM5 for…',
+                                           'Likely pathogenic variant as determined by VCEP at the residue '
+                                           'in ≥2 cases.',
+                                           'Likely pathogenic variant as determined by VCEP at the residue '
+                                           'in only one case.'],
+                                   'PS1': ['Same amino acid change as a previously established (likely) '
+                                           'pathogenic variant must reach a classification of LP without PS1 '
+                                           'using these DDC specifications.'],
+                                   'BP4': ['Due to some pathogenic variants having low REVEL scores, BP4 is '
+                                           'not applied for missense variants.']},
                     'ba1': {'value': 0.004,
                             'op': '>=',
                             'faf': False,
@@ -694,12 +721,17 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'not_missense': {},
                       'conditions': {'PM2': ['PM2Supporting not applicable if PS4 is met at any strength '
                                              'level.'],
-                                     'PM5': ['…previously been determined to be pathogenic (after accounting '
-                                             'for Grantham scores).',
+                                     'PM5': ['…different missense changes which have previously been '
+                                             'determined to be pathogenic (after accounting for Grantham '
+                                             'scores).',
                                              'Compare the Grantham scores of the original and variant '
                                              'residues to assess the similarities between the residues’ '
                                              'properties.',
-                                             '…been determined to be likely pathogenic (after accounting for '
+                                             '…different missense change which has previously been '
+                                             'determined to be pathogenic (after accounting for Grantham '
+                                             'scores).',
+                                             '…different missense change which has previously been '
+                                             'determined to be likely pathogenic (after accounting for '
                                              'Grantham scores).'],
                                      'BP4': ['Do not use for canonical splice site variants.'],
                                      'PP3': ['Do not use for variants with a predicted splicing effect that '
@@ -724,9 +756,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                    'BS1': ['Strong'],
                                    'PP3': ['Supporting']},
                        'not_missense': {},
-                       'conditions': {'PS1': ['Likely pathogenic changes do not apply.'],
+                       'conditions': {'PS1': ['This rule code can only be used to compare variants asserted '
+                                              'as pathogenic by the ClinGen DICER1 VCEP.',
+                                              'Likely pathogenic changes do not apply.'],
                                       'PM5': ['Missense variant under evaluation should have equal or worse '
                                               'Grantham score.',
+                                              'The other variant must be interpreted as pathogenic by the '
+                                              'ClinGen DICER1 VCEP.',
                                               'Likely pathogenic changes do not apply.',
                                               'This rule cannot be applied in combination with PM1 or PS1.']},
                        'ba1': {'value': 0.003,
@@ -752,59 +788,74 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'conditions': {'PP3': ['PP3Strong cannot be combined with PM1 or PM5 at any level, as '
                                              'the combined strength of these 3 codes is limited to the '
                                              'strong level.'],
-                                     'PM5': ['…missense variant at the same residue that has reached a '
-                                             'pathogenic classification by this VCEP’s rule specifications '
-                                             'without using PM5.',
+                                     'PM5': ['…under evaluation has a comparison missense variant at the '
+                                             'same residue that has reached a pathogenic classification by '
+                                             'this VCEP’s rule specifications without using PM5.',
                                              'The variant under evaluation must have a Grantham score equal '
-                                             'to or higher than that of the Pathogenic comparison variant…',
+                                             'to or higher than that of the Pathogenic comparison variant '
+                                             "(https://en.wikipedia.org/wiki/Aminoacidreplacement#Grantham'sdistance).",
                                              'PM5 cannot be used if any variant causing the same amino acid '
                                              'change has previously reached a benign or likely benign '
-                                             'classification using this VCEP’s rule specifications (not…',
-                                             '…variant at the same residue that has reached a likely '
-                                             'pathogenic classification by this VCEP’s rule specifications '
-                                             'without using PM5.',
+                                             'classification using this VCEP’s rule specifications (not just '
+                                             'a previous…',
+                                             '…evaluation has a comparison missense variant at the same '
+                                             'residue that has reached a likely pathogenic classification by '
+                                             'this VCEP’s rule specifications without using PM5.',
                                              'The variant under evaluation must have a Grantham score equal '
                                              'to or higher than that of the Likely Pathogenic comparison '
                                              'variant…',
                                              'PM5Supporting cannot be used if any variant causing the same '
                                              'amino acid change has previously reached a benign or likely '
-                                             'benign classification using this VCEP’s rule…'],
-                                     'PS1': ['…encoding the same amino acid change has reached a pathogenic '
-                                             'classification using the ClinGen Motile Ciliopathy VCEP’s rule '
-                                             'specifications (not just a previous classification in…',
+                                             'benign classification using this VCEP’s rule specifications '
+                                             '(not just a…'],
+                                     'PS1': ['…missense variant if a comparison variant encoding the same '
+                                             'amino acid change has reached a pathogenic classification '
+                                             'using the ClinGen Motile Ciliopathy VCEP’s rule specifications '
+                                             '(not just a…',
                                              'PS1 cannot be applied for a missense variant if any comparison '
                                              'variant causing the same amino acid change has previously '
-                                             'reached a benign or likely benign classification using…',
-                                             '…position, with the same predicted impact, has been previously '
+                                             'reached a benign or likely benign classification using the '
+                                             'ClinGen Motile…',
+                                             '…comparison variant at the same nucleotide position, with the '
+                                             'same predicted impact, has been previously classified '
+                                             'pathogenic using the ClinGen Motile Ciliopathy VCEP’s rule '
+                                             'specifications (PMID:…',
+                                             '…PVS1) if a comparison variant located within the same splice '
+                                             'donor/acceptor +/-1,2 dinucleotide has been classified '
+                                             'pathogenic using the ClinGen Motile Ciliopathy VCEP’s rule '
+                                             'specifications (PMID:…',
+                                             '…variant If a comparison variant encoding the same amino acid '
+                                             'change has reached a likely pathogenic classification using '
+                                             'the ClinGen Motile Ciliopathy VCEP’s rule specifications (not '
+                                             'just a…',
+                                             '…positions, if a comparison variant at the same nucleotide '
+                                             'position, with the same predicted impact, has been classified '
+                                             'likely pathogenic using the ClinGen Motile Ciliopathy VCEP’s '
+                                             'rule…',
+                                             '…different position within the same splice region, with the '
+                                             'same predicted impact, has been previously classified '
+                                             'pathogenic using the ClinGen Motile Ciliopathy VCEP’s rule '
+                                             'specifications (PMID:…',
+                                             '…donor/acceptor motif (but outside the +/-1,2 dinucleotide), '
+                                             'with the same predicted impact, has been previously classified '
+                                             'pathogenic using the ClinGen Motile Ciliopathy VCEP’s rule '
+                                             'specifications…',
+                                             '…comparison variant within the same splice donor/acceptor '
+                                             'motif, with the same predicted impact, has been classified '
+                                             'likely pathogenic using the ClinGen Motile Ciliopathy VCEP’s '
+                                             'rule specifications…',
+                                             '…position or within the same donor/acceptor +/-1,2 '
+                                             'dinucleotide, with the same predicted impact, has been '
                                              'classified pathogenic using the ClinGen Motile Ciliopathy '
-                                             'VCEP’s rule specifications (PMID: 37352859).',
-                                             '…the same splice donor/acceptor +/-1,2 dinucleotide has been '
-                                             'classified pathogenic using the ClinGen Motile Ciliopathy '
-                                             'VCEP’s rule specifications (PMID: 37352859).',
-                                             '…encoding the same amino acid change has reached a likely '
-                                             'pathogenic classification using the ClinGen Motile Ciliopathy '
-                                             'VCEP’s rule specifications (not just a previous…',
-                                             '…nucleotide position, with the same predicted impact, has been '
-                                             'classified likely pathogenic using the ClinGen Motile '
-                                             'Ciliopathy VCEP’s rule specifications (PMID: 37352859).',
-                                             '…region, with the same predicted impact, has been previously '
-                                             'classified pathogenic using the ClinGen Motile Ciliopathy '
-                                             'VCEP’s rule specifications (PMID: 37352859).',
-                                             '…dinucleotide), with the same predicted impact, has been '
-                                             'previously classified pathogenic using the ClinGen Motile '
-                                             'Ciliopathy VCEP’s rule specifications (PMID: 37352859).',
-                                             '…donor/acceptor motif, with the same predicted impact, has '
-                                             'been classified likely pathogenic using the ClinGen Motile '
-                                             'Ciliopathy VCEP’s rule specifications (PMID: 37352859).',
-                                             '…+/-1,2 dinucleotide, with the same predicted impact, has been '
-                                             'classified pathogenic using the ClinGen Motile Ciliopathy '
-                                             'VCEP’s rule specifications (PMID: 37352859).',
-                                             '…+/-1,2 dinucleotide, with the same predicted impact, has been '
-                                             'classified pathogenic or likely pathogenic using the ClinGen '
-                                             'Motile Ciliopathy VCEP’s rule specifications (PMID:…',
-                                             '…+/-1,2 dinucleotide, with the same predicted impact, has been '
-                                             'classified likely pathogenic using the ClinGen Motile '
-                                             'Ciliopathy VCEP’s rule specifications (PMID: 37352859).']},
+                                             'VCEP’s rule specifications (PMID:…',
+                                             '…region, but outside the donor/acceptor +/-1,2 dinucleotide, '
+                                             'with the same predicted impact, has been classified pathogenic '
+                                             'or likely pathogenic using the ClinGen Motile Ciliopathy '
+                                             'VCEP’s rule…',
+                                             '…region, but outside the donor/acceptor +/-1,2 dinucleotide, '
+                                             'with the same predicted impact, has been classified likely '
+                                             'pathogenic using the ClinGen Motile Ciliopathy VCEP’s rule '
+                                             'specifications…']},
                       'ba1': {'value': 0.006,
                               'op': '>=',
                               'faf': True,
@@ -852,13 +903,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'variation should be present at the residue.',
                                             'Do not apply for missense variants encoded by the first or last '
                                             '3 nucleotides of an exon unless a splice effect has been ruled '
-                                            'out for the variant under curation and the…'],
+                                            'out for the variant under curation and the variant(s) resulting '
+                                            'in the…'],
                                     'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                             'classified using LGMD VCEP specifications, and potential splice '
-                                            'effects must be excluded for the missense variant…',
+                                            'effects must be excluded for the missense variant under '
+                                            'curation and the…',
                                             'The likely pathogenic variant must have been classified using '
                                             'LGMD VCEP specifications, and potential splice effects must be '
-                                            'excluded for the missense variant under curation and…']},
+                                            'excluded for the missense variant under curation and the '
+                                            'variant…']},
                      'ba1': {'value': 0.003,
                              'op': '>',
                              'faf': True,
@@ -880,7 +934,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                 'BA1': ['Stand Alone'],
                                 'PM5': ['Moderate', 'Strong']},
                     'not_missense': {},
-                    'conditions': {},
+                    'conditions': {'PM5': ['…different missense changes at same codon have been determined '
+                                           'to be likely pathogenic or pathogenic based on HHT VCEP rules.',
+                                           'A different missense change at same codon has been determined to '
+                                           'be likely pathogenic or pathogenic based on HHT VCEP rules.']},
                     'ba1': {'value': 0.01,
                             'op': '>=',
                             'faf': True,
@@ -916,12 +973,27 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'PS1': ['Moderate', 'Strong'],
                                'BS1': ['Strong']},
                    'not_missense': {},
-                   'conditions': {},
+                   'conditions': {'PM5': ['…can be applied when there is 1 pathogenic variant or 2 likely '
+                                          'pathogenic variants at the same residue based on the F8 rule '
+                                          'specifications from the Coagulation Factor Deficiency VCEP and '
+                                          'where in…',
+                                          'This evidence code can be applied when there is 1 likely '
+                                          'pathogenic variant at the same residue based on the F8 rule '
+                                          'specifications from the Coagulation Factor Deficiency VCEP and '
+                                          'where in silico…'],
+                                  'PS1': ['…can be applied when there is 1 pathogenic variant or 2 likely '
+                                          'pathogenic variants at the same residue based on F8 gene rule '
+                                          'specifications from the Coagulation Factor Deficiency VCEP and '
+                                          'where in…',
+                                          'This evidence code can be applied when there is 1 likely '
+                                          'pathogenic variants at the same residue based on F8 gene rule '
+                                          'specifications from the Coagulation Factor Deficiency VCEP and '
+                                          'where in silico…']},
                    'ba1': {'value': 0.000333,
                            'op': '>=',
                            'faf': False,
                            'quote': 'MAF cutoff of greater or equal to 0.0333% (or 0.000333).'},
-                   'inheritance': 'x-linked',
+                   'inheritance': 'X-linked',
                    'diseases': ['hemophilia A']}],
            'F9': [{'panel': 'Coagulation Factor Deficiency Variant Curation Expert Panel',
                    'id': 'GN080',
@@ -935,12 +1007,27 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                'PP3': ['Supporting'],
                                'PM5': ['Supporting', 'Moderate']},
                    'not_missense': {},
-                   'conditions': {},
+                   'conditions': {'PS1': ['…can be applied when there is 1 pathogenic variant or 2 likely '
+                                          'pathogenic variants at the same residue based on F9 gene rule '
+                                          'specifications from the Coagulation Factor Deficiency VCEP and '
+                                          'where in…',
+                                          'This evidence code can be applied when there is 1 likely '
+                                          'pathogenic variants at the same residue based on F9 gene rule '
+                                          'specifications from the Coagulation Factor Deficiency VCEP and '
+                                          'where in silico…'],
+                                  'PM5': ['…can be applied when there is 1 pathogenic variant or 2 likely '
+                                          'pathogenic variants at the same residue based on F9 rule '
+                                          'specification from the Coagulation Factor Deficiency VCEP and '
+                                          'where in silico…',
+                                          'This evidence code can be applied when there is 1 likely '
+                                          'pathogenic variant at the same residue based on F9 rule '
+                                          'specifications Coagulation Factor Deficiency VCEP and where in '
+                                          'silico predictors do…']},
                    'ba1': {'value': 5.56e-05,
                            'op': '>=',
                            'faf': False,
                            'quote': 'MAF cutoff of greater than or equal to 0.0000556 (or 0.00556%).'},
-                   'inheritance': 'x-linked',
+                   'inheritance': 'X-linked',
                    'diseases': ['hemophilia B']}],
            'FBN1': [{'panel': 'FBN1 Variant Curation Expert Panel',
                      'id': 'GN022',
@@ -954,7 +1041,10 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BP4': ['Supporting'],
                                  'BS1': ['Strong']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PM5': ['Add caveat: original variant should be pathogenic according to '
+                                            'the (modified) ACMG guidelines for variant classification.'],
+                                    'PS1': ['Original variant should be pathogenic according to the '
+                                            '(modified) ACMG guidelines for variant classification.']},
                      'ba1': {'value': 0.001,
                              'op': '>',
                              'faf': False,
@@ -1002,23 +1092,25 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'not_missense': {},
                       'conditions': {'PM5': ['Notes: The informative variant must be classified by the SCID '
                                              'VCEP specifications and may not be the same variant used to '
-                                             'meet “+1 pathogenic variant downstream” on the PVS1…',
+                                             'meet “+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                              'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                              'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                              'Informative variants must also be classified by these rule '
                                              'specifications.'],
-                                     'PS1': ['…same amino acid change if previously established variant is '
-                                             'classified as pathogenic by SCID VCEP specifications for '
-                                             'FOXN1.',
-                                             '…same predicted splicing event as a known Pathogenic variant '
-                                             '(as classified by the SCID VCEP specifications for FOXN1), '
-                                             'only when the strength of the prediction for the variant…',
-                                             '…same amino acid change if previously established variant is '
-                                             'classified as likely pathogenic by SCID VCEP specifications '
-                                             'for FOXN1.',
-                                             '…predicted splicing event as a known (Likely) Pathogenic '
-                                             'variant (as classified by the SCID VCEP specifications for '
-                                             'FOXN1), only when the strength of the prediction for the…']},
+                                     'PS1': ['Applicable for a same amino acid change if previously '
+                                             'established variant is classified as pathogenic by SCID VCEP '
+                                             'specifications for FOXN1.',
+                                             '…also be applied for variants with the same predicted splicing '
+                                             'event as a known Pathogenic variant (as classified by the SCID '
+                                             'VCEP specifications for FOXN1), only when the strength of the '
+                                             'prediction…',
+                                             'Applicable for a same amino acid change if previously '
+                                             'established variant is classified as likely pathogenic by SCID '
+                                             'VCEP specifications for FOXN1.',
+                                             '…applied for variants with the same predicted splicing event '
+                                             'as a known (Likely) Pathogenic variant (as classified by the '
+                                             'SCID VCEP specifications for FOXN1), only when the strength of '
+                                             'the…']},
                       'ba1': {'value': 0.00447,
                               'op': '>',
                               'faf': True,
@@ -1057,13 +1149,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BA1': ['Stand Alone'],
                                  'PP3': ['Supporting']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…have been curated using the GALT VCEP rule specifications and '
-                                            'must reach a pathogenic/likely pathogenic classification '
-                                            'without PM5.',
+                     'conditions': {'PM5': ['…variant(s) used for evidence should also have been curated '
+                                            'using the GALT VCEP rule specifications and must reach a '
+                                            'pathogenic/likely pathogenic classification without PM5.',
                                             'Grantham should be used to compare the variants.',
-                                            '…have been curated using the GALT VCEP rule specifications and '
-                                            'must reach a pathogenic/likely pathogenic classification '
-                                            'without PM5']},
+                                            '…variant(s) used for evidence should also have been curated '
+                                            'using the GALT VCEP rule specifications and must reach a '
+                                            'pathogenic/likely pathogenic classification without PM5']},
                      'ba1': {'value': 0.01,
                              'op': '>=',
                              'faf': True,
@@ -1085,7 +1177,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PM2': ['Supporting'],
                                  'PS1': ['Supporting', 'Moderate', 'Strong']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PM5': ['…change, at the same amino acid position, as a variant that has '
+                                            'been previously established as pathogenic by the CCDS VCEP, by '
+                                            'assessment using these criteria, regardless of nucleotide '
+                                            'change.',
+                                            '…the same amino acid position, as a variant that has been '
+                                            'previously established as likely pathogenic by the CCDS VCEP, '
+                                            'by assessment using these criteria, regardless of nucleotide '
+                                            'change.'],
+                                    'PS1': ['…resulting in the same amino acid change as a variant that has '
+                                            'been previously established as pathogenic by the CCDS VCEP, by '
+                                            'assessment using these criteria, regardless of nucleotide '
+                                            'change.',
+                                            '…in the same amino acid change as a variant that has been '
+                                            'previously established as likely pathogenic by the CCDS VCEP, '
+                                            'by assessment using these criteria, regardless of nucleotide '
+                                            'change.']},
                      'ba1': {'value': 0.003,
                              'op': '>',
                              'faf': False,
@@ -1127,15 +1234,18 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                 'PM2': ['Supporting'],
                                 'PM5': ['Supporting', 'Moderate', 'Strong']},
                     'not_missense': {},
-                    'conditions': {'PS1': ['…same amino acid change if the previously established variant is '
-                                           'classified as pathogenic by ClinGen MDEP specifications.',
-                                           '…same amino acid change if the previously established variant is '
-                                           'classified as likely pathogenic by ClinGen MDEP specifications.'],
+                    'conditions': {'PS1': ['Applicable for a same amino acid change if the previously '
+                                           'established variant is classified as pathogenic by ClinGen MDEP '
+                                           'specifications.',
+                                           'Applicable for a same amino acid change if the previously '
+                                           'established variant is classified as likely pathogenic by '
+                                           'ClinGen MDEP specifications.'],
                                    'PM5': ['The novel amino acid change must have a Grantham distance '
                                            'greater than or equal to the previously classified pathogenic '
                                            'variant.',
-                                           '…previously classified variant is pathogenic but has a greater '
-                                           'Grantham distance.']},
+                                           '…pathogenic (rather than pathogenic) or if the previously '
+                                           'classified variant is pathogenic but has a greater Grantham '
+                                           'distance.']},
                     'ba1': {'value': 0.0001,
                             'op': '>=',
                             'faf': True,
@@ -1154,7 +1264,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PM2': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PS1': ['Previously established variant must be established as '
+                                            'pathogenic per criteria established by this VCEP.']},
                      'ba1': {'value': 0.0001,
                              'op': '>=',
                              'faf': True,
@@ -1173,7 +1284,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PP3': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by the '
+                                            'HL specifications']},
                      'ba1': {'value': None,
                              'op': '',
                              'faf': False,
@@ -1286,12 +1398,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                        'not_missense': {},
                        'conditions': {'PM5': ['Must have one comparison variant that reaches a Pathogenic '
                                               'classification using this rule specification.',
-                                              '…have one comparison variant that reaches a Likely Pathogenic '
-                                              'classification using this rule specification.'],
+                                              'Must have one comparison variant that reaches a Likely '
+                                              'Pathogenic classification using this rule specification.'],
                                       'PS1': ['Must have one comparison variant that reaches a Pathogenic '
                                               'classification using this rule specification.',
-                                              '…have one comparison variant that reaches a Likely Pathogenic '
-                                              'classification using this rule specification.']},
+                                              'Must have one comparison variant that reaches a Likely '
+                                              'Pathogenic classification using this rule specification.']},
                        'ba1': {'value': 0.016,
                                'op': '>',
                                'faf': True,
@@ -1354,13 +1466,15 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'conditions': {'PM5': ['The novel amino acid change must have a Grantham distance '
                                              'greater than or equal to the previously classified pathogenic '
                                              'variant.',
-                                             '…previously classified variant is pathogenic but has a greater '
-                                             'Grantham distance.'],
-                                     'PS1': ['…same amino acid change if the previously established variant '
-                                             'is classified as pathogenic by ClinGen MDEP specifications.',
-                                             '…same amino acid change if the previously established variant '
-                                             'is classified as likely pathogenic by ClinGen MDEP '
-                                             'specifications.']},
+                                             '…pathogenic (rather than pathogenic), or if the previously '
+                                             'classified variant is pathogenic but has a greater Grantham '
+                                             'distance.'],
+                                     'PS1': ['Applicable for a same amino acid change if the previously '
+                                             'established variant is classified as pathogenic by ClinGen '
+                                             'MDEP specifications.',
+                                             'Applicable for a same amino acid change if the previously '
+                                             'established variant is classified as likely pathogenic by '
+                                             'ClinGen MDEP specifications.']},
                       'ba1': {'value': 0.0001,
                               'op': '>=',
                               'faf': True,
@@ -1382,13 +1496,15 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'conditions': {'PM5': ['The novel amino acid change must have a Grantham distance '
                                              'greater than or equal to the previously classified pathogenic '
                                              'variant.',
-                                             '…previously classified variant is pathogenic but has a greater '
-                                             'Grantham distance than the novel variant.'],
-                                     'PS1': ['…same amino acid change if the previously established variant '
-                                             'is classified as pathogenic by ClinGen MDEP specifications.',
-                                             '…same amino acid change if the previously established variant '
-                                             'is classified as likely pathogenic by ClinGen MDEP '
-                                             'specifications.']},
+                                             '…pathogenic (rather than pathogenic) or if the previously '
+                                             'classified variant is pathogenic but has a greater Grantham '
+                                             'distance than the novel variant.'],
+                                     'PS1': ['Applicable for a same amino acid change if the previously '
+                                             'established variant is classified as pathogenic by ClinGen '
+                                             'MDEP specifications.',
+                                             'Applicable for a same amino acid change if the previously '
+                                             'established variant is classified as likely pathogenic by '
+                                             'ClinGen MDEP specifications.']},
                       'ba1': {'value': 0.0001,
                               'op': '>=',
                               'faf': True,
@@ -1451,7 +1567,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                              'SCID VCEP specifications for IL2RG.'],
                                      'PM5': ['Notes: The informative variant must be classified by the SCID '
                                              'VCEP specifications and may not be the same variant used to '
-                                             'meet “+1 pathogenic variant downstream” on the PVS1…',
+                                             'meet “+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                              'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                              'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                              'Informative variants must also be classified by these rule '
@@ -1460,7 +1576,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'op': '>',
                               'faf': True,
                               'quote': 'gnomAD popmax filtering allele frequency >0.01110.'},
-                      'inheritance': 'x-linked',
+                      'inheritance': 'X-linked',
                       'diseases': ['T-B+ severe combined immunodeficiency due to gamma chain deficiency']}],
            'IL7R': [{'panel': 'Severe Combined Immunodeficiency Disease  Variant Curation Expert Panel',
                      'id': 'GN119',
@@ -1476,7 +1592,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'not_missense': {'PP3': 'Do not apply to missense variants'},
                      'conditions': {'PM5': ['Notes: The informative variant must be classified by the SCID '
                                             'VCEP specifications and may not be the same variant used to '
-                                            'meet “+1 pathogenic variant downstream” on the PVS1…',
+                                            'meet “+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                             'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                             'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                             'Informative variants must also be classified by these rule '
@@ -1545,7 +1661,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'not_missense': {'PP3': 'Do not apply to missense variants'},
                      'conditions': {'PM5': ['Notes: The informative variant must be classified by the SCID '
                                             'VCEP specifications and may not be the same variant used to '
-                                            'meet “+1 pathogenic variant downstream” on the PVS1…',
+                                            'meet “+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                             'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                             'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                             'Informative variants must also be classified by these rule '
@@ -1578,9 +1694,19 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                      'PS1': ['The comparison variant must reach a pathogenic classification '
                                              'using these rule specifications, and must have reached '
                                              'pathogenic without the use of the PS1 code.',
-                                             '…level if the comparison variant reaches a likely pathogenic '
-                                             'classification using these rule specifications, without the '
-                                             'use of the PS1 code.']},
+                                             'PS1 is met at the PS1Moderate level if the comparison variant '
+                                             'reaches a likely pathogenic classification using these rule '
+                                             'specifications, without the use of the PS1 code.',
+                                             '…the corresponding variant in the paralogous KCNQ2 gene meets '
+                                             'criteria to be classified as Pathogenic by the KCNQ Channel '
+                                             'Brain Disorders Variant Curation Expert Panel specifications.',
+                                             'If the latter variant in KCNQ2 is classified Pathogenic in the '
+                                             'future by the KCNQ Channel Brain Disorders Variant Curation '
+                                             'Expert Panel specifications, the paralogous p.Thr144Ala '
+                                             'variant in KCNQ1…',
+                                             '…to the KCNQ3, KCNQ4, and KCNQ5 genes too, following future '
+                                             'specifications and variant classifications by the KCNQ Channel '
+                                             'Brain Disorders Variant Curation Expert Panel.']},
                       'ba1': {'value': 0.004,
                               'op': '>=',
                               'faf': False,
@@ -1602,7 +1728,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {},
+                      'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                             'the HL specifications']},
                       'ba1': {'value': None,
                               'op': '',
                               'faf': False,
@@ -1737,7 +1864,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                        'present at ≥0.000083 (0.0083%) in any sub-population. Use if allele '
                                        'frequency is met in any general continental population dataset of '
                                        'at'},
-                      'inheritance': 'x-linked',
+                      'inheritance': 'X-linked',
                       'diseases': ['Rett syndrome']}],
            'MLH1': [{'panel': 'InSiGHT Hereditary Colorectal Cancer/Polyposis Variant Curation Expert Panel',
                      'id': 'GN115',
@@ -1751,9 +1878,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PP3': ['Supporting', 'Moderate'],
                                  'PM2': ['Supporting']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…an amino acid residue where a different missense change was '
-                                            'classified by this VCEP as Pathogenic on the protein level and '
-                                            'not due to aberrant splicing.']},
+                     'conditions': {'PS1': ['…substitution that encodes the same amino acid change with a '
+                                            'different underlying nucleotide change previously established '
+                                            'by this VCEP as Pathogenic (not a predicted or confirmed splice '
+                                            'defect).'],
+                                    'PM5': ['Missense change at an amino acid residue where a different '
+                                            'missense change was classified by this VCEP as Pathogenic on '
+                                            'the protein level and not due to aberrant splicing.']},
                      'ba1': {'value': 0.001,
                              'op': '>=',
                              'faf': True,
@@ -1792,9 +1923,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BS1': ['Strong'],
                                  'PS1': ['Moderate', 'Strong']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…an amino acid residue where a different missense change was '
-                                            'classified by this VCEP as Pathogenic on the protein level and '
-                                            'not due to aberrant splicing.']},
+                     'conditions': {'PM5': ['Missense change at an amino acid residue where a different '
+                                            'missense change was classified by this VCEP as Pathogenic on '
+                                            'the protein level and not due to aberrant splicing.'],
+                                    'PS1': ['…substitution that encodes the same amino acid change with a '
+                                            'different underlying nucleotide change previously established '
+                                            'by this VCEP as Pathogenic (not a predicted or confirmed splice '
+                                            'defect).']},
                      'ba1': {'value': 0.001,
                              'op': '>=',
                              'faf': True,
@@ -1814,9 +1949,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BP4': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…an amino acid residue where a different missense change was '
-                                            'classified by this VCEP as Pathogenic on the protein level and '
-                                            'not due to aberrant splicing.']},
+                     'conditions': {'PM5': ['Missense change at an amino acid residue where a different '
+                                            'missense change was classified by this VCEP as Pathogenic on '
+                                            'the protein level and not due to aberrant splicing.'],
+                                    'PS1': ['…substitution that encodes the same amino acid change with a '
+                                            'different underlying nucleotide change previously established '
+                                            'by this VCEP as Pathogenic (not a predicted or confirmed splice '
+                                            'defect).']},
                      'ba1': {'value': 0.0022,
                              'op': '>=',
                              'faf': True,
@@ -1843,7 +1982,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                              'quote': 'The minor allele frequency using the filtering allele frequency of '
                                       'either exomes or genomes in gnomAD is ≥0.000016. All continental '
                                       'gnomAD populations used should have at least 2000 alleles and >1 obs'},
-                     'inheritance': 'x-linked',
+                     'inheritance': 'X-linked',
                      'diseases': ['centronuclear myopathy']}],
            'MTOR': [{'panel': 'Brain Malformations Variant Curation Expert Panel',
                      'id': 'GN018',
@@ -1881,12 +2020,14 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                    'BS1': ['Strong'],
                                    'PM5': ['Supporting', 'Moderate']},
                        'not_missense': {},
-                       'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon '
-                                              'has been classified as pathogenic using these modified '
-                                              'guidelines without application of PM5.',
-                                              '…SUPPORTING if a different missense variant at the same codon '
-                                              'has been classified as likely pathogenic using these modified '
-                                              'guidelines without application of PM5.',
+                       'conditions': {'PM5': ['This criterion can be used at MODERATE if a different '
+                                              'missense variant at the same codon has been classified as '
+                                              'pathogenic using these modified guidelines without '
+                                              'application of PM5.',
+                                              '…criterion can be considered at SUPPORTING if a different '
+                                              'missense variant at the same codon has been classified as '
+                                              'likely pathogenic using these modified guidelines without '
+                                              'application of PM5.',
                                               'Consider reducing the strength of this rule to NOT APPLICABLE '
                                               'if the predicted impact is not expected to be equivalent or '
                                               'more severe.']},
@@ -1911,12 +2052,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PS1': ['Strong'],
                                  'BP4': ['Supporting']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon has '
-                                            'been classified as pathogenic using these modified guidelines '
-                                            'without application of PM5.',
-                                            '…SUPPORTING if a different missense variant at the same codon '
-                                            'has been classified as likely pathogenic using these modified '
-                                            'guidelines without application of PM5.',
+                     'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                            'variant at the same codon has been classified as pathogenic '
+                                            'using these modified guidelines without application of PM5.',
+                                            '…criterion can be considered at SUPPORTING if a different '
+                                            'missense variant at the same codon has been classified as '
+                                            'likely pathogenic using these modified guidelines without '
+                                            'application of PM5.',
                                             'Consider reducing the strength of this rule to NOT APPLICABLE '
                                             'if the predicted impact is not expected to be equivalent or '
                                             'more severe.']},
@@ -1941,12 +2083,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PM5': ['Supporting', 'Moderate'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon has '
-                                            'been classified as pathogenic using these modified guidelines '
-                                            'without application of PM5.',
-                                            '…SUPPORTING if a different missense variant at the same codon '
-                                            'has been classified as likely pathogenic using these modified '
-                                            'guidelines without application of PM5.',
+                     'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                            'variant at the same codon has been classified as pathogenic '
+                                            'using these modified guidelines without application of PM5.',
+                                            '…criterion can be considered at SUPPORTING if a different '
+                                            'missense variant at the same codon has been classified as '
+                                            'likely pathogenic using these modified guidelines without '
+                                            'application of PM5.',
                                             'Consider reducing the strength of this rule to NOT APPLICABLE '
                                             'if the predicted impact is not expected to be equivalent or '
                                             'more severe.']},
@@ -1971,12 +2114,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PM5': ['Supporting', 'Moderate'],
                                  'BS1': ['Strong']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon has '
-                                            'been classified as pathogenic using these modified guidelines '
-                                            'without application of PM5.',
-                                            '…SUPPORTING if a different missense variant at the same codon '
-                                            'has been classified as likely pathogenic using these modified '
-                                            'guidelines without application of PM5.',
+                     'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                            'variant at the same codon has been classified as pathogenic '
+                                            'using these modified guidelines without application of PM5.',
+                                            '…criterion can be considered at SUPPORTING if a different '
+                                            'missense variant at the same codon has been classified as '
+                                            'likely pathogenic using these modified guidelines without '
+                                            'application of PM5.',
                                             'Consider reducing the strength of this rule to NOT APPLICABLE '
                                             'if the predicted impact is not expected to be equivalent or '
                                             'more severe.']},
@@ -2001,7 +2145,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                    'BP4': ['Supporting'],
                                    'BA1': ['Stand Alone']},
                        'not_missense': {},
-                       'conditions': {},
+                       'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                              'the HL specifications.']},
                        'ba1': {'value': 0.005,
                                'op': '>=',
                                'faf': False,
@@ -2020,7 +2165,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PP3': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by the '
+                                            'HL specifications']},
                      'ba1': {'value': None,
                              'op': '',
                              'faf': False,
@@ -2040,7 +2186,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {},
+                      'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                             'the HL specifications']},
                       'ba1': {'value': None,
                               'op': '',
                               'faf': False,
@@ -2142,17 +2289,19 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'Pathogenic using these OTC specifications.',
                                            'Applicable when the previously reported variant is classified as '
                                            'Likely Pathogenic using these OTC specifications.'],
-                                   'PM5': ['…variant under review occurs at the same amino acid as a variant '
-                                           'classified Pathogenic using these OTC specifications.',
-                                           '…variant under review occurs at the same amino acid as a variant '
-                                           'classified Likely Pathogenic using these OTC specifications.']},
+                                   'PM5': ['PM5 is applicable as described if the variant under review '
+                                           'occurs at the same amino acid as a variant classified Pathogenic '
+                                           'using these OTC specifications.',
+                                           'PM5 is applicable as described if the variant under review '
+                                           'occurs at the same amino acid as a variant classified Likely '
+                                           'Pathogenic using these OTC specifications.']},
                     'ba1': {'value': 0.01,
                             'op': '>',
                             'faf': True,
                             'quote': 'Allele frequency above 0.010000 (1.0%), Grpmax Filtering Allele '
                                      'Frequency OR ≥10 (female) homozygotes or (male) hemizygotes in the '
                                      'most current version of gnomAD available at the time of curation.'},
-                    'inheritance': 'x-linked',
+                    'inheritance': 'X-linked',
                     'diseases': ['ornithine carbamoyltransferase deficiency']}],
            'OTOF': [{'panel': 'Hearing Loss Variant Curation Expert Panel',
                      'id': 'GN023',
@@ -2166,7 +2315,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BP4': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by the '
+                                            'HL specifications.']},
                      'ba1': {'value': 0.005,
                              'op': '>=',
                              'faf': False,
@@ -2229,12 +2379,23 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BS1': ['Strong'],
                                  'PM2': ['Supporting']},
                      'not_missense': {},
-                     'conditions': {'PS1': ['…codon leading to the same amino acid substitution as a variant '
-                                            'classified pathogenic by the OASD VCEP’s guidelines and has the '
-                                            'same predicted impact to splicing',
-                                            '…codon leading to the same amino acid substitution as a variant '
-                                            'classified likely pathogenic by the OASD VCEP’s guidelines and '
-                                            'has the same predicted impact to splicing']},
+                     'conditions': {'PS1': ['Missense variant at the same codon leading to the same amino '
+                                            'acid substitution as a variant classified pathogenic by the '
+                                            'OASD VCEP’s guidelines and has the same predicted impact to '
+                                            'splicing',
+                                            'Missense variant at the same codon leading to the same amino '
+                                            'acid substitution as a variant classified likely pathogenic by '
+                                            'the OASD VCEP’s guidelines and has the same predicted impact to '
+                                            'splicing'],
+                                    'PM5': ['at least one variant at an amino acid residue previously '
+                                            'curated pathogenic by the OASD VCEP leads to a different amino '
+                                            'acid from the comparison variant',
+                                            'at least two variants at an amino acid residue previously '
+                                            'curated likely pathogenic by the OASD VCEP leads to a different '
+                                            'amino acid from the comparison variant',
+                                            'one variant at an amino acid residue previously curated likely '
+                                            'pathogenic by the OASD VCEP leads to a different amino acid '
+                                            'from the comparison variant']},
                      'ba1': {'value': 0.0001,
                              'op': '>=',
                              'faf': True,
@@ -2295,12 +2456,30 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                    'BP4': ['Supporting'],
                                    'PM5': ['Supporting', 'Moderate']},
                        'not_missense': {},
-                       'conditions': {'PM5': ['The variant being evaluated must have a Grantham distance '
+                       'conditions': {'PS1': ['…variant was classified as Pathogenic for autosomal dominant '
+                                              'PIK3CD gain-of-function-related disease by Antibody '
+                                              'Deficiencies VCEP specifications for PIK3CD without using '
+                                              'PS1.',
+                                              '…variant was classified as Likely Pathogenic for autosomal '
+                                              'dominant PIK3CD gain-of-function-related disease by Antibody '
+                                              'Deficiencies VCEP specifications for PIK3CD without using '
+                                              'PS1.'],
+                                      'PM5': ['…variants when other variant was classified as Pathogenic for '
+                                              'autosomal dominant PIK3CD-related disease by Antibody '
+                                              'Deficiencies VCEP specifications for PIK3CD without using '
+                                              'PM5.',
+                                              'The variant being evaluated must have a Grantham distance '
                                               'value greater than or equal to that of the known pathogenic '
-                                              'variant, indicating that the variant residue is equally…',
+                                              'variant, indicating that the variant residue is equally '
+                                              'chemically different or…',
+                                              '…when other variant was classified as Likely Pathogenic for '
+                                              'autosomal dominant PIK3CD-related disease by Antibody '
+                                              'Deficiencies VCEP specifications for PIK3CD without using '
+                                              'PM5.',
                                               'The variant being evaluated must have a Grantham distance '
                                               'value greater than or equal to that of the known likely '
-                                              'pathogenic variant, indicating that the variant residue is…']},
+                                              'pathogenic variant, indicating that the variant residue is '
+                                              'equally chemically…']},
                        'ba1': {'value': 0.00316,
                                'op': '>=',
                                'faf': True,
@@ -2322,23 +2501,25 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                    'PP3': ['Supporting'],
                                    'BS1': ['Strong']},
                        'not_missense': {},
-                       'conditions': {'PM5': ['…encoding a different amino acid change in the same codon was '
-                                              'classified as Pathogenic by Antibody Deficiencies VCEP '
-                                              'specifications for PIK3R1 without using PM5.',
+                       'conditions': {'PM5': ['…missense variant when another missense variant encoding a '
+                                              'different amino acid change in the same codon was classified '
+                                              'as Pathogenic by Antibody Deficiencies VCEP specifications '
+                                              'for PIK3R1 without…',
                                               'The variant of interest must have a higher Grantham score '
                                               'than the Pathogenic comparison variant '
                                               "(https://en.wikipedia.org/wiki/Aminoacidreplacement#Grantham'sdistance).",
-                                              '…encoding a different amino acid change in the same codon was '
-                                              'classified as Likely Pathogenic by Antibody Deficiencies VCEP '
-                                              'specifications for PIK3R1 without using PM5.',
+                                              '…missense variant when another missense variant encoding a '
+                                              'different amino acid change in the same codon was classified '
+                                              'as Likely Pathogenic by Antibody Deficiencies VCEP '
+                                              'specifications for PIK3R1…',
                                               'The variant of interest must have a higher Grantham score '
                                               'than the Likely Pathogenic comparison variant '
                                               "(https://en.wikipedia.org/wiki/Aminoacidreplacement#Grantham'sdistance)."],
                                       'PS1': ['Use PS1 for missense variants when other variant was '
                                               'classified pathogenic by VCEP standards without using PS1.',
-                                              '…PS1Moderate for missense variants when the other variant was '
-                                              'classified likely pathogenic by VCEP standards without using '
-                                              'PS1.']},
+                                              'Use PS1Moderate for missense variants when the other variant '
+                                              'was classified likely pathogenic by VCEP standards without '
+                                              'using PS1.']},
                        'ba1': {'value': 0.00316,
                                'op': '>=',
                                'faf': True,
@@ -2384,9 +2565,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PP3': ['Supporting', 'Moderate'],
                                  'PM5': ['Supporting', 'Moderate']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…an amino acid residue where a different missense change was '
-                                            'classified by this VCEP as Pathogenic on the protein level and '
-                                            'not due to aberrant splicing.']},
+                     'conditions': {'PS1': ['…substitution that encodes the same amino acid change with a '
+                                            'different underlying nucleotide change previously established '
+                                            'by this VCEP as Pathogenic (not a predicted or confirmed splice '
+                                            'defect).'],
+                                    'PM5': ['Missense change at an amino acid residue where a different '
+                                            'missense change was classified by this VCEP as Pathogenic on '
+                                            'the protein level and not due to aberrant splicing.']},
                      'ba1': {'value': 0.0028,
                              'op': '>=',
                              'faf': True,
@@ -2504,7 +2689,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'as likely pathogenic by SCID VCEP specifications for RAG1.'],
                                     'PM5': ['Notes: The informative variant must be classified by the SCID '
                                             'VCEP specifications and may not be the same variant used to '
-                                            'meet “+1 pathogenic variant downstream” on the PVS1…',
+                                            'meet “+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                             'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                             'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                             'Informative variants must also be classified by these rule '
@@ -2533,7 +2718,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'as likely pathogenic by SCID VCEP specifications for RAG2.'],
                                     'PM5': ['Notes: The informative variant must be classified by the SCID '
                                             'VCEP specifications and may not be the same variant used to '
-                                            'meet “+1 pathogenic variant downstream” on the PVS1…',
+                                            'meet “+1 pathogenic variant downstream” on the PVS1 flowchart.',
                                             'PM5Moderate may not be combined with PVS1VeryStrong (should be '
                                             'downgraded to PM5Supporting if PVS1VeryStrong is applied).',
                                             'Informative variants must also be classified by these rule '
@@ -2575,12 +2760,14 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'BP4': [],
                                  'PP3': ['Supporting']},
                      'not_missense': {},
-                     'conditions': {'PS1': ['Cannot be applied if a different nucleotide change at the same '
+                     'conditions': {'PM2': ['…variants with allele frequencies exceeding the PM2 threshold '
+                                            'will be evaluated on a case-by-case basis by the VCEP.'],
+                                    'PS1': ['Cannot be applied if a different nucleotide change at the same '
                                             'position has been previously classified as benign or likely '
                                             'benign.',
                                             'Previously established variants must be classified by SCID VCEP '
                                             'specifications for RMRP.'],
-                                    'PP3': ['…only for Single Nucleotide Polymorphism inside the gene (do '
+                                    'PP3': ['Use only for Single Nucleotide Polymorphism inside the gene (do '
                                             'not use for promoter sequence)']},
                      'ba1': {'value': 0.004,
                              'op': '>',
@@ -2606,12 +2793,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'not_missense': {},
                       'conditions': {'PM5': ['Must have one comparison variant that reaches a Pathogenic '
                                              'classification using this rule specification.',
-                                             '…have one comparison variant that reaches a Likely Pathogenic '
-                                             'classification using this rule specification.'],
+                                             'Must have one comparison variant that reaches a Likely '
+                                             'Pathogenic classification using this rule specification.'],
                                      'PS1': ['Must have one comparison variant that reaches a Pathogenic '
                                              'classification using this rule specification.',
-                                             '…have one comparison variant that reaches a Likely Pathogenic '
-                                             'classification using this rule specification.']},
+                                             'Must have one comparison variant that reaches a Likely '
+                                             'Pathogenic classification using this rule specification.']},
                       'ba1': {'value': 0.008,
                               'op': '>=',
                               'faf': True,
@@ -2633,16 +2820,22 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'not_missense': {},
                      'conditions': {'PM5': ['Must have 2 comparison variants reaching pathogenic '
                                             'classification using these specifications.',
-                                            '…affect splicing (SpliceAI ≤ 0.2), must meet PP3, and have a '
-                                            'Grantham score equal to or greater than the previously '
-                                            'published variants.']},
+                                            '- The novel change must not affect splicing (SpliceAI ≤ 0.2), '
+                                            'must meet PP3, and have a Grantham score equal to or greater '
+                                            'than the previously published variants.'],
+                                    'PS1': ['Comparison variant must have been evaluated by the X-linked IRD '
+                                            'VCEP using these rules and established as a pathogenic variant '
+                                            'and classified as such.',
+                                            'Comparison variant must have been evaluated by the X-linked IRD '
+                                            'VCEP using these rules and established as likely pathogenic '
+                                            'variant and classified as such.']},
                      'ba1': {'value': 0.05,
                              'op': '>',
                              'faf': False,
                              'quote': 'Allele frequency in males is above 5% in Exome Sequencing Project, '
                                       '1000 Genomes or Exome Aggregation Consortium in the subpopulation '
                                       'with the highest frequency.'},
-                     'inheritance': 'x-linked',
+                     'inheritance': 'X-linked',
                      'diseases': ['RPGR-related retinopathy']}],
            'RRAS2': [{'panel': 'RASopathy Variant Curation Expert Panel',
                       'id': 'GN127',
@@ -2675,22 +2868,28 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                 'BA1': ['Stand Alone'],
                                 'PM2': ['Supporting']},
                     'not_missense': {},
-                    'conditions': {'PM5': ['Same residue as a previously established pathogenic variant '
+                    'conditions': {'PS1': ['Comparison variant must have been evaluated by the X-linked IRD '
+                                           'VCEP using these rules and established as a Pathogenic variant '
+                                           'and classified as such.',
+                                           'Comparison variant must have been evaluated by the X-linked IRD '
+                                           'VCEP using these rules and established as a Likely Pathogenic '
+                                           'variant and classified as such.'],
+                                   'PM5': ['Same residue as a previously established pathogenic variant '
                                            'classified using these specifications (assessed independently of '
                                            'PM5) .',
-                                           '…affect splicing (SpliceAI ≤ 0.2), must meet PP3, and have a '
-                                           'Grantham score equal or greater than the previously published '
-                                           'variants.',
-                                           '…residue as a previously established likely pathogenic variant '
-                                           'classified using these specifications (assessed independently of '
-                                           'PM5) .']},
+                                           'The novel change must not affect splicing (SpliceAI ≤ 0.2), must '
+                                           'meet PP3, and have a Grantham score equal or greater than the '
+                                           'previously published variants.',
+                                           'Same residue as a previously established likely pathogenic '
+                                           'variant classified using these specifications (assessed '
+                                           'independently of PM5) .']},
                     'ba1': {'value': 0.0002,
                             'op': '>=',
                             'faf': False,
                             'quote': 'Allele frequency ≥ 2x10<sup>-4</sup> in males in population databases '
                                      '(Exome Sequencing Project, 1000 Genomes or Exome Aggregation '
                                      'Consortium) in the subpopulation with the highest frequency.'},
-                    'inheritance': 'x-linked',
+                    'inheritance': 'X-linked',
                     'diseases': ['X-linked retinoschisis']}],
            'RUNX1': [{'panel': 'Myeloid Malignancy Variant Curation Expert Panel',
                       'id': 'GN008',
@@ -2707,11 +2906,14 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                       'conditions': {'PP3': ['Do not use for variants with a predicted splicing effect that '
                                              'is proven by RNA analysis.',
                                              'Do not use for for canonical splice site variants.'],
-                                     'PM5': ['…been determined to be pathogenic before (after accounting for '
-                                             'Grantham scores).',
+                                     'PM5': ['…different missense changes which have been determined to be '
+                                             'pathogenic before (after accounting for Grantham scores).',
                                              'PM5 cannot be used if PM1 was applied at any strength level.',
-                                             '…determined to be likely pathogenic before (after accounting '
-                                             'for Grantham scores).']},
+                                             '…a different missense change which has been determined to be '
+                                             'pathogenic before (after accounting for Grantham scores).',
+                                             '…different missense change which has been determined to be '
+                                             'likely pathogenic before (after accounting for Grantham '
+                                             'scores).']},
                       'ba1': {'value': 0.0015,
                               'op': '>=',
                               'faf': False,
@@ -2737,9 +2939,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'classification of pathogenicity without PM5',
                                             'Grantham score for alternate pathogenic variant must be less '
                                             'than for variant being assessed',
-                                            '…likely pathogenic variant can be considered supporting '
-                                            'evidence, must reach a classification of likely pathogenic '
-                                            'without PM5.',
+                                            'Previously established likely pathogenic variant can be '
+                                            'considered supporting evidence, must reach a classification of '
+                                            'likely pathogenic without PM5.',
                                             'Grantham score for alternate likely pathogenic variant must be '
                                             'less than for variant being assessed.'],
                                     'PS1': ['Previously established pathogenic variant must reach a '
@@ -2923,7 +3125,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                         'PM5': ['Use code when previously reported variant reaches a '
                                                 'pathogenic classification using the SERPINC1 rule '
                                                 'specifications from the Thrombosis VCEP.',
-                                                '…when previously reported variant reaches a likely '
+                                                'Use code when previously reported variant reaches a likely '
                                                 'pathogenic classification using the SERPINC1 rule '
                                                 'specifications from the Thrombosis VCEP.']},
                          'ba1': {'value': 0.002,
@@ -2950,13 +3152,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'variation should be present at the residue.',
                                             'Do not apply for missense variants encoded by the first or last '
                                             '3 nucleotides of an exon unless a splice effect has been ruled '
-                                            'out for the variant under curation and the…'],
+                                            'out for the variant under curation and the variant(s) resulting '
+                                            'in the…'],
                                     'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                             'classified using LGMD VCEP specifications, and potential splice '
-                                            'effects must be excluded for the missense variant…',
+                                            'effects must be excluded for the missense variant under '
+                                            'curation and the…',
                                             'The likely pathogenic variant must have been classified using '
                                             'LGMD VCEP specifications, and potential splice effects must be '
-                                            'excluded for the missense variant under curation and…']},
+                                            'excluded for the missense variant under curation and the '
+                                            'variant…']},
                      'ba1': {'value': 0.002,
                              'op': '>',
                              'faf': True,
@@ -2980,16 +3185,19 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'not_missense': {},
                      'conditions': {'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                             'classified using LGMD VCEP specifications, and potential splice '
-                                            'effects must be excluded for the missense variant…',
+                                            'effects must be excluded for the missense variant under '
+                                            'curation and the…',
                                             'The likely pathogenic variant must have been classified using '
                                             'LGMD VCEP specifications, and potential splice effects must be '
-                                            'excluded for the missense variant under curation and…'],
+                                            'excluded for the missense variant under curation and the '
+                                            'variant…'],
                                     'PM5': ['Missense changes at the same residue must be classified '
                                             'according to LGMD VCEP specifications, and no benign missense '
                                             'variation should be present at the residue.',
                                             'Do not apply for missense variants encoded by the first or last '
                                             '3 nucleotides of an exon unless a splice effect has been ruled '
-                                            'out for the variant under curation and the…']},
+                                            'out for the variant under curation and the variant(s) resulting '
+                                            'in the…']},
                      'ba1': {'value': 0.002,
                              'op': '>',
                              'faf': True,
@@ -3016,13 +3224,16 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                             'variation should be present at the residue.',
                                             'Do not apply for missense variants encoded by the first or last '
                                             '3 nucleotides of an exon unless a splice effect has been ruled '
-                                            'out for the variant under curation and the…'],
+                                            'out for the variant under curation and the variant(s) resulting '
+                                            'in the…'],
                                     'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                             'classified using LGMD VCEP specifications, and potential splice '
-                                            'effects must be excluded for the missense variant…',
+                                            'effects must be excluded for the missense variant under '
+                                            'curation and the…',
                                             'The likely pathogenic variant must have been classified using '
                                             'LGMD VCEP specifications, and potential splice effects must be '
-                                            'excluded for the missense variant under curation and…']},
+                                            'excluded for the missense variant under curation and the '
+                                            'variant…']},
                      'ba1': {'value': 0.002,
                              'op': '>',
                              'faf': True,
@@ -3046,16 +3257,19 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                      'not_missense': {},
                      'conditions': {'PS1': ['The likely pathogenic or pathogenic variant(s) must have been '
                                             'classified using LGMD VCEP specifications, and potential splice '
-                                            'effects must be excluded for the missense variant…',
+                                            'effects must be excluded for the missense variant under '
+                                            'curation and the…',
                                             'The likely pathogenic variant must have been classified using '
                                             'LGMD VCEP specifications, and potential splice effects must be '
-                                            'excluded for the missense variant under curation and…'],
+                                            'excluded for the missense variant under curation and the '
+                                            'variant…'],
                                     'PM5': ['Missense changes at the same residue must be classified '
                                             'according to LGMD VCEP specifications, and no benign missense '
                                             'variation should be present at the residue.',
                                             'Do not apply for missense variants encoded by the first or last '
                                             '3 nucleotides of an exon unless a splice effect has been ruled '
-                                            'out for the variant under curation and the…']},
+                                            'out for the variant under curation and the variant(s) resulting '
+                                            'in the…']},
                      'ba1': {'value': 0.002,
                              'op': '>',
                              'faf': True,
@@ -3112,7 +3326,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                     'PP3': ['Supporting'],
                                     'BA1': ['Stand Alone']},
                         'not_missense': {},
-                        'conditions': {},
+                        'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                               'the HL specifications']},
                         'ba1': {'value': None,
                                 'op': '',
                                 'faf': False,
@@ -3140,7 +3355,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                         'OR ≥10 homo- or hemizygotes (or the sum of total hemi- and '
                                         'homozygotes) are present in the most current version of gnomAD '
                                         'available a'},
-                       'inheritance': 'x-linked',
+                       'inheritance': 'X-linked',
                        'diseases': ['creatine transporter deficiency']}],
            'SLC9A6': [{'panel': 'Rett and Angelman-like Disorders Variant Curation Expert Panel',
                        'id': 'GN033',
@@ -3164,7 +3379,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                         'present at ≥0.000083 (0.0083%) in any sub-population. Use if allele '
                                         'frequency is met in any general continental population dataset of '
                                         'at'},
-                       'inheritance': 'x-linked',
+                       'inheritance': 'X-linked',
                        'diseases': ['Christianson syndrome']}],
            'SOS1': [{'panel': 'RASopathy Variant Curation Expert Panel',
                      'id': 'GN041',
@@ -3239,7 +3454,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {},
+                      'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                             'the HL specifications']},
                       'ba1': {'value': None,
                               'op': '',
                               'faf': False,
@@ -3259,12 +3475,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon '
-                                             'has been classified as pathogenic using these modified '
-                                             'guidelines without application of PM5.',
-                                             '…SUPPORTING if a different missense variant at the same codon '
-                                             'has been classified as likely pathogenic using these modified '
-                                             'guidelines without application of PM5.',
+                      'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                             'variant at the same codon has been classified as pathogenic '
+                                             'using these modified guidelines without application of PM5.',
+                                             '…criterion can be considered at SUPPORTING if a different '
+                                             'missense variant at the same codon has been classified as '
+                                             'likely pathogenic using these modified guidelines without '
+                                             'application of PM5.',
                                              'Consider reducing the strength of this rule to NOT APPLICABLE '
                                              'if the predicted impact is not expected to be equivalent or '
                                              'more severe.']},
@@ -3289,12 +3506,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PM2': ['Supporting'],
                                   'BP4': ['Supporting']},
                       'not_missense': {},
-                      'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon '
-                                             'has been classified as pathogenic using these modified '
-                                             'guidelines without application of PM5.',
-                                             '…SUPPORTING if a different missense variant at the same codon '
-                                             'has been classified as likely pathogenic using these modified '
-                                             'guidelines without application of PM5.',
+                      'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                             'variant at the same codon has been classified as pathogenic '
+                                             'using these modified guidelines without application of PM5.',
+                                             '…criterion can be considered at SUPPORTING if a different '
+                                             'missense variant at the same codon has been classified as '
+                                             'likely pathogenic using these modified guidelines without '
+                                             'application of PM5.',
                                              'Consider reducing the strength of this rule to NOT APPLICABLE '
                                              'if the predicted impact is not expected to be equivalent or '
                                              'more severe.']},
@@ -3319,7 +3537,15 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PP3': ['Supporting', 'Moderate'],
                                  'PM5': ['Supporting', 'Moderate', 'Strong']},
                      'not_missense': {},
-                     'conditions': {},
+                     'conditions': {'PM5': ['…at an amino acid residue where ≥2 different missense variants '
+                                            'previously determined to be pathogenic according to the TP53 '
+                                            'VCEP’s specifications have been seen before.',
+                                            '…variant at an amino acid residue where 1 different missense '
+                                            'variant previously determined to be pathogenic according to the '
+                                            'TP53 VCEP’s specifications has been seen before.',
+                                            '…amino acid residue where 1 different missense variant '
+                                            'previously determined to be likely pathogenic according to the '
+                                            'TP53 VCEP’s specifications has been seen before.']},
                      'ba1': {'value': 0.001,
                              'op': '>=',
                              'faf': True,
@@ -3341,12 +3567,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                  'PM2': ['Supporting'],
                                  'BA1': ['Stand Alone']},
                      'not_missense': {},
-                     'conditions': {'PM5': ['…MODERATE if a different missense variant at the same codon has '
-                                            'been classified as pathogenic using these modified guidelines '
-                                            'without application of PM5.',
-                                            '…SUPPORTING if a different missense variant at the same codon '
-                                            'has been classified as likely pathogenic using these modified '
-                                            'guidelines without application of PM5.',
+                     'conditions': {'PM5': ['This criterion can be used at MODERATE if a different missense '
+                                            'variant at the same codon has been classified as pathogenic '
+                                            'using these modified guidelines without application of PM5.',
+                                            '…criterion can be considered at SUPPORTING if a different '
+                                            'missense variant at the same codon has been classified as '
+                                            'likely pathogenic using these modified guidelines without '
+                                            'application of PM5.',
                                             'Consider reducing the strength of this rule to NOT APPLICABLE '
                                             'if the predicted impact is not expected to be equivalent or '
                                             'more severe.']},
@@ -3395,7 +3622,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                   'PP3': ['Supporting'],
                                   'BA1': ['Stand Alone']},
                       'not_missense': {},
-                      'conditions': {},
+                      'conditions': {'PS1': ['Established variant must meet criteria for pathogenicity by '
+                                             'the HL specifications']},
                       'ba1': {'value': None,
                               'op': '',
                               'faf': False,
@@ -3417,7 +3645,13 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                     'not_missense': {'BP4': 'Due to the lack of benign variants, and the drop in '
                                             'classification accuracy for benign VHL variants, missense '
                                             'predictors should not be used to assign the BP4 evidence code'},
-                    'conditions': {'PM5': ['The Grantham distance should be used to compare variants.',
+                    'conditions': {'PS1': ['Applied only to variants with interpretation by the VHL VCEP or '
+                                           'by a variant with pathogenicity established using VHL VCEP '
+                                           'specifications.'],
+                                   'PM5': ['Pathogenicity of prior variant is established by interpretation '
+                                           'of the VHL VCEP or variants with pathogenicity established using '
+                                           'VHL VCEP specifications.',
+                                           'The Grantham distance should be used to compare variants.',
                                            'The variant under consideration must be equal or a larger '
                                            'distance than the classified pathogenic variant (Grantham, 1974, '
                                            'Table 2 [<sup>16</sup>](#pmid4843792) ).']},
@@ -3446,10 +3680,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'classified as likely pathogenic using rules from the VWD VCEP.'],
                                    'PM5': ['Use code when previously reported variant reaches a pathogenic '
                                            'classification using the VWD Type 2 rule specifications.',
-                                           '…when two previously reported variants reach a likely pathogenic '
-                                           'classification using the VWD Type 2 rule specifications.',
-                                           '…when previously reported variant reaches a likely pathogenic '
-                                           'classification using the VWD Type 2 rule specifications.']},
+                                           'Code may also be applied when two previously reported variants '
+                                           'reach a likely pathogenic classification using the VWD Type 2 '
+                                           'rule specifications.',
+                                           'Use code when previously reported variant reaches a likely '
+                                           'pathogenic classification using the VWD Type 2 rule '
+                                           'specifications.']},
                     'ba1': {'value': 0.1,
                             'op': '>',
                             'faf': False,
@@ -3478,10 +3714,12 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'classified as likely pathogenic using rules from the VWD VCEP.'],
                                    'PM5': ['Use code when previously reported variant reaches a pathogenic '
                                            'classification using the VWD Type 2 rule specifications.',
-                                           '…when two previously reported variants reach a likely pathogenic '
-                                           'classification using the VWD Type 2 rule specifications.',
-                                           '…when previously reported variant reaches a likely pathogenic '
-                                           'classification using the VWD Type 2 rule specifications.']},
+                                           'Code may also be applied when two previously reported variants '
+                                           'reach a likely pathogenic classification using the VWD Type 2 '
+                                           'rule specifications.',
+                                           'Use code when previously reported variant reaches a likely '
+                                           'pathogenic classification using the VWD Type 2 rule '
+                                           'specifications.']},
                     'ba1': {'value': 0.1,
                             'op': '>',
                             'faf': False,

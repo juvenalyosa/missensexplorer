@@ -618,11 +618,15 @@ def apply_frequency(label: str, basis: str, grpmax: float | None, common_af: flo
 
 
 def _nmd(exon: str | None, terms: set[str]) -> str | None:
-    """Return the expected nonsense-mediated decay outcome of a stop-gain or frameshift, from VEP's exon ('3/10')."""
+    """Return the expected nonsense-mediated decay outcome of a stop-gain or frameshift, from VEP's exon ('3/10').
+
+    A change spanning exons ('9-10/10') is judged by its last exon, where the new stop codon lies or after it.
+    """
     if not exon or not terms & {"stop_gained", "frameshift_variant"}:
         return None
     try:
-        a, b = (int(x) for x in exon.split("/")[0:2])
+        first, total = exon.split("/")[0:2]
+        a, b = int(first.split("-")[-1]), int(total)
     except ValueError:
         return None
     if b == 1:
@@ -1126,6 +1130,10 @@ def _check_connection(ctx: _Context) -> None:
     try:
         ensembl_release(ctx.http, ctx.cache, "GRCh38")
     except OfflineError as e:
+        if not ctx.local and any(ctx.cache.get(f"ensembl_release|{a}", max_age=0) for a in ("GRCh38", "GRCh37")):
+            # a cache filled by earlier runs (a rerun of a published analysis): use what it holds
+            ctx.warnings.append("Ensembl cannot be reached: only answers already in the cache are used")
+            return
         if not ctx.local:
             raise ConnectionError(
                 "Cannot reach the Ensembl REST API (rest.ensembl.org). Check the internet connection, "
@@ -1845,7 +1853,7 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
         if not g > t:
             r["population_frequency"] = (
                 f"frequent: BS1 candidate (grpmax {acmg._pct(g)}); BA1 not met: the gene's expert panel sets BA1 "
-                f"above {acmg._pct(t)}"
+                f"above {100 * t:.3g}%"
             )
     r.pop("_gnomad")
     if "missense_variant" in terms and (ms := model.score(r)) is not None:
@@ -1859,7 +1867,10 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     if found.onco_data is not None:
         _add_oncogenicity(r, i, terms, label, found)
     if not acmg.ba1_exception(r):  # common but pathogenic/uncertain (ClinGen list): no frequency rule
-        label, basis = apply_frequency(label, basis, acmg.ba1_grpmax(r), ctx.opt.common_af)
+        common = ctx.opt.common_af
+        if common and (t := vcep.ba1_above_5pct(r.get("gene"))) and t > common:
+            common = t  # the gene's expert panels set BA1 higher (VWF, ABCA4): a variant below it is not "common"
+        label, basis = apply_frequency(label, basis, acmg.ba1_grpmax(r), common)
     r.pop("_grpmax_2000", None)
     r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis
     r["spliceai_effect"] = (

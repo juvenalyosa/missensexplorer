@@ -269,3 +269,17 @@ def test_pipeline_adds_ps1_pm5_and_pm2(monkeypatch):
     assert r["acmg_pm2"].startswith("depends on the disease")
     assert "PM5 +2" in r["acmg_codes"]
     assert 0 < r["score_with_frequency"] < 1
+
+
+def test_overlap_note_gives_whole_points_and_is_translated():
+    import numpy as np
+
+    from missensexplorer.gui import i18n
+
+    note = acmg.overlap_note({"acmg_points": np.float64(4.0), "acmg_ps1_pm5": "PM5 (p.R1C: Pathogenic, 3★)"})
+    assert note.startswith("PP3 (4 points) and PM5 may partly reflect")
+    i18n.set_language("es")
+    try:
+        assert i18n.tr_text(note).startswith("PP3 (4 puntos) y PM5")
+    finally:
+        i18n.set_language("en")

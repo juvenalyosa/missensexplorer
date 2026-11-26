@@ -20,6 +20,7 @@ so whenever the tool gives PP3 or BP4.
 
 from __future__ import annotations
 
+import re
 from numbers import Real
 from typing import Any, cast
 
@@ -40,6 +41,12 @@ CODE_POINTS = {
 }
 SEP = " | "  # between the notes of different specifications in the acmg_notes column
 MAX_QUOTES = 4  # conditions quoted per criterion; the rest are counted
+# BA1 texts with conditions beyond the threshold: allele counts, sex, other datasets, exclusions, founders
+BA1_CONDITIONS = re.compile(
+    r"alleles|allele count|\bmales?\b|hemizyg|homozyg|Exome Sequencing Project|\bESP\b|ExAC|1000 Genomes|"
+    r"exclu|founder|except|at least|NOT MET|fail",
+    re.I,
+)
 
 
 def specifications(gene: str | None) -> list[dict[str, Any]]:
@@ -57,11 +64,29 @@ def _short(panel: str) -> str:
     return " ".join(panel.replace("Variant Curation Expert Panel", "VCEP").split())
 
 
+def _diseases(s: dict[str, Any], n: int) -> str:
+    """The specification's diseases, with 'X type 2A', 'X type 2B' as 'X types 2A, 2B', cut to `n` characters."""
+    order: list[str] = []
+    types: dict[str, list[str]] = {}
+    for d in s.get("diseases") or []:
+        m = re.match(r"^(.*\btype) (\S+)$", d)
+        key = m[1] if m else d
+        if key not in types:
+            order.append(key)
+            types[key] = []
+        if m:
+            types[key].append(m[2])
+    parts = [
+        f"{k}s {', '.join(types[k])}" if len(types[k]) > 1 else f"{k} {types[k][0]}" if types[k] else k for k in order
+    ]
+    return _cut(", ".join(parts), n)
+
+
 def _name(s: dict[str, Any], several: bool) -> str:
     """'Congenital Myopathies VCEP v2.0' plus, when the gene has several specifications, what tells them apart."""
     name = f"{_short(s['panel'])} v{s['version']}"
     if several:
-        what = ", ".join(x for x in (_cut(", ".join(s.get("diseases") or []), 60), s.get("inheritance")) if x)
+        what = ", ".join(x for x in (_diseases(s, 60), s.get("inheritance")) if x)
         name += f" ({what}; {s['id']})" if what else f" ({s['id']})"
     return name
 
@@ -76,7 +101,7 @@ def describe(gene: str | None) -> str | None:
     specs = specifications(gene)
     out = []
     for s in specs:
-        dis = _cut(", ".join(s.get("diseases") or []), 80)
+        dis = _diseases(s, 80)
         inh = f", {s['inheritance']}" if s.get("inheritance") else ""
         out.append(f"{_short(s['panel'])} v{s['version']}{', ' + dis if dis else ''}{inh} ({s['url']})")
     return "; ".join(out) or None
@@ -111,13 +136,17 @@ def _pct(x: float) -> str:
 
 def _ba1(s: dict[str, Any], row: Row) -> str | None:
     """Where the panel's BA1 threshold and the tool's BA1 (grpmax above 5%) disagree."""
+    from .acmg import ba1_grpmax  # the grpmax the tool's own BA1 uses (groups with >= 2,000 alleles when known)
+
     b = s.get("ba1")
-    g = _num(row.get("gnomad_popmax_af"))
+    g = _num(ba1_grpmax(row))
+    if g is None:
+        g = _num(row.get("gnomad_popmax_af"))
     if not b or g is None:
         return None
     tool = str(row.get("population_frequency") or "").startswith("common: BA1")
     if b.get("value") is None:
-        return f"its own BA1 rule: “{b['quote'][:120]}”" if tool or g >= 0.001 else None
+        return f"its own BA1 rule: “{_cut(b['quote'], 120)}”" if tool or g >= 0.001 else None
     t, op = float(b["value"]), b.get("op") or ">"
     met = g >= t if op == ">=" else g > t
     if tool and not met:
@@ -129,7 +158,10 @@ def _ba1(s: dict[str, Any], row: Row) -> str | None:
             "filtering allele frequency (not computed here): check the filtering allele frequency before BA1"
         )
     if met and not tool:
-        return f"grpmax {_pct(g)} meets its BA1 threshold ({op} {_pct(t)})"
+        text = f"grpmax {_pct(g)} is at or above its BA1 threshold ({op} {_pct(t)}): check its other BA1 conditions"
+        if BA1_CONDITIONS.search(b.get("quote") or ""):
+            text += f" (“{_cut(b['quote'], 200)}”)"
+        return text
     return None
 
 
@@ -152,7 +184,7 @@ def note(s: dict[str, Any], row: Row, several: bool = False) -> str | None:
     tool = _tool_evidence(row)
     for crit, code, pts in tool:
         if crit in s.get("not_missense", {}):
-            parts.append(f"does not use {crit} for missense variants (“{s['not_missense'][crit][:100]}”)")
+            parts.append(f"does not use {crit} for missense variants (“{_cut(s['not_missense'][crit], 100)}”)")
             continue
         allowed = s["allowed"].get(crit)
         if allowed is None:
@@ -169,8 +201,8 @@ def note(s: dict[str, Any], row: Row, several: bool = False) -> str | None:
         elif pts < levels[0] and crit in ("PS1", "PM5"):
             # the tool lowered the strength because the reference is likely pathogenic or has one review star
             parts.append(
-                f"does not use {crit} below {allowed[0]}: with a likely pathogenic or single-star reference, its "
-                f"{crit} would not apply"
+                f"has no {crit} below {allowed[0]}: the tool lowered {crit} because the ClinVar reference is likely "
+                "pathogenic or has one review star, and the panel judges the reference under its own specification"
             )
         elif pts < levels[0]:
             parts.append(f"uses {crit} only at {', '.join(allowed)} (its own thresholds)")
@@ -180,7 +212,9 @@ def note(s: dict[str, Any], row: Row, several: bool = False) -> str | None:
     if rule and rule.get("spec") in (s["id"], "RASopathy") and str(s["panel"]).startswith(rule["panel"]):
         if got := vcep_rules.describe(row):
             parts.append(f"its rules give {got}")
-    elif any(c in ("PP3", "BP4") and c not in s.get("not_missense", {}) for c, _, _ in tool):
+    elif any(
+        c in ("PP3", "BP4") and c not in s.get("not_missense", {}) and s["allowed"].get(c) != [] for c, _, _ in tool
+    ):
         parts.append("it sets its own predictor and thresholds for PP3/BP4 (the tool's PP3/BP4 is its own calibration)")
     if b := _ba1(s, row):
         parts.append(b)

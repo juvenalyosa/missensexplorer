@@ -6,26 +6,26 @@
 
 | Criterion | Positive agreement (panel-cluster CI) | Negative agreement (panel-cluster CI) |
 |---|---|---|
-| PP3 | 89.6% (86.8%–92.3%) | 78.0% (71.6%–82.2%) |
-| BP4 | 76.7% (71.1%–87.5%) | 81.2% (69.4%–87.9%) |
-| PM2 | 48.3% (40.0%–56.3%) | 99.2% (98.4%–99.9%) |
-| PS1 | 60.0% (43.1%–74.1%) | 98.2% (96.6%–99.1%) |
-| PM5 | 88.5% (83.6%–91.8%) | 79.1% (67.0%–87.7%) |
-| BA1 | 21.2% (13.3%–30.1%) | 100.0% (100.0%–100.0%) |
+| PP3 | 89.6% (86.6%–92.4%) | 78.0% (71.7%–82.4%) |
+| BP4 | 76.7% (70.9%–87.0%) | 81.2% (70.2%–88.4%) |
+| PM2 | 48.3% (40.2%–56.3%) | 99.2% (98.4%–99.9%) |
+| PS1 | 60.0% (43.2%–73.8%) | 98.2% (96.6%–99.1%) |
+| PM5 | 88.5% (83.5%–91.8%) | 79.1% (67.1%–87.8%) |
+| BA1 | 21.2% (13.5%–29.6%) | 100.0% (100.0%–100.0%) |
 
 ## AUC against the panel's class: all
 
 n = 3718 (2584 P/LP, 1134 B/LB), 125 genes.
 - AUC: {"model_score": 0.961437, "revel": 0.95297, "alphamissense": 0.934466}; within genes (32,866 pairs): {"model_score": 0.959624, "revel": 0.942813, "alphamissense": 0.95255}
-- model - revel: +0.0085 (DeLong +0.0040 to +0.0130, p = 0.00022; gene-cluster bootstrap -0.0011 to +0.0192)
-- model - alphamissense: +0.0270 (DeLong +0.0218 to +0.0321, p = 1.5e-24; gene-cluster bootstrap +0.0156 to +0.0395)
+- model - revel: +0.0085 (DeLong +0.0040 to +0.0130, p = 0.00022; gene-cluster bootstrap -0.0010 to +0.0193)
+- model - alphamissense: +0.0270 (DeLong +0.0218 to +0.0321, p = 1.5e-24; gene-cluster bootstrap +0.0153 to +0.0386)
 
 ## AUC against the panel's class: gene never seen
 
 n = 3408 (2426 P/LP, 982 B/LB), 95 genes.
 - AUC: {"model_score": 0.960812, "revel": 0.95177, "alphamissense": 0.936483}; within genes (31,343 pairs): {"model_score": 0.958492, "revel": 0.941087, "alphamissense": 0.951935}
-- model - revel: +0.0090 (DeLong +0.0043 to +0.0138, p = 0.00018; gene-cluster bootstrap -0.0005 to +0.0194)
-- model - alphamissense: +0.0243 (DeLong +0.0190 to +0.0297, p = 7.3e-19; gene-cluster bootstrap +0.0122 to +0.0361)
+- model - revel: +0.0090 (DeLong +0.0043 to +0.0138, p = 0.00018; gene-cluster bootstrap -0.0004 to +0.0198)
+- model - alphamissense: +0.0243 (DeLong +0.0190 to +0.0297, p = 7.3e-19; gene-cluster bootstrap +0.0125 to +0.0361)
 
 ## PP3/BP4 strength
 
@@ -52,6 +52,6 @@ n = 3408 (2426 P/LP, 982 B/LB), 95 genes.
 
 ## Incorporation bias
 
-Variants whose rebuilt class does not depend on PP3/BP4: 2799 (1725 P/LP, 1074 B/LB). AUC {"model_score": 0.956672, "revel": 0.945324, "alphamissense": 0.928889}; model - REVEL +0.0113 (DeLong +0.0062 to +0.0165; gene-cluster -0.0005 to +0.0245).
+Variants whose rebuilt class does not depend on PP3/BP4: 2799 (1725 P/LP, 1074 B/LB). AUC {"model_score": 0.956672, "revel": 0.945324, "alphamissense": 0.928889}; model - REVEL +0.0113 (DeLong +0.0062 to +0.0165; gene-cluster -0.0005 to +0.0243).
 
 BP4 given with SpliceAI above 0.1: 0.

@@ -516,14 +516,19 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (r"no PP3/BP4 for missense variants", r"sin PP3/BP4 en variantes missense"),
     (r"PP3/BP4 not evaluated \(no REVEL score\)", r"PP3/BP4 no evaluado (sin puntuación REVEL)"),
     (r"\bPM2 not met\b", r"PM2 no cumplido"),
+    (
+        r"\bPM2 met \(absent from gnomAD, but few reads there: check\)",
+        r"PM2 cumplido (ausente de gnomAD, pero con pocas lecturas: compruébelo)",
+    ),
     (r"\b(PM2|BA1) met\b", r"\1 cumplido"),
     (
         r"BA1 only (>=?) ([\d.e+-]+%): grpmax ([\d.e+-]+%) does not meet it",
         r"BA1 solo \1 \2: el grpmax \3 no lo cumple",
     ),
     (
-        r"grpmax ([\d.e+-]+%) meets its BA1 threshold \((>=?) ([\d.e+-]+%)\)",
-        r"el grpmax \1 cumple su umbral de BA1 (\2 \3)",
+        r"grpmax ([\d.e+-]+%) is at or above its BA1 threshold \((>=?) ([\d.e+-]+%)\): check its other BA1 "
+        r"conditions",
+        r"el grpmax \1 alcanza o supera su umbral de BA1 (\2 \3): compruebe sus otras condiciones de BA1",
     ),
     (r" \(it applies it to the filtering allele frequency\)", r" (lo aplica a la frecuencia alélica de filtrado)"),
     (r"its own BA1 rule: “", r"su propia regla de BA1: “"),
@@ -533,10 +538,10 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         r"\1sobre \2: \3 condiciones más en la especificación",
     ),
     (
-        r"does not use (PS1|PM5) below (\w+): with a likely pathogenic or single-star reference, its (?:PS1|PM5) would "
-        r"not apply",
-        r"no usa \1 por debajo de \2: con una referencia probablemente patogénica o de una estrella, su \1 no se "
-        r"aplicaría",
+        r"has no (PS1|PM5) below (\w+): the tool lowered (?:PS1|PM5) because the ClinVar reference is likely "
+        r"pathogenic or has one review star, and the panel judges the reference under its own specification",
+        r"no tiene \1 por debajo de \2: la herramienta rebajó \1 porque la referencia de ClinVar es probablemente "
+        r"patogénica o tiene una estrella de revisión, y el panel juzga la referencia según su propia especificación",
     ),
     (r"uses (PP3|BP4) only at ([^:;|]+?) \(its own thresholds\)", r"usa \1 solo con fuerza \2 (sus propios umbrales)"),
     (
@@ -545,11 +550,13 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         r"la frecuencia alélica grpmax \1 supera su umbral de BA1 (\2 \3), que aplica a la frecuencia alélica de "
         r"filtrado (no calculada aquí): compruebe la frecuencia de filtrado antes de aplicar BA1",
     ),
-    (r"\b(?<=[(,] )autosomal dominant(?= ?[;)]| or)", "autosómica dominante"),
-    (r"\b(?<=[(,] )autosomal recessive(?=[;)])", "autosómica recesiva"),
-    (r"(?<=or )autosomal recessive(?=[;)])", "autosómica recesiva"),
-    (r"(?<=[(,] )x-linked(?=[;)])", "ligada al X"),
-    (r"(?<=[(,] )semidominant(?=[;)])", "semidominante"),
+    # inheritance in a specification's name (notes) or description (… autosomal dominant (https://…))
+    (r"\b(?<=[(,] )autosomal dominant(?= ?[;)]| or| \(http)", "autosómica dominante"),
+    (r"\b(?<=[(,] )autosomal recessive(?=[;)]| \(http)", "autosómica recesiva"),
+    (r"(?<=or )autosomal recessive(?=[;)]| \(http)", "autosómica recesiva"),
+    (r"(?<=[(,] )X-linked(?=[;)]| or| \(http)", "ligada al X"),
+    (r"(?<=or )X-linked(?=[;)]| \(http)", "ligada al X"),
+    (r"(?<=[(,] )semidominant(?=[;)]| or| \(http)", "semidominante"),
     (
         r"; no SpliceAI score: check that neither variant acts on splicing\)",
         r"; sin puntuación de SpliceAI: compruebe que ninguna de las dos variantes actúe sobre el splicing)",
@@ -648,6 +655,10 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     (
         r"No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold are skipped\.",
         "Sin conexión a internet: solo se usa VEP local; se omiten ClinVar, UniProt y AlphaFold.",
+    ),
+    (
+        r"Ensembl cannot be reached: only answers already in the cache are used",
+        "No se puede acceder a Ensembl: solo se usan las respuestas que ya están en la caché",
     ),
     (
         r"Cannot reach the Ensembl REST API \(rest\.ensembl\.org\)\. Check the internet connection, or use the local "
@@ -859,11 +870,12 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         "OS2/SBS2 no aplicados (la evidencia funcional de CIViC es contradictoria)",
     ),
     (
-        r"((?:OS3|OM3|OP3|OS2)(?:, (?:OS3|OM3|OP3|OS2))*) not counted \((OS1\S*) uses this amino-acid change\)",
+        r"((?:OS3|OM3|OP3|OS2|OM4(?:_Supporting)?)(?:, (?:OS3|OM3|OP3|OS2|OM4(?:_Supporting)?))*) not counted "
+        r"\((OS1\S*) uses this amino-acid change\)",
         r"\1 no contado (\2 usa este cambio de aminoácido)",
     ),
     (
-        r"(OS1\S*) not counted \((.+?); ([A-Z0-9 +]+) for this change is stronger\)",
+        r"(OS1\S*) not counted \((.+?); ([A-Za-z0-9_ +]+) for this change is stronger\)",
         r"\1 no contado (\2; \3 para este cambio es más fuerte)",
     ),
     (
@@ -875,11 +887,12 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         "OP4 no aplicado (ausente de gnomAD, pero con pocas lecturas)",
     ),
     (
-        r"\b(activating|loss-of-function|ambiguous) \(IntOGen: (\d+) cohorts?, (\d+) mutated samples: too few to "
-        r"decide\)",
+        r"\b(activating|loss-of-function|ambiguous) \(IntOGen: (\d+) mutated samples in (\d+) cohorts? with a "
+        r"role: too few to decide\)",
         lambda m: (
             {"activating": "activador", "loss-of-function": "de pérdida de función", "ambiguous": "ambiguo"}[m[1]]
-            + f" (IntOGen: {m[2]} cohorte, {m[3]} muestras mutadas: demasiado pocas para decidir)"
+            + f" (IntOGen: {m[2]} muestras mutadas en {m[3]} cohorte{'s' if m[3] != '1' else ''} con papel: "
+            + "demasiado pocas para decidir)"
         ),
     ),
     (r"\bDominant Negative\b", "dominante negativa"),

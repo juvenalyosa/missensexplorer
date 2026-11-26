@@ -338,6 +338,7 @@ def main(argv=None) -> int:
         "without_op1_in_activating_genes": {
             "overall": summary(df, "tool_group_no_op1_in_act"),
             "by_kind": {k: summary(d, "tool_group_no_op1_in_act") for k, d in df.groupby("kind")},
+            "by_role": {k: summary(d, "tool_group_no_op1_in_act") for k, d in df.groupby("role")},
         },
         "criteria": {},
         "auc_olo_vs_vus": {},
@@ -389,6 +390,8 @@ def main(argv=None) -> int:
         },
     }
     out["data_versions"] = {**res.run.get("data_versions", {}), "sources": res.sources}
+    # the full record of both runs: software, Ensembl release, options, sources and data versions
+    out["runs"] = {"with ClinVar": res.run, "without ClinVar": off.run}
     apc = df[(df["gene"] == "APC") & (df["kind"] == "null variant")]
     apc_codes = apc["codes"].map(_codes)
     out["apc_null_variants"] = {

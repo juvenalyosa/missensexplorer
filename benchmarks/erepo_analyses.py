@@ -42,7 +42,7 @@ from sklearn.metrics import cohen_kappa_score, roc_auc_score
 OUT = Path(__file__).resolve().parent / "results"
 CLASSES = ["Benign", "Likely Benign", "Uncertain Significance", "Likely Pathogenic", "Pathogenic"]
 PLP, BLB = {"Pathogenic", "Likely Pathogenic"}, {"Benign", "Likely Benign"}
-N_BOOT = 2000
+N_BOOT = 10000
 SCORES = ("model_score", "revel", "alphamissense")
 
 

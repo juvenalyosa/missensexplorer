@@ -53,10 +53,11 @@ prognostic evidence for the protein change (the AMP/ASCO/CAP axis: what the vari
 treatment), with the best evidence level (A validated or guideline ... E inferential).
 
 Exclusions: the standard does not use OS3 with OS1 (its count mixes nucleotide changes), counts OS2 with
-OS1 only for studies of the particular nucleotide change, and does not use OM4 with OS1 or OS3. Here OS1
-and the evidence for the same change (OS3, OM3, OP3, OS2, OM4) are alternatives and the stronger is kept,
-so a reference never lowers the points; when the standard's rule would give fewer points, the evidence
-says so. OM4 and OM3 are not combined (the stronger one is kept; OM4 wins a tie).
+OS1 only for studies of the particular nucleotide change, does not use OM4 with OS1 or OS3, and does not
+use OM3 with OM4; OM3 and OP3 combine with OS1. Here OS1 (with OM3 or OP3) and the evidence it excludes
+(OS3, OS2, OM4, with OM3 or OP3) are alternatives and the stronger is kept, so a reference never lowers
+the points; when the standard's rule would give other points, the evidence says so. OM4 and OM3 are not
+combined (the stronger one is kept; OM4 wins a tie), and OM3 comes back when OS1 replaces OM4.
 
 Data: cancerhotspots.org (Chang et al., Cancer Discov 2018; gene symbols updated to HGNC's current
 ones), the IntOGen driver compendium (Martinez-Jimenez et al., Nat Rev Cancer 2020; CC0), UniProt's
@@ -84,6 +85,7 @@ from .api import ENSEMBL, ApiError, Http, OfflineError, SourceStatus
 HOTSPOTS_URL = "https://www.cancerhotspots.org/api/hotspots/single"
 INTOGEN_RELEASE = "IntOGen-Drivers-20240920"
 INTOGEN_URL = f"https://www.intogen.org/download?file={INTOGEN_RELEASE}.zip"
+INTOGEN_KEY = f"oncogenicity|{INTOGEN_RELEASE}|samples-and-cohorts-by-role"  # parse_intogen's counts
 DATA_MAX_AGE = 90 * 86400  # both resources are released rarely
 CIVIC_URL = "https://civicdb.org/downloads/{d}/{d}-ClinicalEvidenceSummaries.tsv"  # monthly release, citable
 CIVIC_MAX_AGE = 35 * 86400  # a new monthly release appears on the first of each month
@@ -177,23 +179,23 @@ def tier(points: int) -> str:
 class Role:
     """A gene's role in cancer and where it comes from.
 
-    IntOGen decides when its evidence is enough: at least 2 cohorts or 20 mutated samples in cohorts that
-    give the gene a role (loss-of-function or activating), and at least as many samples there as in its
-    cohorts of ambiguous role. The role is loss-of-function when at least 60% of those samples are in
+    IntOGen decides when its evidence is enough: at least 2 cohorts or 20 mutated samples among the cohorts
+    that give the gene a role (loss-of-function or activating), and at least as many samples there as in
+    its cohorts of ambiguous role. The role is loss-of-function when at least 60% of those samples are in
     loss-of-function cohorts, activating when at most 40%. Counting samples rather than cohorts keeps many
     small cohorts from outvoting large ones (SMARCA4 is "Act" in 27 of 45 cohorts but loss-of-function in
-    47% of its mutated samples; KEAP1 7 of 14 but 69%). UniProt's curated keyword (Tumor suppressor or
-    Proto-oncogene, not both) decides when IntOGen is absent, ambiguous or too thin; its Proto-oncogene
-    keyword also marks genes known from fusions, such as RUNX1, NSD1 and CBFB, whose point mutations
-    inactivate them. When IntOGen and UniProt disagree, IntOGen decides only with at least 3 cohorts and
+    49% of the mutated samples of cohorts with a role; KEAP1 7 of 14 but 69%). UniProt's curated keyword
+    (Tumor suppressor or Proto-oncogene, not both) decides when IntOGen is absent, ambiguous or too thin; its
+    Proto-oncogene keyword also marks genes known from fusions, such as RUNX1, NSD1 and CBFB, whose point
+    mutations inactivate them. When IntOGen and UniProt disagree, IntOGen decides only with at least 3 cohorts and
     50 samples (so RUNX1 is loss-of-function); otherwise the role is ambiguous (SMARCB1, on 13 samples).
     """
 
     role: str  # Act | LoF | ambiguous
     source: str  # UniProt | IntOGen
     lof_share: float | None = None  # among the samples of cohorts with a role
-    cohorts: int = 0
-    samples: float = 0.0  # in cohorts with a role (loss-of-function or activating)
+    cohorts: int = 0  # cohorts that give the gene a role (loss-of-function or activating)
+    samples: float = 0.0  # in cohorts with a role
     why: str = "decided"  # decided | thin | ambiguous cohorts | conflict
     other: str | None = None  # UniProt's keyword when it disagrees with IntOGen
     ambiguous_samples: float = 0.0
@@ -209,11 +211,10 @@ class Role:
         kw = {"LoF": "tumour suppressor", "Act": "proto-oncogene"}
         if self.source == "UniProt":
             return f"{name} (UniProt: {kw.get(self.role, 'tumour suppressor and proto-oncogene')})"
-        k = f"{self.cohorts} cohort{'s' if self.cohorts != 1 else ''}"
+        k = f"{self.cohorts} cohort{'s' if self.cohorts != 1 else ''}"  # with a role
         share = f"{self.lof_share:.0%}" if self.lof_share is not None else "?"
         if self.why == "thin":
-            total = self.samples + self.ambiguous_samples
-            return f"{name} (IntOGen: {k}, {total:.0f} mutated samples: too few to decide)"
+            return f"{name} (IntOGen: {self.samples:.0f} mutated samples in {k} with a role: too few to decide)"
         if self.why == "ambiguous cohorts":
             total = self.samples + self.ambiguous_samples
             return (
@@ -275,19 +276,20 @@ def parse_hotspots(items: list[dict[str, Any]]) -> tuple[dict[str, dict[str, Hot
 def parse_intogen(zip_bytes: bytes) -> dict[str, list[float]]:
     """Return, for each gene of IntOGen's Compendium_Cancer_Genes.tsv, the mutated samples by cohort role.
 
-    gene -> [samples in LoF cohorts, in Act cohorts, in ambiguous cohorts, number of cohorts].
+    gene -> [samples in LoF cohorts, in Act cohorts, in ambiguous cohorts, cohorts with a role (LoF or
+    Act), cohorts of ambiguous role].
     """
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
         name = next(n for n in z.namelist() if n.endswith("Compendium_Cancer_Genes.tsv"))
         text = z.read(name).decode("utf-8")
-    out: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0, 0])
+    out: dict[str, list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0, 0, 0])
     for rec in csv.DictReader(io.StringIO(text), delimiter="\t"):
         gene, role = rec.get("SYMBOL"), rec.get("ROLE")
         if not gene or role not in ("LoF", "Act", "ambiguous"):
             continue
         c = out[gene]
         c[("LoF", "Act", "ambiguous").index(role)] += _num(rec.get("SAMPLES")) or 0.0
-        c[3] += 1
+        c[4 if role == "ambiguous" else 3] += 1
     return dict(out)
 
 
@@ -308,7 +310,7 @@ def combine_roles(intogen: dict[str, list[float]], suppressors: set[str], oncoge
         if not c:
             out[gene] = Role(uni or "ambiguous", "UniProt")
             continue
-        lof, act, amb, cohorts = float(c[0]), float(c[1]), float(c[2]), int(c[3])
+        lof, act, amb, cohorts = float(c[0]), float(c[1]), float(c[2]), int(c[3])  # cohorts with a role
         decided = lof + act
         share = lof / decided if decided else None
 
@@ -400,14 +402,14 @@ def load(http: Http, cache: KeyValueCache, status: SourceStatus | None = None) -
             status.use("cancerhotspots.org")
         data.residues, data.indels = parse_hotspots(hot)
         data.hotspots_ok = True
-    intogen = cache.get(f"oncogenicity|{INTOGEN_RELEASE}|samples", max_age=DATA_MAX_AGE)
+    intogen = cache.get(INTOGEN_KEY, max_age=DATA_MAX_AGE)
     if intogen is None:
         try:
             r = http.request("GET", INTOGEN_URL, follow_redirects=True)
             if r.status_code != 200:
                 raise ApiError(f"HTTP {r.status_code}", r.status_code)
             intogen = parse_intogen(r.content)
-            cache.set(f"oncogenicity|{INTOGEN_RELEASE}|samples", intogen)
+            cache.set(INTOGEN_KEY, intogen)
         except (ApiError, OfflineError, ValueError, KeyError, StopIteration, zipfile.BadZipFile) as e:
             if status is not None:
                 status.fail("IntOGen", str(e))
@@ -577,6 +579,7 @@ class Assessment:
     codes: list[tuple[str, str]] = field(default_factory=list)  # (code, why)
     notes: list[str] = field(default_factory=list)
     same_change: tuple[str, str] | None = None  # OS1 candidate, kept only if stronger than the alternatives
+    hotspot: tuple[str, str] | None = None  # the residue's hotspot criterion, even when OM4 replaced OM3
     sop_delta: int = 0  # points the standard's rule for OS1 would add (negative: remove) to this assessment
 
     def ordered(self) -> list[tuple[str, str]]:
@@ -740,9 +743,8 @@ def _missense(
     if hot:
         n_aa = hot.changes.get(str(alt_aa), 0)
         code = "OS3" if hot.tumours >= 50 and n_aa >= 10 else "OM3" if n_aa >= 10 else "OP3"
-        a.codes.append(
-            (code, f"hotspot {ref_aa}{pos}: {hot.tumours} tumours, {n_aa} with {alt_aa}; cancerhotspots.org")
-        )
+        a.hotspot = (code, f"hotspot {ref_aa}{pos}: {hot.tumours} tumours, {n_aa} with {alt_aa}; cancerhotspots.org")
+        a.codes.append(a.hotspot)
     has = {c for c, _ in a.codes}
     if other and "OS3" not in has:  # with a same-change reference, OM4 is weighed against OS1 in _same_change
         g_new = grantham(str(ref_aa), str(alt_aa)) or 0
@@ -765,35 +767,45 @@ def _missense(
         a.notes.append("in an activating gene, a damage prediction does not tell activation from inactivation")
 
 
-SAME_CHANGE = ("OS3", "OM3", "OP3", "OS2", "OM4", "OM4_Supporting")  # evidence that OS1 would replace
+SAME_CHANGE = ("OS3", "OS2", "OM4", "OM4_Supporting")  # the evidence that the standard does not use with OS1
+WITH_OS1 = ("OM3", "OP3")  # hotspot criteria that the standard combines with OS1
 
 
 def _same_change(a: Assessment) -> None:
-    """OS1 from a ClinVar classification of the same amino-acid change, or the hotspot and CIViC evidence.
+    """OS1 from a ClinVar classification of the same amino-acid change, or the evidence it excludes.
 
-    The standard does not use OS3 with OS1 (unless the hotspot count is specific to the nucleotide change)
-    and counts OS2 with OS1 only for studies of the particular nucleotide change (Horak et al. 2022, Table
-    1). Here the two ways of counting the change are alternatives and the stronger is kept, so that adding
-    a reference never lowers the points: this departs from the standard when the hotspot and CIViC
-    evidence are stronger than OS1. A likely oncogenic reference (OS1_Moderate, two points, the tool's own
-    level) therefore never removes stronger evidence.
+    The standard does not use OS3 with OS1 (unless the hotspot count is specific to the nucleotide change),
+    counts OS2 with OS1 only for studies of the particular nucleotide change, and does not use OM4 with OS1;
+    OM3 and OP3 combine with OS1, and OM3, which cannot be used with OM4, comes back when OS1 replaces OM4
+    (Horak et al. 2022, Table 1). Here the two ways of counting the change, OS1 with OM3 or OP3 and the
+    evidence it excludes with OM3 or OP3, are alternatives and the stronger is kept, so that adding a
+    reference never lowers the points: this departs from the standard when the excluded evidence is
+    stronger. A likely oncogenic reference (OS1_Moderate, two points, the tool's own level) therefore never
+    removes stronger evidence.
     """
     if a.same_change is None:
         return
     code, why = a.same_change
     alt = [(c, w) for c, w in a.codes if c in SAME_CHANGE]
-    alt_points = sum(POINTS[c] for c, _ in alt)
-    if POINTS[code] >= alt_points:
-        a.codes = [(c, w) for c, w in a.codes if c not in SAME_CHANGE]
+    alt_points = sum(POINTS[c] for c, _ in alt) + sum(POINTS[c] for c, _ in a.codes if c in WITH_OS1)
+    minor = a.hotspot if a.hotspot and a.hotspot[0] in WITH_OS1 else None  # kept or restored with OS1
+    os1_points = POINTS[code] + (POINTS[minor[0]] if minor else 0)
+    if os1_points >= alt_points:
+        a.codes = [(c, w) for c, w in a.codes if c not in SAME_CHANGE and c not in WITH_OS1]
         a.codes.append((code, why))
+        if minor:
+            a.codes.append(minor)
         if alt:
             a.notes.append(f"{', '.join(c for c, _ in alt)} not counted ({code} uses this amino-acid change)")
-        chosen = POINTS[code]
+        chosen = os1_points
     else:
-        a.notes.append(f"{code} not counted ({why}; {' + '.join(c for c, _ in alt)} for this change is stronger)")
+        parts = [c for c, _ in alt] + [c for c, _ in a.codes if c in WITH_OS1]
+        a.notes.append(f"{code} not counted ({why}; {' + '.join(parts)} for this change is stronger)")
         chosen = alt_points
-    # the standard's rule: OS1 from an oncogenic reference replaces this evidence; no OS1 from a likely oncogenic one
-    a.sop_delta = (POINTS["OS1"] if code == "OS1" else alt_points) - chosen
+    # the standard's rule: OS1 (with OM3 or OP3) from an oncogenic reference replaces the evidence it
+    # excludes; a likely oncogenic reference gives no OS1, so the other evidence stands
+    standard = POINTS["OS1"] + (POINTS[minor[0]] if minor else 0) if code == "OS1" else alt_points
+    a.sop_delta = standard - chosen
 
 
 def _inframe(a: Assessment, row: Row, terms: set[str], data: Data, role: Role | None) -> None:

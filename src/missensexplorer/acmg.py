@@ -204,7 +204,7 @@ def overlap_note(row: Row) -> str | None:
     ps = str(row.get("acmg_ps1_pm5") or "")
     if pts is not None and pts >= 2 and ps[:3] in ("PS1", "PM5"):
         return (
-            f"PP3 ({pts} points) and {ps.split(' ')[0]} may partly reflect the same residue-level information "
+            f"PP3 ({int(pts)} points) and {ps.split(' ')[0]} may partly reflect the same residue-level information "
             "(Pejaver et al. 2022): weigh their combination with care; if PM1 is added, PP3 + PM1 should not "
             "exceed 4 points"
         )

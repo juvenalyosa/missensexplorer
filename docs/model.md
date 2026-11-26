@@ -252,7 +252,8 @@ worked examples in Horak et al.
 | OP1 / SBP1: the calibrated computational evidence reaches PP3 / BP4 | MissensExplorer |
 
 **Gene roles.** IntOGen, weighting each cohort by its mutated samples, when its evidence is enough (at
-least 2 cohorts or 20 samples in cohorts with a role, and no more samples in cohorts of ambiguous role):
+least 2 cohorts or 20 samples among the cohorts with a role, not outnumbered by samples in cohorts of
+ambiguous role):
 loss-of-function when at least 60% of the samples in cohorts with a role are in loss-of-function ones,
 activating when at most 40%. Otherwise, or when IntOGen is ambiguous, UniProt's curated keyword (Tumor
 suppressor or Proto-oncogene) when it names one role. When the two disagree, IntOGen decides only with at
@@ -299,8 +300,11 @@ so it never adds oncogenicity points.
 2. **OP4 below 1e-5.** The standard says "absent or extremely low" without a number. Clonal
    haematopoiesis is not handled, so hotspots present in gnomAD (KRAS G12D, IDH1 R132H, JAK2 V617F) get
    no OP4.
-3. **OS1 removes the hotspot criteria** (OS3, as the standard says, and also OM3 and OP3). OM3 and OM4
-   are never combined; the stronger one is kept.
+3. **OS1 and the evidence it excludes are alternatives.** The standard does not use OS3, protein-level
+   OS2 or OM4 with OS1 (OM3 and OP3 combine with it). Here OS1 with OM3 or OP3 and the excluded evidence
+   with OM3 or OP3 are weighed and the stronger is kept, so a ClinVar reference never lowers the points;
+   when the standard's rule would give other points, the evidence says so. OM3 and OM4 are never combined
+   (the stronger is kept), and OM3 comes back when OS1 replaces OM4.
 
 **Validation on laboratory assays** (AUC; ties count half; CIViC items citing the assays left out):
 
@@ -314,7 +318,7 @@ so it never adds oncogenicity points.
 - In EGFR the points rank transformation better than the model (paired difference +0.153 for 3T3),
   but OP1/SBP1 lower the ranking; two transforming variants (R165Q, T638M) are called likely benign on
   SBP1 alone. L858R, T790M and E746_A750del are likely oncogenic.
-- In TP53 the points rank as well as the model (paired differences not significant); 90 of 493
+- In TP53 the points rank as well as the model (paired differences not significant); 92 of 493
   non-functional variants are oncogenic or likely oncogenic, none of the 1,147 functional ones.
 - 66 EGFR variants cannot be analysed (protein-level insertions and deletion-insertions); 60 of them
   transform 3T3 cells.

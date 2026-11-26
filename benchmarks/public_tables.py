@@ -38,6 +38,8 @@ THIRD_PARTY = (
 )
 # third-party scores quoted inside text columns ("... SpliceAI 0.15 does not rule out ...")
 SCORE_IN_TEXT = re.compile(r"\b(SpliceAI|REVEL|CADD|EVE|popEVE|BayesDel|MetaRNN|ClinPred)( score)?\s+-?\d+(?:\.\d+)?")
+# cancerhotspots.org tumour counts quoted in the oncogenicity evidence ("hotspot G129: 12 tumours, 4 with E")
+HOTSPOT_COUNTS = re.compile(r"(hotspot [^:;()]+): \d+ tumours, \d+ with [^;)]+")
 TABLES = (
     "clinvar_benchmark_variants.csv.gz",
     "clinvar_oncogenicity_variants.csv.gz",
@@ -55,15 +57,27 @@ NOTICE = """Per-variant results of the MissensExplorer benchmarks (redistributab
 Written by benchmarks/public_tables.py from the full tables that the benchmark scripts produce. Columns
 with third-party scores whose terms do not allow redistribution under GPL-3.0 were dropped: REVEL, CADD,
 SpliceAI, EVE, popEVE, SIFT, PolyPhen-2 and every dbNSFP predictor, COSMIC/GENIE counts and ProteinGym
-assay values and bins; scores quoted in text columns are replaced by "[score removed]". Regenerate the
-full tables by running the scripts (see README.md).
+assay values and bins. Scores quoted in text columns are replaced by "[score removed]", and the
+cancerhotspots.org tumour counts quoted in the oncogenicity evidence by "[counts removed]" (the hotspot
+criteria are kept; Chang et al., Cancer Discov 2018). Regenerate the full tables by running the scripts
+(see README.md).
 
 Kept, with their sources and terms:
 - variant keys, labels and dates from ClinVar (public domain) and the ClinGen Evidence Repository (CC0);
-- MissensExplorer's own scores, calls, ACMG/AMP and oncogenicity criteria and points (GPL-3.0 project);
+- MissensExplorer's own scores, calls, ACMG/AMP and oncogenicity criteria and points. The missense score
+  and the criteria derived from it (PP3/BP4, OP1/SBP1) are computed from REVEL, CADD and popEVE scores
+  (with SpliceAI for BP4), whose non-commercial terms may extend to values derived from them: check those
+  terms before commercial use;
 - AlphaMissense scores (CC BY 4.0; Cheng et al., Science 2023);
 - gnomAD allele frequencies (gnomAD, Broad Institute; free to reuse);
-- ClinGen CSpec-derived codes (CC0).
+- ClinGen CSpec-derived codes (CC0);
+- gene roles from IntOGen (CC0; Martinez-Jimenez et al., Nat Rev Cancer 2020) and UniProt keywords
+  (CC BY 4.0; The UniProt Consortium);
+- CIViC evidence identifiers (CC0);
+- the EGFR transformation results (ffa, baf3) of Ikeuchi et al. (CC BY 4.0; PLoS Comput Biol 2022).
+
+Outside this folder, tests/data holds a few recorded Ensembl VEP answers and model test vectors with REVEL,
+CADD and SpliceAI values, used only as test fixtures.
 """
 
 
@@ -77,10 +91,11 @@ def main() -> int:
         df = pd.read_csv(src, dtype=str, keep_default_na=False)
         drop = [c for c in df.columns if c in THIRD_PARTY]
         out = df.drop(columns=drop)
-        for c in out.columns:  # scores quoted in free text
+        for c in out.columns:  # scores and hotspot counts quoted in free text
             out[c] = out[c].str.replace(SCORE_IN_TEXT, r"\1 [score removed]", regex=True)
+            out[c] = out[c].str.replace(HOTSPOT_COUNTS, r"\1: [counts removed]", regex=True)
         dest = PUBLIC / (name if name.endswith(".gz") else name + ".gz")
-        out.to_csv(dest, index=False, compression="gzip")
+        out.to_csv(dest, index=False, compression={"method": "gzip", "mtime": 0})  # same bytes for the same table
         print(f"  {name}: {len(out):,} rows, {len(out.columns)} columns kept, {len(drop)} dropped")
     (PUBLIC / "NOTICE.txt").write_text(NOTICE)
     return 0

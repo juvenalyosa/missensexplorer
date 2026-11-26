@@ -4,20 +4,20 @@ Produced by `benchmarks/erepo_vcep_rules.py` (rules in `src/missensexplorer/vcep
 
 | Criterion | Evaluated | Tool: positive / negative agreement | Panel rules: positive / negative agreement |
 |---|---|---|---|
-| PP3 | 2,824 | 91.8% (88.3–95.5) / 77.9% (65.8–85.0) | 98.4% (97.6–98.9) / 95.6% (81.4–99.6) |
-| BP4 | 1,668 | 75.4% (70.2–92.0) / 86.7% (68.7–94.0) | 97.6% (87.0–100.0) / 97.1% (94.0–99.5) |
-| PM2 | 2,878 | 47.4% (33.9–59.3) / 98.6% (97.7–100.0) | 89.0% (79.7–95.5) / 66.0% (42.8–96.6) |
-| BA1 | 1,511 | 16.3% (3.5–32.1) / 100.0% (100.0–100.0) | 91.8% (82.9–100.0) / 98.1% (91.0–99.5) |
+| PP3 | 2,824 | 91.8% (88.3–95.7) / 77.9% (64.5–84.9) | 98.4% (97.6–98.9) / 95.6% (81.0–99.7) |
+| BP4 | 1,668 | 75.4% (70.0–91.7) / 86.7% (68.7–94.0) | 97.6% (86.8–100.0) / 97.1% (94.0–99.5) |
+| PM2 | 2,878 | 47.4% (33.9–58.8) / 98.6% (97.7–100.0) | 89.1% (79.8–95.6) / 66.0% (43.1–96.6) |
+| BA1 | 1,511 | 16.3% (3.5–31.9) / 100.0% (100.0–100.0) | 91.8% (83.2–100.0) / 98.1% (91.1–99.5) |
 
 Exact agreement of the PP3/BP4 strength with the panels':
 
 | Classifications | n | Tool | Tool capped at the specification's maximum | Panel rules |
 |---|---|---|---|---|
-| panel_pp3_met | 1,652 | 16.1% (10.5–21.6) | 79.9% (59.1–94.1) | 85.8% (61.4–98.5) |
+| panel_pp3_met | 1,652 | 16.1% (10.5–21.8) | 79.9% (58.9–94.0) | 85.8% (61.4–98.5) |
 | panel_pp3_or_bp4_met | 2,193 | 17.6% | 78.7% | 88.7% |
-| pp3_or_bp4_evaluated | 3,013 | 25.2% (19.4–29.6) | 70.4% (59.0–80.3) | 88.9% (70.6–98.0) |
+| pp3_or_bp4_evaluated | 3,013 | 25.2% (19.3–29.7) | 70.4% (59.0–80.3) | 88.9% (70.0–98.0) |
 
-PM2 without the Myeloid Malignancy panel: panel rules 86.3% / 93.6%; tool 41.9% / 99.7%. Rule PM2 against the panel: 195 (174 Myeloid Malignancy; 176 in classifications listing 15 or more criteria as not met).
+PM2 without the Myeloid Malignancy panel: panel rules 86.4% / 93.6%; tool 41.9% / 99.7%. Rule PM2 against the panel: 195 (174 Myeloid Malignancy; 176 in classifications listing 15 or more criteria as not met).
 
 By approval period:
 
@@ -70,6 +70,12 @@ By approval period:
    "tool": 0.238806,
    "tool_capped": 0.547974,
    "rule": 0.490405
+  },
+  "strength_panel_pp3_met": {
+   "n": 337,
+   "tool": 0.148368,
+   "tool_capped": 0.522255,
+   "rule": 0.448071
   }
  },
  "2022-2023": {
@@ -119,6 +125,12 @@ By approval period:
    "tool": 0.275862,
    "tool_capped": 0.758621,
    "rule": 0.931034
+  },
+  "strength_panel_pp3_met": {
+   "n": 439,
+   "tool": 0.202733,
+   "tool_capped": 0.865604,
+   "rule": 0.940774
   }
  },
  "2024-2026": {
@@ -168,6 +180,12 @@ By approval period:
    "tool": 0.245671,
    "tool_capped": 0.722944,
    "rule": 0.975108
+  },
+  "strength_panel_pp3_met": {
+   "n": 876,
+   "tool": 0.144977,
+   "tool_capped": 0.872146,
+   "rule": 0.974886
   }
  }
 }
@@ -854,11 +872,11 @@ By panel:
    },
    "panel_rules": {
     "evaluated": 173,
-    "tp": 90,
-    "fn": 42,
+    "tp": 91,
+    "fn": 41,
     "fp": 0,
     "tn": 41,
-    "positive_agreement": 0.681818,
+    "positive_agreement": 0.689394,
     "negative_agreement": 1.0
    }
   },

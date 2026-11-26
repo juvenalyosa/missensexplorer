@@ -201,3 +201,12 @@ def test_ba1_exceptions_are_not_called_benign():
     assert acmg.ba1_exception({**c282y, "alt": "C"}) is None  # another allele of the same rsID
     assert acmg.ba1_exception({"rsid": "rs13078881", "alt": "C"}).startswith("BTD")  # D444H = D424H on MANE
     assert acmg.ba1_exception({"rsid": "rs1, rs387906242", "alt": "TAAG"}).startswith("ACAD9")
+
+
+def test_nmd_of_a_change_spanning_exons_is_judged_by_its_last_exon():
+    import importlib
+
+    predict = importlib.import_module("missensexplorer.predict")
+    assert predict._nmd("9-10/10", {"frameshift_variant"}) == "NMD escape likely (last exon)"
+    assert predict._nmd("3/10", {"stop_gained"}).startswith("NMD likely")
+    assert predict._nmd("x/10", {"stop_gained"}) is None
