@@ -121,9 +121,12 @@ def _clean(text: str) -> str:
     t = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", t)  # other markdown links: their text
     t = re.sub(r"<sup>([^<]*)</sup>", r"^\1", t)
     t = re.sub(r"<[^>]+>", "", t)
-    t = re.sub(r"[*\\]", "", t)
+    t = t.replace("\\", "")
+    t = re.sub(r"(p\.[A-Z][a-z]{2}\d+)\*", "\\1\x00", t)  # the stop codon of p.Arg41* is kept
+    t = t.replace("*", "").replace("\x00", "*")  # emphasis and footnote marks
     t = re.sub(r"(?<![A-Za-z0-9])_+|_+(?![A-Za-z0-9])", "", t)  # emphasis, not the underscores of NM_ or URLs
-    return re.sub(r"\s+", " ", t.replace("\xa0", " ")).strip()
+    t = re.sub(r"\s+", " ", t.replace("\xa0", " "))
+    return re.sub(r"\s+\)", ")", t).strip()
 
 
 def _applicable(e: dict[str, Any]) -> bool:
@@ -138,12 +141,26 @@ BA1_CONDITIONS = re.compile(
     r"Ashkenazi|Finnish|continental populations|not be used|in the context of|not listed",
     re.I,
 )
-# clauses that match the terms above but state no condition (calculator steps, justifications, references)
+# clauses that match the terms above but state no condition (calculator steps, justifications, references),
+# judged outside parentheses (a cited PMID does not make a condition noise), unless the clause sets an allele count
 BA1_NOT_A_CONDITION = re.compile(r"calculat|Whiff|Inverse AF|prevalence|PMID", re.I)
+BA1_ALLELE_COUNT = re.compile(r"[>≥]\s*=?\s*[\d,]+\s*alleles", re.I)
+
+
+def _is_condition(c: str) -> bool:
+    """True when a clause of a BA1 text states a further condition (see BA1_CONDITIONS)."""
+    if not BA1_CONDITIONS.search(c):
+        return False
+    bare = re.sub(r"\([^()]*\)", "", c)
+    return not BA1_NOT_A_CONDITION.search(bare) or bool(BA1_ALLELE_COUNT.search(c))
+
+
 # BA1 exclusion lists numbered on another transcript than MANE Select: the MANE numbering, checked against the
 # ClinGen Evidence Repository's HGVS list for the variant (NEB: NM_001271208.2 c.22249A>C is NM_001164508.2
 # c.22144A>C, ClinVar 506284, NC_000002.12:g.151525975T>G; the two transcripts agree up to c.19944)
-EXCLUSION_MANE: dict[str, dict[str, str]] = {"GN146": {"c.22249A>C": "c.22144A>C", "p.Thr7417Pro": "p.Thr7382Pro"}}
+EXCLUSION_MANE: dict[str, dict[str, str]] = {
+    "GN146": {"accession": "NM_001164508.2", "c.22249A>C": "c.22144A>C", "p.Thr7417Pro": "p.Thr7382Pro"}
+}
 HGVS = re.compile(r"c\.[0-9_+\-*]+[A-Za-z0-9>_+\-*]*|p\.\(?[A-Z][a-z]{2}\d+(?:[A-Z][a-z]{2}|Ter|fs|\*)[A-Za-z0-9*]*\)?")
 
 
@@ -168,6 +185,11 @@ def ba1_conditions(raw: str, sid: str = "") -> tuple[list[str], dict[str, Any] |
                 else:
                     shown.append(x)
             mane = EXCLUSION_MANE.get(sid, {})
+            for k, x in enumerate(shown):  # the MANE numbering next to the panel's, where they differ
+                if moved := [mane[y] for y in re.findall(r"[cp]\.[^ ()]+", x) if y in mane]:
+                    shown[k] += (
+                        f" [MANE {mane['accession']}: {moved[0]}" + (f" ({moved[1]})" if len(moved) > 1 else "") + "]"
+                    )
             excluded = {
                 "text": (f"{acc.group(1)}: " if acc else "") + ", ".join(shown),
                 "match": [mane.get(x, x) for x in found],
@@ -179,7 +201,7 @@ def ba1_conditions(raw: str, sid: str = "") -> tuple[list[str], dict[str, Any] |
             continue  # given as the list itself
         if HGVS.fullmatch(c.split(" ")[-1].strip("()")) and excluded:
             continue  # a line of the exclusion list
-        if BA1_CONDITIONS.search(c) and not BA1_NOT_A_CONDITION.search(c):
+        if _is_condition(c):
             out.append(c if len(c) <= 260 else c[:259].rsplit(" ", 1)[0] + "…")
     return out[:4], excluded
 
@@ -221,8 +243,23 @@ def ba1_threshold(sid: str, text: str, raw: str = "") -> dict[str, Any] | None:
 
 def clauses(raw: str) -> list[str]:
     """The clauses of a specification text: its lines, bullets and sentences, cleaned."""
-    parts = re.split(r"\n+|(?:^|\s)\*\s+|(?<=[.;])\s+(?=[A-Z*])", raw or "")
+    parts = [x for chunk in re.split(r"\n+|(?:^|\s)\*\s+", raw or "") for x in _sentences(chunk)]
     return [c for c in (_clean(x) for x in parts) if c]
+
+
+def _sentences(text: str) -> list[str]:
+    """A text split after each '.' or ';' that a capital (or '*') follows, outside parentheses."""
+    out, depth, start = [], 0, 0
+    for i, ch in enumerate(text):
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+        elif ch in ".;" and depth == 0 and re.match(r"\s+[A-Z*]", text[i + 1 :]):
+            out.append(text[start : i + 1])
+            start = i + 1
+    out.append(text[start:])
+    return out
 
 
 def condition_quotes(raw_texts: list[str]) -> list[str]:

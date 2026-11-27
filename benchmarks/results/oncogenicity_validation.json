@@ -440,7 +440,7 @@
   "baf3_transforming": 9
  },
  "civic_dropped": 78,
- "generated": "2026-11-26T20:57:05Z",
+ "generated": "2026-11-27T09:03:51Z",
  "missensexplorer": "2.5.0",
  "data_versions": {
   "cancerhotspots.org": "cached copy retrieved 2026-11-25",
@@ -455,8 +455,8 @@
    "inputs": 345,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T20:55:24+00:00",
-    "seconds": 1.1,
+    "started_utc": "2026-11-27T09:00:22+00:00",
+    "seconds": 2.0,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
@@ -521,8 +521,8 @@
    "inputs": 345,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T20:55:26+00:00",
-    "seconds": 1.0,
+    "started_utc": "2026-11-27T09:00:25+00:00",
+    "seconds": 1.6,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
@@ -586,8 +586,8 @@
    "inputs": 2571,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T20:55:27+00:00",
-    "seconds": 8.3,
+    "started_utc": "2026-11-27T09:00:28+00:00",
+    "seconds": 19.9,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,
@@ -651,8 +651,8 @@
    "inputs": 2571,
    "run": {
     "tool": "MissensExplorer 2.5.0",
-    "started_utc": "2026-11-26T20:55:48+00:00",
-    "seconds": 5.6,
+    "started_utc": "2026-11-27T09:02:03+00:00",
+    "seconds": 9.5,
     "assembly": "GRCh38",
     "annotation": "Ensembl VEP REST, release 116",
     "ensembl_release": 116,

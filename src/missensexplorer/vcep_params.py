@@ -156,7 +156,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                        'alleles and >1 observation. BA1 exclusion variants (well-known '
                                        'pathogenic variants that are above the specified BA1 threshold) are '
                                        'as follows: NM_001100.4(ACTA1):c.541del (p.Asp181fs) '
-                                       'NM_001100.4(ACTA1):c.121C>T(p.Arg41)',
+                                       'NM_001100.4(ACTA1):c.121C>T(p.Arg41*)',
                               'conditions': ['All continental populations in gnomAD used should have at '
                                              'least 2000 alleles and >1 observation.'],
                               'excluded': {'text': 'NM_001100.4: c.541del (p.Asp181fs), c.121C>T (p.Arg41*)',
@@ -847,7 +847,11 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                      'stand-alone benign criteria which is calculated using 100% genetic '
                                      'heterogeneity, because DDC variants are the only known genetic cause '
                                      'of AADC deficiency, and full penetrance.',
-                            'conditions': [],
+                            'conditions': ['An allele frequency of ≥0.004 (0.4%) in any continental '
+                                           'population in gnomAD v2.1.1 or v4.0 with >2000 alleles as a '
+                                           'cutoff for stand-alone benign criteria which is calculated using '
+                                           '100% genetic heterogeneity, because DDC variants are the only '
+                                           'known genetic…'],
                             'excluded': None},
                     'inheritance': 'autosomal recessive',
                     'diseases': ['aromatic L-amino acid decarboxylase deficiency']}],
@@ -1407,7 +1411,15 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                       'minor allele frequency (MAF) in any given continental population with '
                                       '>2,000 alleles (European non-Finnish, African, East Asian, South '
                                       'Asian, Latino) (PMID 30311383).',
-                             'conditions': [],
+                             'conditions': ['Allele frequency >0.003 (0.3%) in gnomAD v4.0 in any '
+                                            'continental population with >2000 alleles (based on the '
+                                            'estimated prevalence 1 in 114,000, PMID 24071436) in gnomAD '
+                                            'v4.0 (max allelic contribution = 100%; max genetic contribution '
+                                            '= 100%).',
+                                            'Use the highest population minor allele frequency (MAF) in any '
+                                            'given continental population with >2,000 alleles (European '
+                                            'non-Finnish, African, East Asian, South Asian, Latino) (PMID '
+                                            '30311383).'],
                              'excluded': None},
                      'inheritance': None,
                      'diseases': ['guanidinoacetate methyltransferase deficiency']}],
@@ -1980,10 +1992,9 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                               'conditions': ['Allele frequency is above 5% in Exome Sequencing Project, 1000 '
                                              'Genomes or Exome Aggregation Consortium.',
                                              'Maximum allele frequency in gnomAD (in one of the 5 '
-                                             'continental populations;',
-                                             'African/African-American, East Asian, European non-Finnish, '
-                                             'Latino/Admixed-American, or South Asian) greater than or equal '
-                                             'to 0.004 (0.4%).'],
+                                             'continental populations; African/African-American, East Asian, '
+                                             'European non-Finnish, Latino/Admixed-American, or South Asian) '
+                                             'greater than or equal to 0.004 (0.4%).'],
                               'excluded': None},
                       'inheritance': 'autosomal dominant or autosomal recessive',
                       'diseases': ['long QT syndrome 1']}],
@@ -2684,7 +2695,8 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'The Ashkenazi Jewish, European Finnish, and Other populations in '
                                            'gnomAD will not be used for BA1 application.'],
                             'excluded': {'text': 'NM_001271208.2: c.7431+1919_7536+374del, c.19097G>T '
-                                                 '(p.Ser6366Ile), c.22249A>C (p.Thr7417Pro)',
+                                                 '(p.Ser6366Ile), c.22249A>C (p.Thr7417Pro) [MANE '
+                                                 'NM_001164508.2: c.22144A>C (p.Thr7382Pro)]',
                                          'match': ['c.7431+1919_7536+374del',
                                                    'c.19097G>T',
                                                    'p.Ser6366Ile',
@@ -4492,7 +4504,7 @@ VCEP = {'source': 'ClinGen Criteria Specification Registry (CSpec), https://cspe
                                            'The Grantham distance should be used to compare variants.',
                                            'The variant under consideration must be equal or a larger '
                                            'distance than the classified pathogenic variant (Grantham, 1974, '
-                                           'Table 2 ).']},
+                                           'Table 2).']},
                     'ba1': {'value': 0.000156,
                             'op': '>=',
                             'faf': True,

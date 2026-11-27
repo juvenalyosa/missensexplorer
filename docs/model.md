@@ -270,8 +270,9 @@ which the standard recommends, using the standard's option to downgrade a criter
 - full (8) when nonsense-mediated decay is expected, or when skipping the affected exon would shift
   the reading frame;
 - OVS1_Strong (4) when decay is escaped (last exon, single-exon gene) or uncertain because the change
-  spans an exon-intron boundary, and the truncation removes more than 10% of the protein, or an in-frame
-  exon skip removes more than 10% of the coding sequence;
+  crosses an exon-intron boundary (VEP gives it a range of exons, or an intron as well as an exon), and
+  the truncation removes more than 10% of the protein, or an in-frame exon skip removes more than 10% of
+  the coding sequence;
 - OVS1_Moderate (2) otherwise, and for a lost start codon.
 Cryptic splice sites and alternative isoforms are not assessed, and the penultimate exon counts as
 subject to decay. Up to version 2.4, OVS1 was not given anywhere in a last exon.
@@ -334,7 +335,7 @@ so it never adds oncogenicity points.
 `benchmarks/results/clinvar_oncogenicity_validation.json`): 995 of 1,700 oncogenic or likely oncogenic
 variants called oncogenic or likely oncogenic (58.5%); null variants 77.5%, missense 25.3% (16.3% without
 OP1 in activating genes), in-frame 2 of 37; loss-of-function genes 72.8%, activating genes 19.7%, none in
-genes of ambiguous or unknown role. One opposite-direction call (likely benign on SBP1 alone); 32 variants
+genes of ambiguous, undecided (too few IntOGen samples) or unknown role. One opposite-direction call (likely benign on SBP1 alone); 32 variants
 that ClinVar calls uncertain are called likely oncogenic, all null variants in loss-of-function genes.
 Most oncogenic APC truncations lie in the last exon and get OVS1_Strong (5 points with OP4: VUS).
 

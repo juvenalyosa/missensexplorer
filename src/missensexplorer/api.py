@@ -275,13 +275,14 @@ class SourceStatus:
         return out
 
 
-def ensembl_release(http: Http, cache: KeyValueCache, assembly: str) -> int | None:
+def ensembl_release(http: Http, cache: KeyValueCache, assembly: str, timeout: float | None = None) -> int | None:
     """Return the current Ensembl release of the REST server (cached for a day).
 
     Args:
         http: Client used for the request (GET /info/software).
         cache: Cache read and written under "ensembl_release|<assembly>".
         assembly: "GRCh38" or "GRCh37" (a key of `ENSEMBL`).
+        timeout: Read timeout of the request, in seconds; None for the client's.
 
     Returns:
         The release number, or None when the server does not report one.
@@ -293,7 +294,8 @@ def ensembl_release(http: Http, cache: KeyValueCache, assembly: str) -> int | No
     hit = cache.get(key, max_age=86400)
     if hit:
         return hit
-    data = http.get_json(f"{ENSEMBL[assembly]}/info/software", params={"content-type": "application/json"})
+    extra = {"timeout": httpx.Timeout(timeout, connect=20)} if timeout else {}
+    data = http.get_json(f"{ENSEMBL[assembly]}/info/software", params={"content-type": "application/json"}, **extra)
     rel = data.get("release")
     if rel:
         cache.set(key, rel)

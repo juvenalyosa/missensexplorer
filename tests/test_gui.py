@@ -245,7 +245,8 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "ambiguous (IntOGen: 10 of 14 mutated samples in cohorts of ambiguous role)",
         "ambiguous (IntOGen: 38% loss-of-function in 13 samples, 5 cohorts; UniProt: tumour suppressor: they disagree)",
         "UniProt keywords unavailable: gene roles from IntOGen only",
-        "Ensembl cannot be reached: only answers already in the cache are used",
+        "Ensembl cannot be reached: only Ensembl answers already in the cache are used, whatever their age; "
+        "inputs without them fail",
         "PM2 met (absent from gnomAD, but few reads there: check)",
         "PM2 not assessed (no gnomAD data)",
         "NMD uncertain (the change spans an exon-intron boundary)",
@@ -263,6 +264,13 @@ def test_skipped_note_counts_records_that_failed_filter(app, lang):
         "common: BA1 (grpmax 6.2%; allele numbers not checked in gnomAD)",
         "frequent: BS1 candidate (grpmax 7.04%); BA1 not met: the gene's expert panel sets BA1 above 10%",
         "OM4 not applied (this change is milder than the oncogenic ones at the residue)",
+        "BA1/BS1 exclusion variants (NM_000540.3: c.14524G>A (p.Val4842Met))",
+        "BA1 met on grpmax (the panel uses the filtering allele frequency: check)",
+        "REF allele not checked against the genome for 2 input(s) (Ensembl sequence unavailable)",
+        "ClinVar: Pathogenic; drug response (3★): a pathogenic variant at or above an expert panel's BA1 threshold; "
+        "review BA1 and BS1 before using them (expert panels keep such variants pathogenic on other evidence)",
+        "ClinVar: Pathogenic/Likely pathogenic; risk factor (2★): a common pathogenic variant; review BA1 and BS1 "
+        "before using them (expert panels keep such variants pathogenic on other evidence)",
         "OM2 not applied (not a known cancer gene: UniProt, IntOGen)",
         "OM4_Supporting not used (p.Gly719Ser: Likely oncogenic; the hotspot criterion OM3 is stronger)",
         "not assessed (cancerhotspots.org or IntOGen unavailable)",

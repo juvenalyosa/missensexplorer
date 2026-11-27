@@ -3,9 +3,9 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [2.5.0] — 2026-11-26
+## [2.5.0] — 2026-11-27
 
-Corrections prompted by six rounds of review of the evaluation. The model and its PP3/BP4
+Corrections prompted by seven rounds of review of the evaluation. The model and its PP3/BP4
 thresholds are retrained and recalibrated, so the results of 2.4 change.
 
 ### Fixed
@@ -29,15 +29,27 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   BA1 at 5% applies to genes without a gene-specific rule (Ghosh et al. 2018); nor does the prediction
   column call such a variant "common". When gnomAD could not be asked for allele numbers, the BA1 text
   says so.
-- A truncation that spans two exons ("9-10/10" in VEP) crosses an exon-intron boundary: its
-  nonsense-mediated decay is "uncertain" and OVS1 is graded by the share of the protein removed (before,
-  its decay was not assessed and it got full OVS1).
-- When Ensembl cannot be reached but the cache holds earlier answers (a rerun of a published analysis),
-  the run uses every cached answer, whatever its age, and says so (`cache_only` in the run record),
-  instead of stopping; this also holds when Ensembl answers with server errors or times out.
-- A frequent variant that ClinVar classifies as pathogenic with review (two stars or more), such as HbS
-  in HBB, carries a caution in `acmg_notes`: panels keep such variants pathogenic on other evidence, so
-  BA1 and BS1 need review. The classification is shown, never counted as evidence.
+- A truncation that crosses an exon-intron boundary (VEP gives it a range of exons, "9-10/10", or an
+  intron as well as an exon): its nonsense-mediated decay is "uncertain" and OVS1 is graded by the share
+  of the protein removed (before, its decay was not assessed and it got full OVS1, or it was judged by
+  its exon alone).
+- When Ensembl is down (no connection; or server errors, rate limits or timeouts that a second request
+  confirms) and the cache holds answers of earlier runs for the genome build (a rerun of a published
+  analysis), the run goes on instead of stopping: Ensembl's answers come from the cache only, whatever
+  their age, and Ensembl is not asked again (an input whose answers are not cached fails); cached answers
+  of the other services are used whatever their age, and the other services are asked for what the cache
+  lacks. The run says so (`cache_only` in the run record). A client error (4xx), or an error that a second
+  request does not confirm, does not stop or freeze the run, and an answer of the live server is never
+  filed under a release read from the cache: when the server does not say its release, it is unknown.
+- A variant that ClinVar classifies as pathogenic with review (its own record, two stars or more;
+  ClinVar's qualifiers such as "; risk factor", "; drug response" or "low penetrance" included) carries a
+  caution in `acmg_notes` when it is frequent ("a common pathogenic variant": HbS in HBB, GJB2 p.Met34Thr,
+  SERPINA1 PiZ) or reaches an expert panel's BA1 threshold on the grpmax allele frequency ("a pathogenic
+  variant at or above an expert panel's BA1 threshold": SERPINC1, F9): panels keep such
+  variants pathogenic on other evidence, so BA1 and BS1 need review. The classification is shown, never
+  counted as evidence; without ClinVar's own record (offline, or ClinVar unavailable) there is no caution.
+- When the REF allele of an input could not be checked against the genome (the sequence request failed,
+  or a run from the cache lacks it), a warning says so; before, only the log did.
 - PS1/PM5: a ClinVar reference variant with a single review star counts one step lower (a pathogenic
   one like a likely pathogenic one; a likely pathogenic one not at all). Expert panels agreed with PM5
   from single-star references in only about a third of their classifications.
@@ -59,7 +71,9 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
     reference, OS1_Moderate, removed OS3, OS2 and OM4: TP53 p.K132N fell to VUS; and OS1 removed OM3 and
     OP3). OM3 comes back when OS1 replaces OM4. OS1_Moderate, the tool's own level for a likely oncogenic
     reference, is not combined with OM3 or OP3 (that reference may itself rest on the same hotspot) and
-    gives way to the standard's criteria on a tie. Keeping the excluded evidence when it is stronger
+    gives way to the standard's criteria on a tie. The points no longer depend on the order in which
+    ClinVar references are passed to `oncogenicity.assess` (an oncogenic reference is used before a likely
+    oncogenic one). Keeping the excluded evidence when it is stronger
     departs from the standard; the evidence then gives the points under the standard's rule;
   - OP4 ("absent from gnomAD") needs gnomAD itself to confirm the absence, with enough coverage, as
     PM2 does (before, it was also given when gnomAD had not been asked);
@@ -95,15 +109,17 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
     warning when the panel applies it to the filtering allele frequency, which the tool does not compute,
     and the text quoted when it sets further conditions (allele counts, males only, other datasets,
     excluded or founder variants), whichever frequency the panel uses; a variant on the panel's own BA1
-    exclusion list (RYR1, NEB, ACTA1; matched on MANE Select, NEB's list mapped from NM_001271208.2, and
-    shown with its transcript) or on ClinGen's BA1 exception list is said not to meet BA1 (nor BS1 where
-    the panel says so);
+    exclusion list (RYR1, NEB, ACTA1; matched on MANE Select, so on GRCh38 only, with NEB's list mapped
+    from NM_001271208.2, shown with its transcript and the MANE numbering, and "BA1/BS1" where the panel
+    excludes them from both) or on ClinGen's BA1 exception list is said not to meet BA1 (nor BS1 where
+    the panel says so); a listed frameshift ("p.Asp181fs") matches any frameshift starting at that residue;
   - its conditions the tool cannot check, quoted from the clause that states them (for example,
     references classified under its specification, PM5 not with PM1);
   - the disease and mode of inheritance of each specification, from CSpec's structured fields;
   - for the ten panels whose PP3/BP4, PM2 and BA1 rules were encoded by hand (`vcep_rules.py`), what
     those rules give for the variant (PM2 "not assessed" without gnomAD data; the Myeloid Malignancy
-    panel's 20x coverage for an absent variant).
+    panel's 20x coverage for an absent variant; "BA1 met on grpmax" for a panel that applies BA1 to the
+    filtering allele frequency).
   The notes are shown in the ACMG section of the desktop app, the web app and the reports.
 - A note when PP3 at moderate or stronger meets PS1/PM5, which may share residue-level information
   (Pejaver et al. 2022); it is in `acmg_notes` too.
@@ -125,7 +141,8 @@ thresholds are retrained and recalibrated, so the results of 2.4 change.
   quoted in text columns are removed, `NOTICE.txt` lists each kept source and its terms, and the files are
   byte-for-byte reproducible. `benchmarks/requirements-lock.txt` lists the exact package versions of the
   analysis environment, and the `benchmark` extra now includes SciPy, which the scripts need.
-- CI also runs the desktop app's tests and the CIViC test under a Spanish locale.
+- CI also runs the desktop app's tests and the CIViC test under a Spanish locale. The tests use their own
+  cache, never the user's (`tests/conftest.py`).
 - The hotspot-only comparison of the EGFR/TP53 evaluation takes the hotspot criteria met from the run without
   ClinVar (a reference could remove them from the final points); the ClinVar oncogenicity evaluation gives
   intervals from a bootstrap of genes and keeps genes whose IntOGen role rests on too few samples apart.

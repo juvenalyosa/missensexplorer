@@ -6,8 +6,8 @@
  "genes": 1181,
  "run": {
   "tool": "MissensExplorer 2.5.0",
-  "started_utc": "2026-11-26T20:46:55+00:00",
-  "seconds": 5.2,
+  "started_utc": "2026-11-27T08:40:29+00:00",
+  "seconds": 3.8,
   "assembly": "GRCh38",
   "annotation": "Ensembl VEP REST, release 116",
   "ensembl_release": 116,
@@ -765,5 +765,5 @@
    }
   }
  },
- "seconds": 277.8
+ "seconds": 168.6
 }

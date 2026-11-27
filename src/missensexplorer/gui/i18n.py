@@ -6,6 +6,26 @@ import re
 from collections.abc import Callable
 from typing import TypeAlias
 
+_CLINVAR_TERMS = [
+    ("Likely pathogenic", "probablemente patogénica"),
+    ("Pathogenic", "patogénica"),
+    ("low penetrance", "penetrancia baja"),
+    ("risk factor", "factor de riesgo"),
+    ("drug response", "respuesta a fármacos"),
+    ("protective", "protectora"),
+    ("association", "asociación"),
+    ("Affects", "afecta"),
+    ("other", "otra"),
+]
+_CLINVAR_TERM = re.compile("|".join(re.escape(a) for a, _ in _CLINVAR_TERMS))
+
+
+def _clinvar_class(text: str) -> str:
+    """ClinVar's classification ('Pathogenic/Likely pathogenic; risk factor') in Spanish, term by term."""
+    es = dict(_CLINVAR_TERMS)
+    return _CLINVAR_TERM.sub(lambda m: es[m[0]], text)
+
+
 _Replacement: TypeAlias = str | Callable[[re.Match[str]], str]
 """What a matched phrase becomes: a ``re.sub`` template, or a function of the match."""
 
@@ -529,6 +549,10 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
         r"\bPM2 met \(absent from gnomAD, but few reads there: check\)",
         r"PM2 cumplido (ausente de gnomAD, pero con pocas lecturas: compruébelo)",
     ),
+    (
+        r"\bBA1 met on grpmax \(the panel uses the filtering allele frequency: check\)",
+        "BA1 cumplido con el grpmax (el panel usa la frecuencia alélica filtrada: compruébelo)",
+    ),
     (r"\b(PM2|BA1) met\b", r"\1 cumplido"),
     (
         r"BA1 only (>=?) ([\d.e+-]+%): grpmax ([\d.e+-]+%) does not meet it",
@@ -564,20 +588,20 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
             + " antes de aplicar BA1"
         ),
     ),
-    (r"BA1 exclusion variants \(", r"variantes excluidas de BA1 ("),
+    (r"(BA1|BA1/BS1) exclusion variants \(", r"variantes excluidas de \1 ("),
     (
-        r"ClinVar: (Pathogenic|Likely pathogenic|Pathogenic/Likely pathogenic) \((\d)★\): a common pathogenic "
-        r"variant; review BA1 and BS1 before using them \(expert panels keep such variants pathogenic on other "
-        r"evidence\)",
+        r"ClinVar: ((?:Pathogenic|Likely pathogenic)[^()]*?) \((\d)★\): (a common pathogenic variant|a pathogenic "
+        r"variant at or above an expert panel's BA1 threshold); review BA1 and BS1 before using them \(expert panels "
+        r"keep such variants pathogenic on other evidence\)",
         lambda m: (
-            "ClinVar: "
+            f"ClinVar: {_clinvar_class(m[1])} ({m[2]}★): "
             + {
-                "Pathogenic": "patogénica",
-                "Likely pathogenic": "probablemente patogénica",
-                "Pathogenic/Likely pathogenic": "patogénica/probablemente patogénica",
-            }[m[1]]
-            + f" ({m[2]}★): una variante patogénica común; revise BA1 y BS1 antes de usarlos (los paneles de expertos "
-            "mantienen estas variantes como patogénicas por otras evidencias)"
+                "a common pathogenic variant": "una variante patogénica común",
+                "a pathogenic variant at or above an expert panel's BA1 threshold": "una variante patogénica en el "
+                "umbral de BA1 de un panel de expertos o por encima",
+            }[m[3]]
+            + "; revise BA1 y BS1 antes de usarlos (los paneles de expertos mantienen estas variantes como patogénicas "
+            "por otras evidencias)"
         ),
     ),
     (
@@ -697,12 +721,18 @@ PHRASES_ES: list[tuple[str, _Replacement]] = [
     ),
     (r"Genome build not verified \(offline\); assuming (\S+)\.", r"Genoma no verificado (sin conexión); se asume \1."),
     (
+        r"REF allele not checked against the genome for (\d+) input\(s\) \(Ensembl sequence unavailable\)",
+        r"Alelo REF no comprobado con el genoma en \1 entrada(s) (secuencia de Ensembl no disponible)",
+    ),
+    (
         r"No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold are skipped\.",
         "Sin conexión a internet: solo se usa VEP local; se omiten ClinVar, UniProt y AlphaFold.",
     ),
     (
-        r"Ensembl cannot be reached: only answers already in the cache are used",
-        "No se puede acceder a Ensembl: solo se usan las respuestas que ya están en la caché",
+        r"Ensembl cannot be reached: only Ensembl answers already in the cache are used, whatever their age; inputs "
+        r"without them fail",
+        "No se puede acceder a Ensembl: solo se usan las respuestas de Ensembl que ya están en la caché, sea cual "
+        "sea su antigüedad; las entradas sin ellas fallan",
     ),
     (
         r"Cannot reach the Ensembl REST API \(rest\.ensembl\.org\)\. Check the internet connection, or use the local "

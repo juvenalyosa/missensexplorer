@@ -17,7 +17,7 @@ current specification versions.
 # ruff: noqa: E501  (the hand-encoded rules keep one gene per line, next to the text they come from)
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -176,5 +176,20 @@ def describe(row: dict[str, Any]) -> str | None:
         else:
             parts.append("PM2 not met")
     if c["BA1"]:
-        parts.append("BA1 met")
+        # the rule compares the grpmax allele frequency with a threshold the panel applies to the filtering allele
+        # frequency, which is at most the grpmax: met here, not necessarily on the panel's own measure
+        parts.append(
+            "BA1 met on grpmax (the panel uses the filtering allele frequency: check)"
+            if _ba1_on_faf(row, rule)
+            else "BA1 met"
+        )
     return ", ".join(parts)
+
+
+def _ba1_on_faf(row: dict[str, Any], rule: dict[str, Any]) -> bool:
+    """True when the panel's specification applies its BA1 threshold to the filtering allele frequency."""
+    from .vcep_params import VCEP
+
+    specs: list[dict[str, Any]] = cast(dict[str, Any], VCEP["genes"]).get(str(row.get("gene") or ""), [])
+    mine = [x for x in specs if x["id"] == rule["spec"] or rule["panel"] in x["panel"]]
+    return any((x.get("ba1") or {}).get("faf") for x in mine)

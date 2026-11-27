@@ -67,7 +67,7 @@ def test_ba1_against_the_panel_threshold():
     # the panels' further BA1 conditions are quoted whether they use the filtering allele frequency or not
     ryr1 = next(n for n in vcep.notes({"gene": "RYR1", "acmg_points": 0, "gnomad_popmax_af": 0.0004,
                                        "population_frequency": "rare"}) if "GN150" in n)  # fmt: skip
-    assert "BA1 exclusion variants (NM_000540.3: c.14524G>A (p.Val4842Met), c.325C>T (p.Arg109Trp))" in ryr1
+    assert "BA1/BS1 exclusion variants (NM_000540.3: c.14524G>A (p.Val4842Met), c.325C>T (p.Arg109Trp))" in ryr1
     mlh1 = vcep.notes({"gene": "MLH1", "acmg_points": 0, "gnomad_popmax_af": 0.002, "population_frequency": "rare"})[0]
     assert "excluded as founder pathogenic variant" in mlh1
     # a variant on the panel's own exclusion list, or on ClinGen's BA1 exception list, is never sent to BA1
@@ -143,7 +143,10 @@ def test_encoded_rules_say_what_the_panel_would_give():
                                   "acmg_pm2": None})  # fmt: skip
     assert "PM2 not assessed (no gnomAD data)" in nodata
     ada = vcep_rules.describe({"gene": "ADA", "gnomad_popmax_af": 0.01})
-    assert ada == "no PP3/BP4 for missense variants, PM2 not met, BA1 met"
+    assert ada == (
+        "no PP3/BP4 for missense variants, PM2 not met, BA1 met on grpmax (the panel uses the filtering allele "
+        "frequency: check)"
+    )
 
 
 def test_weaker_residue_evidence_is_not_an_invitation_to_upgrade():
@@ -186,3 +189,71 @@ def test_vcep_notes_are_translated_part_by_part(gene):
     assert "admite PP3 hasta Supporting" in out or "admite PP3 hasta Moderate" in out
     assert "allows" not in out  # every note of the cell, every part
     assert "own predictor" not in out
+
+
+def test_exclusion_lists_are_shown_and_matched_precisely():
+    neb = next(
+        n
+        for n in vcep.notes({"gene": "NEB", "acmg_points": 0, "gnomad_popmax_af": 0.01, "population_frequency": "x"})
+        if "exclusion variants" in n
+    )
+    # the panel's numbering, with the MANE Select numbering where it differs
+    assert "c.22249A>C (p.Thr7417Pro) [MANE NM_001164508.2: c.22144A>C (p.Thr7382Pro)]" in neb
+    assert "BA1 exclusion variants (NM_001271208.2:" in neb  # NEB excludes them from BA1 only
+    acta1 = {"gene": "ACTA1", "acmg_points": 0, "gnomad_popmax_af": 0.03, "population_frequency": "frequent",
+             "mane_select": "NM_001100.4"}  # fmt: skip
+    assert not any("exclusion list" in n for n in vcep.notes({**acta1, "hgvsp": "x:p.Asp1810MetfsTer4"}))
+    assert not any("exclusion list" in n for n in vcep.notes({**acta1, "hgvsp": "x:p.Asp18ThrfsTer3"}))
+    assert any("exclusion list" in n for n in vcep.notes({**acta1, "hgvsp": "x:p.Asp181ThrfsTer3"}))
+    i18n.set_language("es")
+    try:
+        assert "variantes excluidas de BA1/BS1 (NM_000540.3:" in i18n.tr_text(
+            "BA1/BS1 exclusion variants (NM_000540.3: c.1A>G)"
+        )
+    finally:
+        i18n.set_language("en")
+
+
+def test_quoted_ba1_conditions_keep_their_parts():
+    def ba1(gene):
+        return next(x["ba1"] for x in vcep.specifications(gene) if x.get("ba1"))
+
+    # a cited PMID does not make a clause noise (GAMT); a calculation step does, unless it sets an allele count (DDC)
+    assert any(">2000 alleles" in c for c in ba1("GAMT")["conditions"])
+    assert any(">2000 alleles" in c for c in ba1("DDC")["conditions"])
+    assert not ba1("ABCD1")["conditions"]  # the Whiffen-Ware calculation alone
+    # a clause is not cut inside a parenthesis (KCNQ1), and the stop codon of p.Arg41* survives the cleaning (ACTA1)
+    assert any("(in one of the 5 continental populations; African" in c for c in ba1("KCNQ1")["conditions"])
+    acta1 = next(x["ba1"] for x in vcep.specifications("ACTA1") if (x.get("ba1") or {}).get("excluded"))
+    assert "(p.Arg41*)" in acta1["quote"]
+
+
+def test_encoded_ba1_on_the_filtering_allele_frequency_is_hedged():
+    hnf4a = {"gene": "HNF4A", "gnomad_popmax_af": 0.000208, "revel": 0.919, "acmg_pm2": ""}
+    assert vcep_rules.describe(hnf4a).endswith(
+        "BA1 met on grpmax (the panel uses the filtering allele frequency: check)"
+    )
+    pah = {"gene": "PAH", "gnomad_popmax_af": 0.02, "revel": 0.919, "acmg_pm2": ""}  # BA1 on the allele frequency
+    assert vcep_rules.describe(pah).endswith(", BA1 met")
+    i18n.set_language("es")
+    try:
+        assert i18n.tr_text(vcep_rules.describe(hnf4a)).endswith(
+            "BA1 cumplido con el grpmax (el panel usa la frecuencia alélica filtrada: compruébelo)"
+        )
+    finally:
+        i18n.set_language("en")
+
+
+def test_panel_ba1_above_5pct_sets_the_frequency_label_and_the_common_threshold(monkeypatch):
+    import importlib
+
+    P = importlib.import_module("missensexplorer.predict")
+    assert P._common_af({"gene": "VWF"}, 0.05) == pytest.approx(0.1)
+    assert P._common_af({"gene": "BRAF"}, 0.05) == 0.05
+    assert P._common_af({"gene": "VWF"}, None) is None  # no frequency rule asked for
+    monkeypatch.setattr(P.acmg, "frequency", lambda r: "common: BA1 (grpmax 7%)")
+    monkeypatch.setattr(P.acmg, "ba1_grpmax", lambda r: 0.07)
+    assert P._population_frequency({"gene": "VWF"}) == (
+        "frequent: BS1 candidate (grpmax 7%); BA1 not met: the gene's expert panel sets BA1 above 10%"
+    )
+    assert P._population_frequency({"gene": "BRAF"}) == "common: BA1 (grpmax 7%)"

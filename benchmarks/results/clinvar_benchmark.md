@@ -1,6 +1,6 @@
 # ClinVar benchmark
 
-1972 expert-reviewed (≥ 2 stars) germline missense variants from 1181 genes, GRCh38, sampled with seed 42 from ClinVar's variant_summary. ClinVar is not an input of the verdict. Run: MissensExplorer 2.5.0, Ensembl VEP REST, release 116, 2026-11-26T20:46:55+00:00.
+1972 expert-reviewed (≥ 2 stars) germline missense variants from 1181 genes, GRCh38, sampled with seed 42 from ClinVar's variant_summary. ClinVar is not an input of the verdict. Run: MissensExplorer 2.5.0, Ensembl VEP REST, release 116, 2026-11-27T08:40:29+00:00.
 
 The missense model (v2.5, trained 2026-11-26) was fitted on 9086 other ClinVar variants from 3190 genes; **no gene of this benchmark was used for training**, so these are held-out results (benchmarks/train_model.py). Its cut-offs (0.76/0.3) were chosen by cross-validation on the training genes, not on this benchmark.
 

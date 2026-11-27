@@ -212,29 +212,40 @@ def overlap_note(row: Row) -> str | None:
     return None
 
 
-def common_pathogenic_note(row: Row, ba1_noted: bool = False) -> str | None:
+# ClinVar's germline classification led by pathogenic, with ClinVar's qualifiers ("Pathogenic/Likely pathogenic;
+# risk factor", "Pathogenic/Pathogenic, low penetrance; other", "Pathogenic; drug response"); conflicts excluded
+_PATHOGENIC = re.compile(
+    r"(Pathogenic|Likely pathogenic)(, low penetrance)?(/(Pathogenic|Likely pathogenic)(, low penetrance)?)*(;|$)"
+)
+
+
+def common_pathogenic_note(row: Row, ba1_reached: bool = False) -> str | None:
     """A caution when a frequent variant, or one at an expert panel's BA1 threshold, is pathogenic in ClinVar.
 
-    Well-known pathogenic variants can be common (HbS in HBB, GJB2 p.Met34Thr) without being on ClinGen's BA1
-    exception list; the panels keep them pathogenic on other evidence. The variant's own classification is
-    shown as a caution, never counted as evidence.
+    Well-known pathogenic variants can be common (HbS in HBB, GJB2 p.Met34Thr, SERPINA1 PiZ) without being on
+    ClinGen's BA1 exception list; the panels keep them pathogenic on other evidence. The variant's own ClinVar
+    record (its aggregate classification, reviewed: two stars or more) is shown as a caution, never counted as
+    evidence; without that record (offline, or ClinVar unavailable) there is no caution.
 
     Args:
         row: One results row with ``clinvar``, ``clinvar_stars`` and ``population_frequency`` filled.
-        ba1_noted: An expert-panel note says the panel's BA1 threshold is reached.
+        ba1_reached: An expert panel's BA1 threshold, which it applies to the grpmax allele frequency, is reached.
 
     Returns:
         The caution, or None.
     """
     cls = str(row.get("clinvar") or "")
     stars = _num(row.get("clinvar_stars"))
-    freq = str(row.get("population_frequency") or "")
-    if not re.match(r"(Likely pathogenic|Pathogenic)(/Likely pathogenic)?$", cls) or stars is None or stars < 2:
+    if not _PATHOGENIC.match(cls) or stars is None or stars < 2:
         return None
-    if not (ba1_noted or freq.startswith(("frequent", "common"))):
+    if str(row.get("population_frequency") or "").startswith(("frequent", "common")):
+        what = "a common pathogenic variant"
+    elif ba1_reached:
+        what = "a pathogenic variant at or above an expert panel's BA1 threshold"
+    else:
         return None
     return (
-        f"ClinVar: {cls} ({int(stars)}\u2605): a common pathogenic variant; review BA1 and BS1 before using them "
+        f"ClinVar: {cls} ({int(stars)}\u2605): {what}; review BA1 and BS1 before using them "
         "(expert panels keep such variants pathogenic on other evidence)"
     )
 

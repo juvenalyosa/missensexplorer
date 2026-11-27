@@ -244,7 +244,7 @@ def test_pipeline_adds_ps1_pm5_and_pm2(monkeypatch):
         def annotate(self, queries, params, progress=None, stage="", source="Ensembl VEP"):
             return {(kind, q): {"results": BRAF} for kind, qs in queries.items() for q in set(qs)}
 
-    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm: 116)
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
     monkeypatch.setattr(P, "_match_rate", lambda *a, **k: (1.0, {}))
     monkeypatch.setattr(P, "Vep", Vep)
     monkeypatch.setattr(
@@ -293,11 +293,72 @@ def test_a_common_variant_that_clinvar_calls_pathogenic_carries_a_caution():
     assert note.startswith("ClinVar: Pathogenic (2★): a common pathogenic variant; review BA1 and BS1")
     assert acmg.common_pathogenic_note({**hbs, "clinvar_stars": 1}) is None  # not reviewed by anyone else
     assert acmg.common_pathogenic_note({**hbs, "clinvar": "Conflicting classifications of pathogenicity"}) is None
-    rare = {**hbs, "population_frequency": "rare (grpmax 0.6%)"}
+    assert acmg.common_pathogenic_note({**hbs, "clinvar": "Uncertain significance"}) is None
+    assert acmg.common_pathogenic_note({**hbs, "clinvar": "Pathogenic (submissions)"}) is None  # VEP's, not ClinVar's
+    for cls in (  # ClinVar's qualifiers (SERPINA1 PiZ and PiS, GBA1 p.Asn409Ser, RYR1 malignant hyperthermia)
+        "Pathogenic/Likely pathogenic; risk factor",
+        "Pathogenic/Pathogenic, low penetrance; other",
+        "Pathogenic; drug response",
+        "Likely pathogenic, low penetrance",
+    ):
+        assert acmg.common_pathogenic_note({**hbs, "clinvar": cls}).startswith(f"ClinVar: {cls} (2★): a common"), cls
+    rare = {**hbs, "population_frequency": "rare (grpmax 0.0002%)"}
     assert acmg.common_pathogenic_note(rare) is None
-    assert acmg.common_pathogenic_note(rare, ba1_noted=True) is not None  # at a panel's BA1 threshold (GJB2 M34T)
+    at_ba1 = acmg.common_pathogenic_note(rare, ba1_reached=True)  # a panel's BA1 reached on grpmax (SERPINC1)
+    assert "a pathogenic variant at or above an expert panel's BA1 threshold; review" in at_ba1
+    assert "common" not in at_ba1
     i18n.set_language("es")
     try:
         assert i18n.tr_text(note).startswith("ClinVar: patogénica (2★): una variante patogénica común")
+        assert i18n.tr_text(at_ba1).startswith("ClinVar: patogénica (2★): una variante patogénica en el umbral")
+        piz = acmg.common_pathogenic_note({**hbs, "clinvar": "Pathogenic/Likely pathogenic; risk factor"})
+        assert i18n.tr_text(piz).startswith(
+            "ClinVar: patogénica/probablemente patogénica; factor de riesgo (2★): una variante patogénica común"
+        )
     finally:
         i18n.set_language("en")
+
+
+def _pipeline(monkeypatch, frequency, panel_notes, classification="Pathogenic; drug response"):
+    """BRAF V600E through the pipeline with its own ClinVar record, frequency label and panel notes replaced."""
+    from test_robustness import BRAF
+
+    class Vep:
+        def __init__(self, *a, **k):
+            pass
+
+        def annotate(self, queries, params, progress=None, stage="", source="Ensembl VEP"):
+            return {(kind, q): {"results": BRAF} for kind, qs in queries.items() for q in set(qs)}
+
+    own = {**RECORDS["VCV000013961"], "classification": classification,
+           "review_status": "criteria provided, multiple submitters, no conflicts"}  # fmt: skip
+    records = {**RECORDS, "VCV000013961": own}
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
+    monkeypatch.setattr(P, "_match_rate", lambda *a, **k: (1.0, {}))
+    monkeypatch.setattr(P, "Vep", Vep)
+    monkeypatch.setattr(
+        P.cv, "fetch", lambda http, cache, ids, status=None: {k: records[k] for k in ids if k in records}
+    )
+    monkeypatch.setattr(P.cv, "search_windows", lambda http, cache, ws, asm, status=None: {w: [] for w in ws})
+    monkeypatch.setattr(P.acmg, "frequency", lambda r: frequency)
+    monkeypatch.setattr(P.vcep, "notes", lambda r: list(panel_notes))
+    res = P.predict(
+        text="7 140753336 A T", options=P.PredictOptions(cache=False, protein_context=False, sequences=False)
+    )
+    return str(res.table.iloc[0]["acmg_notes"] or "")
+
+
+def test_pipeline_adds_the_common_pathogenic_caution(monkeypatch):
+    af = "X VCEP (BRAF): grpmax 0.2% is at or above its BA1 threshold (> 0.1%): check its other BA1 conditions"
+    faf = (
+        "X VCEP (BRAF): grpmax allele frequency 0.0002% is above its BA1 threshold (> 0.0001%), which it applies "
+        "to the filtering allele frequency (not computed here): check the filtering allele frequency before BA1"
+    )
+    rule = "X VCEP (BRAF): its own BA1 rule: “MAF ≥ 0.5% for autosomal recessive”"
+    notes = _pipeline(monkeypatch, "frequent: BS1 candidate (grpmax 1.2%)", [])
+    assert notes.startswith("ClinVar: Pathogenic; drug response (2★): a common pathogenic variant")
+    notes = _pipeline(monkeypatch, "rare (grpmax 0.2%)", [af])
+    assert notes.startswith("ClinVar: Pathogenic; drug response (2★): a pathogenic variant at or above an expert")
+    for other in (faf, rule):  # neither says that the panel's BA1 is reached
+        assert _pipeline(monkeypatch, "rare (grpmax 0.2%)", [other]) == other
+    assert _pipeline(monkeypatch, "frequent: BS1 candidate (grpmax 1.2%)", [], "Benign") == ""

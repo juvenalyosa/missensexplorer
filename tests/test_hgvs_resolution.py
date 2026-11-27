@@ -260,7 +260,7 @@ def test_a_protein_change_placed_outside_the_coding_sequence_is_an_error(monkeyp
     def fake_annotate(ctx, queries):
         return {("hgvs", q): {"results": [{**T725M_ELSEWHERE, "input": q}]} for q in queries["hgvs"]}, set()
 
-    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm: 116)
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
     monkeypatch.setattr(P, "_annotate", fake_annotate)
     opts = P.PredictOptions(cache=False, predictors=False, protein_context=False, clinvar=False, gnomad_check=False)
     res = P.predict(text="EGFR T725M", options=opts)

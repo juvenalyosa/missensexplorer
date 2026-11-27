@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 
 import pandas as pd
 
@@ -31,6 +31,8 @@ from .vep import BASE_PARAMS, DETAIL_CONSEQUENCES, PREDICTOR_PARAMS, Vep, on_can
 from .vep_local import LocalVep
 
 log = logging.getLogger(__name__)
+# read timeout, in seconds, of the requests that tell whether Ensembl is up (a normal request may take minutes)
+PROBE_TIMEOUT = 30.0
 
 LOF_TERMS = {"stop_gained", "frameshift_variant", "splice_acceptor_variant", "splice_donor_variant", "start_lost"}
 INFRAME_TERMS = {"inframe_insertion", "inframe_deletion", "protein_altering_variant", "stop_lost"}
@@ -617,11 +619,12 @@ def apply_frequency(label: str, basis: str, grpmax: float | None, common_af: flo
     return "Likely benign (common in population)", f"{note} | {basis}"
 
 
-def _nmd(exon: str | None, terms: set[str]) -> str | None:
+def _nmd(exon: str | None, terms: set[str], intron: str | None = None) -> str | None:
     """Return the expected nonsense-mediated decay outcome of a stop-gain or frameshift, from VEP's exon ('3/10').
 
-    A change that spans exons ('9-10/10') also crosses an exon-intron boundary and removes splice sites, so the
-    fate of the transcript cannot be told from the position of the new stop codon: NMD is uncertain.
+    A change that crosses an exon-intron boundary (VEP gives it an intron as well as an exon, or a range of exons
+    such as '9-10/10') removes splice sites, so the fate of the transcript cannot be told from the position of the
+    new stop codon: NMD is uncertain.
     """
     if not exon or not terms & {"stop_gained", "frameshift_variant"}:
         return None
@@ -630,7 +633,7 @@ def _nmd(exon: str | None, terms: set[str]) -> str | None:
         a, b = int(first.split("-")[-1]), int(total)
     except ValueError:
         return None
-    if "-" in first:
+    if "-" in first or intron:
         return "NMD uncertain (the change spans an exon-intron boundary)"
     if b == 1:
         return "NMD escape likely (single-exon gene)"
@@ -775,7 +778,7 @@ def _add_transcript(row: Row, tc: dict[str, Any], terms: set[str]) -> None:
             "_terms": terms,
         }
     )
-    row["nmd"] = _nmd(row["exon"], terms)
+    row["nmd"] = _nmd(row["exon"], terms, row.get("intron"))
     if "missense_variant" in terms and len(ref_aa) == 1 and len(alt_aa) == 1:
         row.update(substitution_profile(ref_aa, alt_aa))
 
@@ -792,11 +795,7 @@ def _ref_bases(
     is logged and its variants are left out.
     """
     cache = cache or NullCache()
-    vs = [
-        (v, v.pos, v.ref)
-        for v in variants
-        if v.chrom in CHROMS and v.pos is not None and v.ref and v.ref != "-" and len(v.ref) <= 50
-    ]
+    vs = [(v, int(v.pos or 0), v.ref or "") for v in variants if _ref_checkable(v)]
     key = {v.query: f"refseq|{assembly}|{v.chrom}:{pos}:{len(ref)}" for v, pos, ref in vs}
     hit = cache.get_many(list(set(key.values())))
     out = {q: hit[k] for q, k in key.items() if k in hit}
@@ -819,6 +818,11 @@ def _ref_bases(
                 out[v.query] = (item.get("seq") or "").upper()
                 cache.set(key[v.query], out[v.query])
     return out
+
+
+def _ref_checkable(v: VariantInput) -> bool:
+    """True for a nuclear variant with a REF of 1-50 bases, whose REF is checked against the genome."""
+    return bool(v.chrom in CHROMS and v.pos is not None and v.ref and v.ref != "-" and len(v.ref) <= 50)
 
 
 def _match_rate(
@@ -960,7 +964,8 @@ class _Context:
         assembly: genome build in use (may change after the REF allele check).
         hint: genome build named in a VCF header, if any.
         release: Ensembl release of the REST server, if known.
-        cache_only: Ensembl could not be reached and the cache held earlier answers: the run uses them only.
+        cache_only: Ensembl could not be reached and the cache held earlier answers: Ensembl answers come from the
+            cache only, and cached answers of every service are used whatever their age.
         local_version: local VEP version, if known.
         n_unique: unique VEP queries, for the statistics.
         n_no_protein: valid inputs that gave no row, for the statistics.
@@ -1126,21 +1131,34 @@ def _files_assembly(files: list[tuple[str, bytes | None]]) -> str | None:
 def _check_connection(ctx: _Context) -> None:
     """Check that Ensembl is reachable; in local-VEP mode, carry on offline when it is not.
 
+    When Ensembl is really down (no connection, or server errors, rate limits or timeouts that a second request
+    confirms) and the cache holds answers of earlier runs for this genome build, the run goes on from the cache
+    alone for Ensembl: the cache is frozen (answers of any age are used) and Ensembl is not asked again, so an
+    input whose Ensembl answers are not cached fails. A client error (4xx) says that the server is up.
+
     Raises:
         ConnectionError: Ensembl cannot be reached and the REST VEP is in use.
     """
     if not ctx.net:
         return
     # one quick request tells us whether Ensembl is reachable at all
-    cached = any(ctx.cache.get(f"ensembl_release|{a}", max_age=0) for a in ("GRCh38", "GRCh37"))
+    cached = ctx.cache.get(f"ensembl_release|{ctx.assembly}", max_age=0)
     try:
-        ensembl_release(ctx.http, ctx.cache, "GRCh38")
-    except ApiError as e:  # no connection (OfflineError), or HTTP 5xx and timeouts after the retries
+        ensembl_release(ctx.http, ctx.cache, ctx.assembly, timeout=PROBE_TIMEOUT)
+    except ApiError as e:
+        if not _ensembl_down(ctx, e):
+            log.warning("Ensembl release lookup failed: %s", e)
+            return
         if not ctx.local and cached:
-            # a cache filled by earlier runs (a rerun of a published analysis): use what it holds, whatever its age
+            # a cache filled by earlier runs (a rerun of a published analysis): Ensembl answers come from it only
             ctx.cache.freeze()
             ctx.cache_only = True
-            ctx.warnings.append("Ensembl cannot be reached: only answers already in the cache are used")
+            for host in {urlsplit(u).netloc for u in ENSEMBL.values()}:
+                ctx.http.down[host] = "not asked again in this run from the cache"
+            ctx.warnings.append(
+                "Ensembl cannot be reached: only Ensembl answers already in the cache are used, whatever their "
+                "age; inputs without them fail"
+            )
             return
         if not isinstance(e, OfflineError):
             log.warning("Ensembl release lookup failed: %s", e)
@@ -1152,6 +1170,21 @@ def _check_connection(ctx: _Context) -> None:
             ) from e
         ctx.net = False
         ctx.warnings.append("No internet connection: using local VEP only; ClinVar, UniProt and AlphaFold are skipped.")
+
+
+def _ensembl_down(ctx: _Context, e: ApiError) -> bool:
+    """True when Ensembl is down: no connection, or a failure without an answer that a second request confirms."""
+    if isinstance(e, OfflineError):
+        return True
+    if e.status is not None:  # the server answered (a 4xx): it is up
+        return False
+    try:  # HTTP 5xx, rate limits or timeouts after the retries: ask once more, on another endpoint
+        ctx.http.get_json(
+            f"{ENSEMBL[ctx.assembly]}/info/ping", params={"content-type": "application/json"}, timeout=PROBE_TIMEOUT
+        )
+    except ApiError as e2:
+        return isinstance(e2, OfflineError) or e2.status is None
+    return False
 
 
 def _load_inputs(ctx: _Context) -> ParsedInput:
@@ -1224,6 +1257,10 @@ def _check_genome_build(ctx: _Context, parsed: ParsedInput) -> tuple[ParsedInput
                     )
         except ApiError as e:
             ctx.status.fail("Genome build check", str(e))
+        if unchecked := sum(_ref_checkable(v) and v.query not in ref_seqs for v in sample):
+            ctx.warnings.append(
+                f"REF allele not checked against the genome for {unchecked} input(s) (Ensembl sequence unavailable)"
+            )
         ctx.say("Checking genome build", 1, 1)
     elif region_vars and ctx.opt.assembly == "auto" and not ctx.hint:
         ctx.warnings.append(f"Genome build not verified (offline); assuming {ctx.assembly}.")
@@ -1236,18 +1273,21 @@ def _check_genome_build(ctx: _Context, parsed: ParsedInput) -> tuple[ParsedInput
 
 
 def _release(ctx: _Context) -> int | None:
-    """Return the Ensembl release of the REST server for the build in use; None offline or on failure."""
+    """Return the Ensembl release of the REST server for the build in use; None offline or on failure.
+
+    A live answer is never keyed to a release read from the cache: when the server does not say its release, the
+    release is unknown. Only a run from the cache alone takes the release of the cached answers (their keys name it).
+    """
     if not ctx.net:
         return None
-    if ctx.cache_only:  # the release of the cached answers (their keys name it)
+    if ctx.cache_only:
         rel = ctx.cache.get(f"ensembl_release|{ctx.assembly}", max_age=0)
         return int(rel) if rel else None
     try:
         return ensembl_release(ctx.http, ctx.cache, ctx.assembly)
     except ApiError as e:
         log.warning("Ensembl release lookup failed: %s", e)
-        rel = ctx.cache.get(f"ensembl_release|{ctx.assembly}", max_age=0)  # the cached answers name their release
-        return int(rel) if rel else None
+        return None
 
 
 def _vep_queries(parsed: ParsedInput) -> dict[str, list[str]]:
@@ -1844,6 +1884,27 @@ def _add_protein_features(
         notes.append("UniProt canonical numbering differs from this transcript; UniProt/AlphaFold features skipped")
 
 
+def _population_frequency(r: Row) -> str | None:
+    """The row's population frequency label; BA1 follows its gene's expert panels where they set it above 5%."""
+    label = acmg.frequency(r)
+    if str(label or "").startswith("common: BA1") and (t := vcep.ba1_above_5pct(r.get("gene"))):
+        # the gene's expert panels set BA1 above 5% (Ghosh et al.: BA1 at 5% only without a gene-specific rule)
+        g = acmg.ba1_grpmax(r) or 0.0
+        if not g > t:
+            label = (
+                f"frequent: BS1 candidate (grpmax {acmg._pct(g)}); BA1 not met: the gene's expert panel sets BA1 "
+                f"above {100 * t:.3g}%"
+            )
+    return label
+
+
+def _common_af(r: Row, common: float | None) -> float | None:
+    """The frequency above which the row is "common": the option's, or its gene's panel BA1 when higher (VWF, ABCA4)."""
+    if common and (t := vcep.ba1_above_5pct(r.get("gene"))) and t > common:
+        return t
+    return common
+
+
 def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str], found: _Lookups) -> None:
     """Add the prediction, the ACMG evidence and the population frequency to row ``i``."""
     label, score, basis = classify(r, terms)
@@ -1859,15 +1920,7 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     r["acmg_pm2"] = acmg.pm2(r, r["_gnomad"])[0]
     if i in found.gnomad_need and i not in found.gnomad_info and ctx.opt.gnomad_check and ctx.net:
         notes.append("gnomAD check unavailable (service error)")
-    r["population_frequency"] = acmg.frequency(r)
-    if str(r["population_frequency"] or "").startswith("common: BA1") and (t := vcep.ba1_above_5pct(r.get("gene"))):
-        # the gene's expert panels set BA1 above 5% (Ghosh et al.: BA1 at 5% only without a gene-specific rule)
-        g = acmg.ba1_grpmax(r) or 0.0
-        if not g > t:
-            r["population_frequency"] = (
-                f"frequent: BS1 candidate (grpmax {acmg._pct(g)}); BA1 not met: the gene's expert panel sets BA1 "
-                f"above {100 * t:.3g}%"
-            )
+    r["population_frequency"] = _population_frequency(r)
     r.pop("_gnomad")
     if "missense_variant" in terms and (ms := model.score(r)) is not None:
         r["score_with_frequency"] = model.with_frequency(ms.p, r.get("gnomad_popmax_af"))
@@ -1876,17 +1929,16 @@ def _add_verdict(ctx: _Context, i: int, r: Row, terms: set[str], notes: list[str
     if r.get("acmg_codes") or r.get("acmg_pp3_bp4"):
         r["vcep_specification"] = vcep.describe(r.get("gene"))
         acmg_notes.extend(vcep.notes(r))
-    ba1_noted = any("BA1 threshold" in n or "BA1 rule" in n for n in acmg_notes)
-    if caution := acmg.common_pathogenic_note(r, ba1_noted):
+    # a panel's BA1 threshold reached on the grpmax allele frequency (not one it applies to the filtering allele
+    # frequency, nor a rule without a parsed threshold: neither says that BA1 is reached)
+    ba1_reached = any("is at or above its BA1 threshold" in n for n in acmg_notes)
+    if caution := acmg.common_pathogenic_note(r, ba1_reached):
         acmg_notes.insert(0, caution)
     r["acmg_notes"] = vcep.SEP.join(acmg_notes) or None
     if found.onco_data is not None:
         _add_oncogenicity(r, i, terms, label, found)
     if not acmg.ba1_exception(r):  # common but pathogenic/uncertain (ClinGen list): no frequency rule
-        common = ctx.opt.common_af
-        if common and (t := vcep.ba1_above_5pct(r.get("gene"))) and t > common:
-            common = t  # the gene's expert panels set BA1 higher (VWF, ABCA4): a variant below it is not "common"
-        label, basis = apply_frequency(label, basis, acmg.ba1_grpmax(r), common)
+        label, basis = apply_frequency(label, basis, acmg.ba1_grpmax(r), _common_af(r, ctx.opt.common_af))
     r.pop("_grpmax_2000", None)
     r["prediction"], r["effect_score"], r["prediction_basis"] = label, score, basis
     r["spliceai_effect"] = (
@@ -2023,8 +2075,8 @@ def _run_record(ctx: _Context, seconds: float) -> dict[str, Any]:
             else f"Ensembl VEP REST, release {ctx.release or 'unknown'}"
         ),
         "ensembl_release": ctx.release,
-        # Ensembl could not be reached: cached answers were used whatever their age, and other services were
-        # asked only for what the cache lacked
+        # Ensembl could not be reached: Ensembl answers came from the cache only; every cached answer was used
+        # whatever its age, and other services were asked for what the cache lacked
         "cache_only": ctx.cache_only,
         "options": {k: v for k, v in asdict(ctx.opt).items() if k not in ("cache_path",)},
         "inputs": {

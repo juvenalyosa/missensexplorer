@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-26T20:55:00Z",
+ "generated": "2026-11-27T08:59:35Z",
  "missensexplorer": "2.5.0",
  "clinvar_file": "variant_summary.txt.gz",
  "selected": 2296,
@@ -1298,8 +1298,8 @@
  "runs": {
   "with ClinVar": {
    "tool": "MissensExplorer 2.5.0",
-   "started_utc": "2026-11-26T20:54:52+00:00",
-   "seconds": 3.8,
+   "started_utc": "2026-11-27T08:59:20+00:00",
+   "seconds": 9.1,
    "assembly": "GRCh38",
    "annotation": "Ensembl VEP REST, release 116",
    "ensembl_release": 116,
@@ -1359,8 +1359,8 @@
   },
   "without ClinVar": {
    "tool": "MissensExplorer 2.5.0",
-   "started_utc": "2026-11-26T20:54:57+00:00",
-   "seconds": 2.6,
+   "started_utc": "2026-11-27T08:59:30+00:00",
+   "seconds": 3.8,
    "assembly": "GRCh38",
    "annotation": "Ensembl VEP REST, release 116",
    "ensembl_release": 116,
@@ -1565,5 +1565,5 @@
    "codes": "OM3 +2, OP1 +1, OP4 +1"
   }
  ],
- "seconds": 246
+ "seconds": 437
 }

@@ -212,5 +212,6 @@ def test_nmd_is_judged_by_the_exon_of_the_change():
     assert predict._nmd("10/10", {"stop_gained"}) == "NMD escape likely (last exon)"
     assert predict._nmd("9/10", {"frameshift_variant"}).startswith("NMD uncertain (penultimate exon")
     assert predict._nmd("1/1", {"stop_gained"}) == "NMD escape likely (single-exon gene)"
+    assert predict._nmd("9/10", {"frameshift_variant"}, "9/9") == predict._nmd("9-10/10", {"frameshift_variant"})
     assert predict._nmd("3/10", {"missense_variant"}) is None
     assert predict._nmd("x/10", {"stop_gained"}) is None

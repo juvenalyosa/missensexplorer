@@ -312,8 +312,12 @@ leaves the computer.
   attempts, instead of retrying for minutes.
 - **Every run is recorded.** Exports include the tool version, the Ensembl release, the options,
   the SHA-256 of each input file and the status of each source (JSON `run`, Excel *Run info* sheet,
-  *Help → Run information* in the desktop app). Cached VEP answers are tied to the Ensembl release.
-  ClinVar answers are refreshed every week.
+  *Help → Run information* in the desktop app). Cached VEP answers are tied to the Ensembl release
+  (answers of a server that does not say its release are filed as of an unknown release). ClinVar answers
+  are refreshed every week.
+- **Reruns from the cache.** When Ensembl is down and the cache holds answers of earlier runs, the run
+  takes Ensembl's answers from the cache only, whatever their age, and says so (`cache_only` in the run
+  record); inputs whose answers are not cached fail.
 - **Tested on hard cases.** Recorded VEP responses cover frameshifts, start-lost, canonical splice,
   splice-altering synonymous, mitochondrial, chromosome X, multi-allelic and GRCh37 variants. A
   nightly GitHub workflow checks that the external APIs still return the fields the tool reads.

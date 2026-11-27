@@ -110,7 +110,7 @@ class FakeVep:
 
 @pytest.fixture
 def fake_services(monkeypatch):
-    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm: 116)
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
     monkeypatch.setattr(P, "_match_rate", lambda *a, **k: (1.0, {}))
     monkeypatch.setattr(P, "Vep", FakeVep)
 
@@ -216,7 +216,7 @@ def fake_vep_cmd(tmp_path):
 
 
 def test_local_vep_backend(fake_vep_cmd, monkeypatch):
-    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm: 116)
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
     monkeypatch.setattr(P, "_match_rate", lambda *a, **k: (1.0, {}))
     opts = P.PredictOptions(vep="local", vep_command=fake_vep_cmd, offline=True, cache=False)
     res = P.predict(text="7 140753336 A T\nBRAF V600E", options=opts)
@@ -308,45 +308,132 @@ def test_one_unreadable_variant_does_not_sink_its_batch():
     assert st.failed("Ensembl VEP", bad)
 
 
-def test_an_unreachable_ensembl_with_a_filled_cache_uses_the_cache(monkeypatch, tmp_path):
+CACHE_ONLY = (
+    "Ensembl cannot be reached: only Ensembl answers already in the cache are used, whatever their age; inputs "
+    "without them fail"
+)
+
+
+class _Ping:
+    """A stand-in client for the second request that tells whether Ensembl is down."""
+
+    def __init__(self, error: ApiError | None) -> None:
+        self.error, self.down, self.asked = error, {}, 0
+
+    def get_json(self, url, **kw):
+        self.asked += 1
+        if self.error:
+            raise self.error
+        return {"ping": 1}
+
+
+@pytest.mark.parametrize(
+    ("error", "ping", "frozen"),
+    [
+        (OfflineError("no network"), None, True),  # no connection
+        (
+            ApiError("HTTP 503 after the retries"),
+            ApiError("HTTP 503"),
+            True,
+        ),  # an outage that a second request confirms
+        (ApiError("read timeout after the retries"), OfflineError("down"), True),
+        (ApiError("HTTP 503 after the retries"), None, False),  # a passing error: the server answers again
+        (ApiError("HTTP 403", 403), None, False),  # a client error: the server is up
+        (ApiError("HTTP 404", 404), ApiError("HTTP 503"), False),
+    ],
+)
+def test_the_cache_alone_is_used_only_when_ensembl_is_down(monkeypatch, tmp_path, error, ping, frozen):
     from types import SimpleNamespace
 
-    from missensexplorer.api import OfflineError
     from missensexplorer.cache import Cache
 
-    def offline(*a, **k):
-        raise OfflineError("no network")
+    def failing(*a, **k):
+        raise error
 
-    monkeypatch.setattr(P, "ensembl_release", offline)
+    monkeypatch.setattr(P, "ensembl_release", failing)
     cache = Cache(tmp_path / "c.sqlite")
-    ctx = SimpleNamespace(net=True, local=False, cache=cache, http=None, warnings=[])
-    with pytest.raises(ConnectionError):  # nothing cached: no answers to use
-        P._check_connection(ctx)
     cache.set("ensembl_release|GRCh38", 116)
-    P._check_connection(ctx)  # a rerun from a filled cache goes on, and says so
-    assert ctx.warnings == ["Ensembl cannot be reached: only answers already in the cache are used"]
+    http = _Ping(ping)
+    ctx = SimpleNamespace(
+        net=True, local=False, cache=cache, http=http, assembly="GRCh38", warnings=[], cache_only=False
+    )
+    P._check_connection(ctx)
+    assert ctx.cache_only is frozen
+    assert cache.frozen is frozen
+    assert ctx.warnings == ([CACHE_ONLY] if frozen else [])
+    assert ("rest.ensembl.org" in http.down) is frozen  # in a run from the cache, Ensembl is not asked again
+    assert http.asked == (0 if isinstance(error, OfflineError) or error.status else 1)
     cache.close()
 
 
-def test_a_rerun_from_the_cache_without_the_internet_gives_the_same_rows(monkeypatch, tmp_path):
-    """A run fills the cache; two days later, with Ensembl unreachable, the same input gives the same rows."""
-    import time as _time
+def test_an_unreachable_ensembl_without_a_cache_for_the_build(monkeypatch, tmp_path):
+    from types import SimpleNamespace
 
+    from missensexplorer.cache import Cache
+
+    def failing(*a, **k):
+        raise failing.error
+
+    monkeypatch.setattr(P, "ensembl_release", failing)
+    cache = Cache(tmp_path / "c.sqlite")
+    cache.set("ensembl_release|GRCh37", 75)  # a cache of the other build holds no answer for this one
+    ctx = SimpleNamespace(net=True, local=False, cache=cache, http=_Ping(ApiError("HTTP 503")), assembly="GRCh38",
+                          warnings=[], cache_only=False)  # fmt: skip
+    failing.error = OfflineError("no network")
+    with pytest.raises(ConnectionError):  # nothing to use
+        P._check_connection(ctx)
+    failing.error = ApiError("HTTP 503 after the retries")
+    P._check_connection(ctx)  # a server outage without a cache: the run goes on and its requests fail one by one
+    assert not ctx.cache_only
+    assert not cache.frozen
+    assert ctx.warnings == []
+    cache.close()
+
+
+def test_a_live_answer_is_never_keyed_to_a_cached_release(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from missensexplorer.cache import Cache
+
+    def failing(*a, **k):
+        raise ApiError("HTTP 503 after the retries")
+
+    monkeypatch.setattr(P, "ensembl_release", failing)
+    cache = Cache(tmp_path / "c.sqlite")
+    cache.set("ensembl_release|GRCh38", 116)
+    ctx = SimpleNamespace(net=True, cache=cache, assembly="GRCh38", cache_only=False, http=None)
+    assert P._release(ctx) is None  # the server's release is unknown: its answers are not filed under 116
+    ctx.cache_only = True
+    assert P._release(ctx) == 116  # a run from the cache alone reads the answers filed under 116
+    cache.close()
+
+
+def _ensembl_mock(monkeypatch, tmp_path):
+    """A mocked Ensembl whose behaviour the test sets per endpoint; returns the state, the options and the log."""
     import missensexplorer.cache as cache_mod
     from missensexplorer.api import Http
 
     braf = json.loads((DATA / "vep_braf_v600e_region.json").read_text())
-    online = {"on": True, "status": 0}
+    state = {"software": "ok", "ping": "ok", "vep": "ok", "release": 116, "asked": []}
+
+    def answer(kind, request):
+        if kind == "none":
+            raise httpx.ConnectError("no network", request=request)
+        if kind == "timeout":
+            raise httpx.ReadTimeout("no answer", request=request)
+        if isinstance(kind, int):
+            return httpx.Response(kind, json={})
+        return None
 
     def handler(request):
-        if online["status"]:
-            return httpx.Response(online["status"], json={})
-        if not online["on"]:
-            raise httpx.ConnectError("no network", request=request)
-        if request.url.path.endswith("/info/software"):
-            return httpx.Response(200, json={"release": 116})
-        if "/vep/" in request.url.path:
-            return httpx.Response(200, json=braf)
+        path = request.url.path
+        state["asked"].append(path)
+        if path.endswith("/info/software"):
+            return answer(state["software"], request) or httpx.Response(200, json={"release": state["release"]})
+        if path.endswith("/info/ping"):
+            return answer(state["ping"], request) or httpx.Response(200, json={"ping": 1})
+        if "/vep/" in path:
+            return answer(state["vep"], request) or httpx.Response(200, json=braf)
         return httpx.Response(404, json={})
 
     class MockHttp(Http):
@@ -355,18 +442,86 @@ def test_a_rerun_from_the_cache_without_the_internet_gives_the_same_rows(monkeyp
             self.client = httpx.Client(transport=httpx.MockTransport(handler))
 
     monkeypatch.setattr(P, "Http", MockHttp)
+    clock = {"t": None}
+    real = cache_mod.time.time
+    monkeypatch.setattr(cache_mod.time, "time", lambda: clock["t"] or real())
     opts = {"cache_path": str(tmp_path / "c.sqlite"), "clinvar": False, "protein_context": False,
             "sequences": False, "gnomad_check": False}  # fmt: skip
+    return state, opts, clock
+
+
+def _keys(path, prefix):
+    import sqlite3
+
+    with sqlite3.connect(path) as db:
+        return {k for (k,) in db.execute("SELECT k FROM kv WHERE k LIKE ?", (prefix + "%",))}
+
+
+def test_a_rerun_from_the_cache_without_the_internet_gives_the_same_rows(monkeypatch, tmp_path):
+    """A run fills the cache; a month later, with Ensembl down, the same input gives the same rows."""
+    import time as _time
+
+    state, opts, clock = _ensembl_mock(monkeypatch, tmp_path)
     first = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
     assert len(first.table) == 1
-    online["on"] = False
-    later = _time.time() + 31 * 86400  # past the cache's 30-day limit: only a frozen cache still answers
-    monkeypatch.setattr(cache_mod.time, "time", lambda: later)
+    # the mock has no genome sequence: the REF allele cannot be checked, and the run says so
+    assert "REF allele not checked against the genome for 1 input(s) (Ensembl sequence unavailable)" in first.warnings
+    clock["t"] = _time.time() + 31 * 86400  # past the cache's 30-day limit: only a frozen cache still answers
     cols = ["gene", "protein_change", "prediction", "acmg_pp3_bp4"]
-    for status in (0, 503):  # no connection, then an Ensembl outage (HTTP 503 after the retries)
-        online["status"] = status
+    for down in ("none", 503, "timeout", 429):  # no connection; an outage; no answer; rate limits, after the retries
+        state.update(software=down, ping=down, vep=down, asked=[])
         again = P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
-        assert "Ensembl cannot be reached: only answers already in the cache are used" in again.warnings
+        assert CACHE_ONLY in again.warnings
         assert again.run["cache_only"]
         assert again.run["ensembl_release"] == 116
-        assert again.table[cols].equals(first.table[cols]), status
+        assert again.table[cols].equals(first.table[cols]), down
+        assert not any("/vep/" in a for a in state["asked"])  # every Ensembl answer came from the cache
+        # an input whose answers are not cached fails, and Ensembl is not asked for it
+        new = P.predict(text="7 140753336 A C", options=P.PredictOptions(**opts))
+        assert new.table.empty
+        assert len(new.errors) == 1
+        assert not any("/vep/" in a for a in state["asked"])
+
+
+def test_a_passing_ensembl_error_does_not_freeze_the_run(monkeypatch, tmp_path):
+    """One failed release lookup on a working Ensembl: the run stays live and files nothing under the old release."""
+    import time as _time
+
+    state, opts, clock = _ensembl_mock(monkeypatch, tmp_path)
+    P.predict(text="7 140753336 A T", options=P.PredictOptions(**opts))
+    old = _keys(opts["cache_path"], "vep|e116|")
+    assert old
+    clock["t"] = _time.time() + 2 * 86400
+    state["release"] = 117  # Ensembl has moved on; its release lookup fails, the rest answers
+    for software in (503, "timeout", 403, 404):
+        state.update(software=software, asked=[])
+        run = P.predict(text="7 140753336 A T", options=P.PredictOptions(predictors=False, **opts))
+        assert not run.run["cache_only"], software
+        assert CACHE_ONLY not in run.warnings
+        assert run.run["ensembl_release"] is None  # unknown, never the cached 116
+        if software == 503:  # asked live (later runs find the answer filed under the unknown release)
+            assert any("/vep/" in a for a in state["asked"])
+        assert _keys(opts["cache_path"], "vep|e116|") == old  # no live answer filed under the old release
+    assert _keys(opts["cache_path"], "vep|e?|")
+
+
+def test_a_truncation_across_an_exon_intron_boundary_has_uncertain_nmd(monkeypatch):
+    import copy
+
+    braf = copy.deepcopy(BRAF)
+    for tc in braf[0]["transcript_consequences"]:
+        tc.update(consequence_terms=["frameshift_variant"], exon="15/18", intron="15/17")
+
+    class Vep:
+        def __init__(self, *a, **k):
+            pass
+
+        def annotate(self, queries, params, progress=None, stage="", source="Ensembl VEP"):
+            return {(kind, q): {"results": braf} for kind, qs in queries.items() for q in set(qs)}
+
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
+    monkeypatch.setattr(P, "_match_rate", lambda *a, **k: (1.0, {}))
+    monkeypatch.setattr(P, "Vep", Vep)
+    opts = P.PredictOptions(cache=False, clinvar=False, protein_context=False, sequences=False)
+    res = P.predict(text="7 140753336 A T", options=opts)
+    assert set(res.table["nmd"]) == {"NMD uncertain (the change spans an exon-intron boundary)"}

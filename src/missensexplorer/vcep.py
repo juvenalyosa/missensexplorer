@@ -132,12 +132,12 @@ def _conditions(b: dict[str, Any]) -> str:
     """'“…”; “…”; BA1 exclusion variants (NM_…: …)' for a BA1 text with further conditions, else ''."""
     parts = [f"“{c}”" for c in b.get("conditions") or []]
     if ex := b.get("excluded"):
-        parts.append(f"BA1 exclusion variants ({ex['text']})")
+        parts.append(f"{'BA1/BS1' if ex.get('bs1') else 'BA1'} exclusion variants ({ex['text']})")
     return "; ".join(parts)
 
 
 def _protein_forms(p: str) -> set[str]:
-    """'p.Arg41*' and 'p.Arg41Ter' alike; 'p.Asp181fs' as the prefix of any frameshift at that residue."""
+    """'p.Arg41*' and 'p.Arg41Ter' alike (a listed 'p.Asp181fs' matches any frameshift at that residue: `_excluded`)."""
     return {p, p.replace("*", "Ter"), p.replace("Ter", "*")}
 
 
@@ -152,7 +152,10 @@ def _excluded(b: dict[str, Any], row: Row) -> bool:
         if x == c or (
             x.startswith("p.")
             and p
-            and (p in _protein_forms(x) or (x.endswith("fs") and p.startswith(x[:-2]) and "fs" in p))
+            and (
+                p in _protein_forms(x)
+                or (x.endswith("fs") and "fs" in p and re.match(re.escape(x[:-2]) + r"(?!\d)", p))
+            )
         ):
             return True
     return False

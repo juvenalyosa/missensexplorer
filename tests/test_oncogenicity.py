@@ -495,7 +495,7 @@ def braf_pipeline(monkeypatch):
         def annotate(self, queries, params, progress=None, stage="", source="Ensembl VEP"):
             return {(kind, q): {"results": braf} for kind, qs in queries.items() for q in set(qs)}
 
-    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm: 116)
+    monkeypatch.setattr(P, "ensembl_release", lambda http, cache, asm, **k: 116)
     monkeypatch.setattr(P, "_match_rate", lambda *a, **k: (1.0, {}))
     monkeypatch.setattr(P, "Vep", Vep)
     monkeypatch.setattr(P.cv, "fetch", lambda http, cache, ids, status=None: {})
